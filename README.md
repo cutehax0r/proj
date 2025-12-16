@@ -3,7 +3,7 @@ A tool for setting up new projects or adding files to existing projects
 
 ## Usage
 
-Use the ruby on rails project template in `~/.local/proj/rails/new` to create a project called
+Use the ruby on rails project template in `~/.local/share/proj/rails/new` to create a project called
 `foo` in the current directory.
 
 ```sh
