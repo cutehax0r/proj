@@ -88,3 +88,8 @@ We need some kind of 'setup' function you can run:
 some kind of an "info" service would be nice. Display the details about an installed project:
 requirements, the readme, what variables are used (and current values), etc.
 
+
+Consider a makefile that builds a release version (stripped of symbols) with
+```sh
+go build -ldflags "-s -w"
+```
