@@ -1,6 +1,3 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -28,7 +25,6 @@ like packaging, remote repositories, database creation, etc.
 
 func init() {
 	rootCmd.AddCommand(newCmd)
-
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
 	// newCmd.PersistentFlags().String("foo", "", "A help for foo")
@@ -67,8 +63,9 @@ func newProject(cmd *cobra.Command, args []string) {
 	}
 
 	slog.Debug("Parsing template config", "src", src)
+
 	// check that config.yml exists
-	// read config.yml
+	// use viper to 'MergeInConfig' for the new config file.
 	// verify config.yml has mandatory keys/correct structure
 
 	// check destination
