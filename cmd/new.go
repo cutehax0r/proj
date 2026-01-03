@@ -1,11 +1,13 @@
 /*
 Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
-	"fmt"
+	"errors"
+	"log/slog"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -15,18 +17,13 @@ var newCmd = &cobra.Command{
 	Use:   "new [kind] [name]",
 	Args: cobra.ExactArgs(2),
 	Short: "Create a project called NAME based on the KIND template",
-	Long: `Create a new project based on a project template.
+	Long: `Create a new project based on a project template in the current directory.
 
 Uses the project template, name, and standard variables from config to create a new project ready to
 work on. Projects typically include skeleton files as well as shell scripts to pre-configure things
 like packaging, remote repositories, database creation, etc.
 `,
-	Run: func(cmd *cobra.Command, args []string) {
-		// kind must be one of the root folders in ~/.local/share/proj
-		kind := args[0]
-		name := args[1]
-		fmt.Printf("new called to make a new '%s' called '%s'\n", kind, name)
-	},
+	Run: newProject,
 }
 
 func init() {
@@ -39,4 +36,89 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// newCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+// responsible for building the new project
+func newProject(cmd *cobra.Command, args []string) {
+	kind := args[0]
+	name := args[1]
+	slog.Debug("New called", "kind", kind, "name", name)
+
+	// generally it's better to just try and then crash with errors but I'm learning about how
+	// file management works in go so I'm being a bit cautious. This means I'm risking a race
+	// where the time between check & use allows things to change. I'll eat that for now and
+	// refactor later.
+	home, err := os.UserHomeDir()
+	if err != nil {
+		slog.Error("Couldn't get home directory", "home", home)
+		os.Exit(1)
+	}
+
+	src := filepath.Join(home, ".local", "share", "proj", kind)
+	slog.Debug("Set compute src path", "src", src, "home", home)
+	_, err = os.Stat(src)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			slog.Error("Template definition not found at expected path", "kind", kind, "src", src)
+		} else {
+			slog.Error("Template definition couldn't be read", "kind", kind, "src", src)
+		}
+		os.Exit(1)
+	}
+
+	slog.Debug("Parsing template config", "src", src)
+	// check that config.yml exists
+	// read config.yml
+	// verify config.yml has mandatory keys/correct structure
+
+	// check destination
+	dest, err := os.Getwd()
+	if err != nil {
+		slog.Error("Couldn't get working directory")
+		os.Exit(1)
+	}
+
+	// check working dir to see if we can mess with it
+	info, err := os.Stat(dest)
+	if err != nil {
+		slog.Error("Couldn't read working directory", "dest", dest)
+		os.Exit(1)
+	} else {
+		if info.Mode()&0200 == 0 {
+			slog.Error("No permission to write to working directory", "dest", dest)
+			os.Exit(1)
+		}
+	}
+
+	// then ensure our new target dir is okay
+	dest = filepath.Join(dest, name)
+	slog.Debug("Set dest path", "dest", dest)
+	_, err = os.Stat(dest)
+	if err == nil {
+		slog.Error("Destination path already exists", "dest", dest)
+		os.Exit(1)
+	} else {
+		if errors.Is(err, os.ErrNotExist) {
+			slog.Debug("Destination path doesn't exist, all good", "dest", dest)
+		} else {
+			slog.Error("Error checking for destination", "dest", "dest")
+			os.Exit(1)
+		}
+	}
+
+	// that's a lot of os.exits but if you get here we should be able to start the real work
+
+	slog.Info("Run 'before' lua script")
+
+	slog.Info("Creating target directory", "dest", dest)
+	err = os.MkdirAll(dest, 0777) // umask will make this more restrictive
+	if err != nil {
+		slog.Error("Failed to create destination", "dest", dest)
+		os.Exit(1)
+	}
+
+	slog.Info("Copy each file to destination")
+
+	slog.Info("Run 'after' lua script")
+	
 }
