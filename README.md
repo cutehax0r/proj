@@ -85,3 +85,6 @@ We need some kind of 'setup' function you can run:
 * creates a default config in ~/.config/proj
 * makes sure ~/.local/share/proj exists
 
+some kind of an "info" service would be nice. Display the details about an installed project:
+requirements, the readme, what variables are used (and current values), etc.
+
