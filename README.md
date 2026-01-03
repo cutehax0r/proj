@@ -76,6 +76,12 @@ contents of config
     * can be set as string, int bool, array, etc.
     * can come from ENV or from process
   * variable 'requirements': optional, mandatory
+  * pre-run/post-run scripts
   * file mapping:
     * files/index.html to .proj/../src/index.html
     * files/index_test.py to .proj/../test/index_test.html
+
+We need some kind of 'setup' function you can run: 
+* creates a default config in ~/.config/proj
+* makes sure ~/.local/share/proj exists
+
