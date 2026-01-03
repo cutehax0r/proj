@@ -6,7 +6,9 @@ package cmd
 import (
 	"os"
 	"log/slog"
+
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var rootCmd = &cobra.Command{
@@ -33,20 +35,21 @@ func init() {
 	logger := slog.New(logHandler)
 	slog.SetDefault(logger)
 
-	// `new` creates a new project
-	// `add` adds a file to an existing project
-	// `config.global` edits the global config
-	// `config.local` edits the config for a project
-	// `list templates` lists the local templates available
-	// `list [template] files` lists the files you can add to a template
-	// long term a way to search for install, and remove templates would be good.
-	// want a `add` to add files to aproject
-	// figure out how to do templating of file names. Just use go?
-	// figure out how to support scripting: just one script that runs after the template step
-	// want to use lua for that.
+	// lets load the default global config
+	viper.SetConfigName("config")
+	viper.AddConfigPath("$HOME/.config/proj")
+	err := viper.ReadInConfig()
+	if err != nil {
+		slog.Error("Error reading config file", "err", err, "path", viper.ConfigFileUsed())
+		// maybe tried to read a file that doesn't exist - can create defaults
+	} else {
+		slog.Info("Read Configuration configuration", "path", viper.ConfigFileUsed())
+	}
+
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	//
 	// flags
 	// - config: load a new default config (~/.config/proj/config.yml default)
 	// - dir: set the target directory for a new project (cwd default)
+	// - projects: path to where templates can be found
 }
