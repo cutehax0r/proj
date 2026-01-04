@@ -1,0 +1,63 @@
+---
+variables:
+  foo: "This is a string"
+  bar: 123.45
+  baz: true
+  bing:
+    - "Array"
+    - "of"
+    - "strings"
+  bang:
+    bang_a: "hash"
+    bang_b: "map"
+
+requirements:
+  - For now just a list
+  - only used for information
+  - variables that must be defined
+  - software that must be installed
+
+new:
+  description: "New HTML project"
+  scripts:
+    before: scripts/before.lua
+    after: scripts/after.lua
+  files:
+    - source: src/Dockerfile
+      dest: Dockerfile
+      parse: true
+    - source: src/Makefile
+      dest: Makefile
+      parse: true
+    - source: src/README.md
+      dest: README.md
+      parse: true
+    - source: src/index.html
+      dest: src/index.html
+      parse: true
+    - source: src/favicon.svg
+      dest: src/images/favicon.svg
+      parse: false
+
+add:
+  html:
+    description: "Add new empty HTML file"
+    scripts:
+      before: scripts/before.lua
+      after: scripts/after.lua
+    files:
+      - source: src/index.html
+        dest: src/{{.name}}.html
+        parse: true
+  js:
+    description: "Add new javascript file"
+    files:
+      - source: src/javascript.js
+        dest: src/scripts/{{.name}}.js
+        parse: false
+  css:
+    description: "add new stylesheet"
+    files:
+      - source: src/stylesheet.css
+        dest: src/styles/{{.name}}.css
+        parse: false

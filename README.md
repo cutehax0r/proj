@@ -91,6 +91,13 @@ requirements, the readme, what variables are used (and current values), etc.
 Allowing for a global before/after scripts is worth considering. These would be different from the
 ones handling files or projects being run.
 
+# it would be nice if you could define variables as 'prompt' types and those would display some kind
+of pretty UI for getting the value.  It would also be good to have variables declared as 'optional'
+vs 'mandatory'.  If mandatory then they become 'prompt' type.
+
+A basic go/charm(?) UI for getting strings, booleans, integers, choosing from a list, adding a list,
+etc. would be nice. Being able to trigger that from lua would be double-cool.
+
 
 Consider a makefile that builds a release version (stripped of symbols) with
 ```sh
