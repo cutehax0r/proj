@@ -30,6 +30,7 @@ func Execute() {
 }
 
 func init() {
+	// Setup logging
 	logLevel := slog.LevelDebug
 	logHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel })
 	logger := slog.New(logHandler)
