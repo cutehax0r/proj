@@ -88,6 +88,9 @@ We need some kind of 'setup' function you can run:
 some kind of an "info" service would be nice. Display the details about an installed project:
 requirements, the readme, what variables are used (and current values), etc.
 
+Allowing for a global before/after scripts is worth considering. These would be different from the
+ones handling files or projects being run.
+
 
 Consider a makefile that builds a release version (stripped of symbols) with
 ```sh
