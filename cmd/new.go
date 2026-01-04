@@ -173,7 +173,7 @@ func newProject(cmd *cobra.Command, args []string) {
 		if errors.Is(err, os.ErrNotExist) {
 			slog.Debug("No after script defined, skipping", "path", after)
 		} else {
-			slog.Error("Error accessing after script, aborting", "path", after)
+			slog.Error("Error accessing after script, aborting", "path", after, "error", err)
 			os.Exit(1)
 		}
 	} else {
