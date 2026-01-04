@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/yuin/gopher-lua"
 )
 
 // newCmd represents the new command
@@ -105,10 +106,27 @@ func newProject(cmd *cobra.Command, args []string) {
 
 	// that's a lot of os.exits but if you get here we should be able to start the real work
 
-	slog.Info("Run 'before' lua script")
+	// run "before" script
+	before := filepath.Join(src, "scripts", "before.lua")
+	slog.Debug("Attempt to run 'before.lua' script", "path", before)
+	info, err = os.Stat(before)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			slog.Debug("No before script defined, skipping", "path", before)
+		} else {
+			slog.Error("Error accessing before script, aborting", "path", before)
+			os.Exit(1)
+		}
+	} else {
+		slog.Info("Running before script", "path", before)
+		L := lua.NewState()
+		defer L.Close()
+		L.OpenLibs()
+		L.DoFile(before)
+	}
 
 	slog.Info("Creating target directory", "dest", dest)
-	err = os.MkdirAll(dest, 0777) // umask will make this more restrictive
+	// err = os.MkdirAll(dest, 0777) // umask will make this more restrictive
 	if err != nil {
 		slog.Error("Failed to create destination", "dest", dest)
 		os.Exit(1)
@@ -117,5 +135,24 @@ func newProject(cmd *cobra.Command, args []string) {
 	slog.Info("Copy each file to destination")
 
 	slog.Info("Run 'after' lua script")
+
+	// run "after" script
+	after := filepath.Join(src, "scripts", "after.lua")
+	slog.Debug("Attempt to run 'after.lua' script", "path", after)
+	info, err = os.Stat(after)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			slog.Debug("No after script defined, skipping", "path", after)
+		} else {
+			slog.Error("Error accessing after script, aborting", "path", after)
+			os.Exit(1)
+		}
+	} else {
+		slog.Info("Running after script", "path", after)
+		L := lua.NewState()
+		defer L.Close()
+		L.OpenLibs()
+		L.DoFile(after)
+	}
 	
 }
