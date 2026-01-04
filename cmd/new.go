@@ -106,6 +106,8 @@ func newProject(cmd *cobra.Command, args []string) {
 	}
 
 	// that's a lot of os.exits but if you get here we should be able to start the real work
+	config_vars := viper.GetStringMapString("variables")
+	slog.Debug("building variables", "variables", config_vars)
 
 	// run "before" script -- should we have separate environments for each script?
 	before := filepath.Join(src, "scripts", "before.lua")
@@ -124,9 +126,6 @@ func newProject(cmd *cobra.Command, args []string) {
 		defer L.Close()
 		L.OpenLibs()
 
-		config_vars := viper.GetStringMapString("variables")
-		slog.Debug("building variables", "variables", config_vars)
-
 		// this needs to get more clever and recursively transform types
 		variables := L.NewTable()
 		for k, v := range config_vars {
@@ -141,10 +140,22 @@ func newProject(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 		// We should copy back the changed variables to Go here.
+		raw_lua_variables := L.GetGlobal("VARIABLES")
+		lua_variables, ok := raw_lua_variables.(*lua.LTable)
+		if !ok {
+			slog.Error("Lua screwed up the variables")
+		}
+		go_variables := make(map[string]string)
+		lua_variables.ForEach(func(k, v lua.LValue) {
+			go_variables[k.String()] = v.String()
+		})
+		config_vars = go_variables
+
 	}
 
 	slog.Info("Creating target directory", "dest", dest)
-	// err = os.MkdirAll(dest, 0777) // umask will make this more restrictive
+	// really need a 'dry run' flag
+	err = os.MkdirAll(dest, 0777) // umask will make this more restrictive
 	if err != nil {
 		slog.Error("Failed to create destination", "dest", dest)
 		os.Exit(1)
@@ -171,12 +182,9 @@ func newProject(cmd *cobra.Command, args []string) {
 		defer L.Close()
 		L.OpenLibs()
 
-		config_vars := viper.GetStringMapString("variables")
-		slog.Debug("building variables", "variables", config_vars)
-
 		// this needs to get more clever and recursively transform types
 		variables := L.NewTable()
-		for k, v := range config_vars {
+		for k, v := range config_vars { // note this was modified by before
 			variables.RawSetString(k, lua.LString(v))
 		}
 		// also expose source, target, log level kind, and name
