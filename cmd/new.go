@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/yuin/gopher-lua"
 )
 
@@ -106,7 +107,7 @@ func newProject(cmd *cobra.Command, args []string) {
 
 	// that's a lot of os.exits but if you get here we should be able to start the real work
 
-	// run "before" script
+	// run "before" script -- should we have separate environments for each script?
 	before := filepath.Join(src, "scripts", "before.lua")
 	slog.Debug("Attempt to run 'before.lua' script", "path", before)
 	info, err = os.Stat(before)
@@ -122,7 +123,24 @@ func newProject(cmd *cobra.Command, args []string) {
 		L := lua.NewState()
 		defer L.Close()
 		L.OpenLibs()
-		L.DoFile(before)
+
+		config_vars := viper.GetStringMapString("variables")
+		slog.Debug("building variables", "variables", config_vars)
+
+		// this needs to get more clever and recursively transform types
+		variables := L.NewTable()
+		for k, v := range config_vars {
+			variables.RawSetString(k, lua.LString(v))
+		}
+		// also expose source, target, log level kind, and name
+		L.SetGlobal("VARIABLES", variables)
+
+		err = L.DoFile(before)
+		if err != nil {
+			slog.Error("Lua error in before script", "path", before, "error", err)
+			os.Exit(1)
+		}
+		// We should copy back the changed variables to Go here.
 	}
 
 	slog.Info("Creating target directory", "dest", dest)
@@ -136,7 +154,7 @@ func newProject(cmd *cobra.Command, args []string) {
 
 	slog.Info("Run 'after' lua script")
 
-	// run "after" script
+	// run "after" script - should this just be a do_script using the before env?
 	after := filepath.Join(src, "scripts", "after.lua")
 	slog.Debug("Attempt to run 'after.lua' script", "path", after)
 	info, err = os.Stat(after)
@@ -152,7 +170,25 @@ func newProject(cmd *cobra.Command, args []string) {
 		L := lua.NewState()
 		defer L.Close()
 		L.OpenLibs()
-		L.DoFile(after)
+
+		config_vars := viper.GetStringMapString("variables")
+		slog.Debug("building variables", "variables", config_vars)
+
+		// this needs to get more clever and recursively transform types
+		variables := L.NewTable()
+		for k, v := range config_vars {
+			variables.RawSetString(k, lua.LString(v))
+		}
+		// also expose source, target, log level kind, and name
+		L.SetGlobal("VARIABLES", variables)
+
+		err = L.DoFile(after)
+		if err != nil {
+			slog.Error("Lua error in after script", "path", after, "error", err)
+			os.Exit(1)
+		}
+		// we should copy stuff back here so that it's available for 'global' scripts even
+		// though this currently is the last step in the chain.
 	}
 	
 }

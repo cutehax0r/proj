@@ -44,7 +44,14 @@ func init() {
 		slog.Error("Error reading config file", "err", err, "path", viper.ConfigFileUsed())
 		// maybe tried to read a file that doesn't exist - can create defaults
 	} else {
-		slog.Info("Read Configuration configuration", "path", viper.ConfigFileUsed())
+		slog.Debug("Read Configuration configuration", "path", viper.ConfigFileUsed())
+		slog.Debug("Loaded global config",
+			"log_level", viper.GetString("log_level"),
+			"templates_path", viper.GetString("templates_path"),
+			"default_path", viper.GetString("default_path"),
+			"scripts", viper.GetViper().GetStringMapString("scripts"),
+			"variables", viper.GetStringMap("variables"),
+			)
 	}
 
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
