@@ -51,6 +51,7 @@ func init() {
 			"default_path", viper.GetString("default_path"),
 			"scripts", viper.GetViper().GetStringMapString("scripts"),
 			"variables", viper.GetStringMap("variables"),
+			"settings", viper.AllSettings(),
 			)
 	}
 

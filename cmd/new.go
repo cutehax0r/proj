@@ -67,8 +67,18 @@ func newProject(cmd *cobra.Command, args []string) {
 	slog.Debug("Parsing template config", "src", src)
 
 	// check that config.yml exists
-	// use viper to 'MergeInConfig' for the new config file.
-	// verify config.yml has mandatory keys/correct structure
+	proj_viper := viper.New()
+	proj_viper.SetConfigName("config")
+	proj_viper.AddConfigPath(src)
+	if err := proj_viper.ReadInConfig(); err != nil {
+		slog.Error("Project template config read error", "path", proj_viper.ConfigFileUsed(), "error", err)
+		os.Exit(1)
+	}
+	slog.Debug("Read project config", "keys", viper.AllSettings())
+	if err := proj_viper.MergeConfigMap(viper.AllSettings()); err != nil {
+		slog.Debug("Failed to merge global config with project config", "error", err)
+		os.Exit(1)
+	}
 
 	// check destination
 	dest, err := os.Getwd()
@@ -106,7 +116,7 @@ func newProject(cmd *cobra.Command, args []string) {
 	}
 
 	// that's a lot of os.exits but if you get here we should be able to start the real work
-	config_vars := viper.GetStringMapString("variables")
+	config_vars := proj_viper.GetStringMapString("variables")
 	slog.Debug("building variables", "variables", config_vars)
 
 	// run "before" script -- should we have separate environments for each script?
