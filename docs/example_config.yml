@@ -13,8 +13,14 @@ log_level: Debug
 
 # Specify global before/after scripts. These run for all projects
 scripts:
-  # before: nil # if set this script runs before the project level 'before.lua'
-  # after: nil # if set this script runs after the project level 'after.lua'
+  # scripts that run when creating new templates
+  new:
+    before: nil # if set this script runs before the project level 'before.lua'
+    after: nil # if set this script runs after the project level 'after.lua'
+  # scripts that run when adding files to an existing project
+  add:
+    # before: nil # if set this script runs before the project level 'before.lua' when adding files
+    # after: nil # if set this script runs after the project level 'after.lua' when adding files
 
 # These variables are available inside of lua scripts and templates.
 # Right now, owing to laziness they're passed around as a map[string]string but eventually I'll
