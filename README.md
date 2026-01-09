@@ -7,7 +7,18 @@ Commands:
   * proj new <template> <name> [OPTIONS]
   * proj add <definition> <name> [OPTIONS]
 
-Running 'new' implises the definition `new`
+Running `new` implies the definition `new`
+Running `add` implies reading template from `.proj/proj.yml`
+
+### Flags
+* *dry-run*: don't actually change the filesystem, just log all the state (implies --log-level 2)
+* *log-level*: amount of logging to display (from 0-3)
+* *global-config*: specify a global config for use instead of the default
+* *target-root*: location to create the project folder
+* *target-path*: full path to where to create files (don't infer from target-path/name)
+* *template-root*: path to where templates can be found
+* *template-path*: specific tempate path to be used (don't infer from template-root/template)
+* *set*: set a variable with key value pairs (--set variable=value). Can be passed multiple times
 
 ## Config
 What is the minimal config that can work?
@@ -107,7 +118,7 @@ definitions:
         parse: false
 ```
 
-### Local
+### Project
 ```yaml
 ---
 # ~/src/my_homepage/.proj/proj.yml
@@ -253,13 +264,50 @@ func flagSource(cfg *viper.Viper, cmd *cobra.Command, name string) FlagSource {
     2. template global before `template_config.Get("scripts." + "template_before")` if present
     3. template definition before `template_config.Get(viper.get("definition") + ".scripts." + "definition_before")` if present
 
-4. for each file in `template_config['definitions.' + viper.Get("definition") '.files']` as file do
+4. ensure resolved variables cover all requirements: for each `reqdvar` in
+   `template_config[definitions.definition.requirements.variables']`
+   if nil, prompt for value until not nil using options, type, to drive a UI.
+
+5. for each file in `template_config['definitions.' + viper.Get("definition") '.files']` as file do
   * `source` = `filepath.Join(viper.Get("template_root"), file['source'])`
   * `target` = `GO_TEMPLATE_STRING(filepath.Join(viper.Get("target_path"), file['target'])), RESOLVED_VARIABLES)`
   * `content` = `GO_TEMPLATE_FILE(source, RESOLVED_VARIABLES)`
   * `file.Write(target, content)`
 
-5. run after scripts
+6. run after scripts
     7. template definition after `template_config.Get(viper.get("definition") + ".scripts." + "definition_after")` if present
     8. template global after `template_config.Get("scripts." + "template_after")` if present
     9. global after `global_config.Get("scripts." + viper.Get("action") + "_after")` if present
+
+## Module structure
+* main (entry point) - just runs commands
+* cmd - all the commands exposed via cobra
+* lua_runtime - code for setting up and enhancing the lua runtime
+* config - handles loading vipers and preparing the variables for exection
+
+# Wishlist
+
+*GET IT WORKING BEFORE FUSSING WITH THIS STUFF*
+
+* allow for `variables.template.definition` in global config so that (for example)
+`variables.python.version = 3` or `variables.ruby.typesystem = "sorbet"` can be set
+* allow variable declarations to include "persist: false" to avoid adding them to a .proj directory
+* allow required variables to declare kind: (string, number, boolean) as type
+* allow required variables to declare "options"
+* write a `prompt` function that can be called from lua
+* write a `shell exec` function exposed to lua that can run commands and recieve std err/in
+* add "descriptions" to most things
+* allow requirements to define mandatory software, checked with `which foo`
+* add --action param on new that lets you have multiple 'new' types and you can choose between them
+* add `setup` command that writes a default config to and an example template
+* add `info` command that shows details about what's allowed/required for templates/definitions
+* add `install` command that does a `git clone ...` to template_root
+* add `remove` command that does an `rm -rf ` in template root
+* make `new` list all available templates if run with no arguments
+* make `add` list all available definitions if run with no arguments
+* make `dry run` actually do nothing
+* make a prettier logger
+* add --version that dumps a version
+* makefile that does go build for arm/x86/apple.
+* makefile that can build bundles (brew, arch, deb, rpm, nix)
+* 
