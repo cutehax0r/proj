@@ -22,30 +22,21 @@ var rootCmd = &cobra.Command{
 	Run:              runRoot,
 }
 
-func persistentPreRun(cmd *cobra.Command, args []string) {
-	logOpts := &slogpretty.Options{
-		Level:      slog.LevelDebug,
-		AddSource:  true,
-		Colorful:   true,
-		Multiline:  true,
-		TimeFormat: "15:04:05",
+func Execute() {
+	err := rootCmd.Execute()
+	if err != nil {
+		os.Exit(1)
 	}
-	logHandler := slogpretty.New(os.Stdout, logOpts)
-	slog.SetDefault(slog.New(logHandler))
-}
-
-func runRoot(cmd *cobra.Command, args []string) {
-	cmd.Help()
 }
 
 func init() {
 	viper.SetConfigName("proj")
 
 	rootCmd.PersistentFlags().BoolP("dry-run", "n", false, "Print the plan, don't write anything")
-	viper.BindPFlag("dry_run", rootCmd.PersistentFlags().Lookup("dry-run"))
+	viper.BindPFlag("dryRun", rootCmd.PersistentFlags().Lookup("dry-run"))
 
 	rootCmd.PersistentFlags().IntP("log-level", "l", 0, "How much to log [0-3], bigger = more")
-	viper.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level"))
+	viper.BindPFlag("logLevel", rootCmd.PersistentFlags().Lookup("log-level"))
 
 	rootCmd.PersistentFlags().StringVarP(&globalConfig, "global-config", "c", "", "Use specific global configuration file")
 
@@ -57,9 +48,35 @@ func init() {
 	viper.BindPFlags(rootCmd.PersistentFlags())
 }
 
-func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
-		os.Exit(1)
+func persistentPreRun(cmd *cobra.Command, args []string) {
+	initLogger(viper.GetInt("logLevel"))
+}
+
+func runRoot(cmd *cobra.Command, args []string) {
+	cmd.Help()
+}
+
+func initLogger(logLevel int) {
+	levels := []slog.Level{
+		slog.LevelError,
+		slog.LevelWarn,
+		slog.LevelInfo,
+		slog.LevelDebug,
 	}
+	level := slog.LevelDebug
+	if logLevel >= 0 && logLevel < len(levels) {
+		level = levels[logLevel]
+	} 
+
+	logOpts := &slogpretty.Options{
+		Level:      level,
+		AddSource:  true,
+		Colorful:   true,
+		Multiline:  true,
+		TimeFormat: "15:04:05",
+	}
+	logHandler := slogpretty.New(os.Stdout, logOpts)
+	slog.SetDefault(slog.New(logHandler))
+	slog.Debug("Setup logging", slog.Int("Log Level", logLevel))
+
 }
