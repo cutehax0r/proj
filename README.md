@@ -1,105 +1,263 @@
 # Proj
 A tool for setting up new projects or adding files to existing projects
-Maybe rename this to "jorp" - it's less likely to confligt with other people's stuff
 
 ## Usage
 
-Use the ruby on rails project template in `~/.local/share/proj/rails/new` to create a project called
-`foo` in the current directory.
+Commands:
+  * proj new <kind> <name> [OPTIONS]
+  * proj add <kind> <name> [OPTIONS]
 
-```sh
-proj new rails foo
+## Config
+What is the minimal config that can work?
+
+### Global
+```yaml
+---
+# ~/.config/proj/proj.yml
+template_root: ~/.local/share/proj
+target_root: .
+log_level: 0
+scripts:
+  new_before: scripts/before.lua
+  new_after: scripts/after.lua
+  add_before: scripts/before.lua
+  add_after: scripts/after.lua
+variables:
+  global: #reserving space for variables.template && variables.template.definition
+    aboolean: true
+    anumber: 8080
+    astring: hello world
+    anarray: [1, 3, 3]
+    amap:
+      foo: 1
+      bar: 2
+      nested:
+        yes: true
+        no: false
+        anotherarray:
+          - 4
+          - 5
+    anil: ~
 ```
 
-If you're in a rails project then this will add `app/models/foo.rb` and `spec/models/foo_spec.rb`
-using the templates in `~/.local/proj/rails/files/model`
+### Template
+```yaml
+---
+# ~/.local/share/proj/html/proj.yml
+scripts:
+  template_before: scripts/before.lua
+  template_after: scripts/after.lua
+definitions:
+  new:
+    requirements:
+      local: false
+      variables:
+        - name: "title"
+        - name: "has_date"
+        - name: "font_size"
+          default: 14
+        - name: "background"
+          default: "#202020"
+    scripts:
+      definition_before: scripts/before.lua
+      definition_after: scripts/after.lua
+    files:
+      - source: src/Dockerfile
+        target: Dockerfile
+        parse: true
+      - source: src/Makefile
+        target: Makefile
+        parse: true
+      - source: src/README.md
+        target: README.md
+        parse: true
+      - source: src/index.html
+        target: src/index.html
+        parse: true
+      - source: src/favicon.svg
+        target: src/images/favicon.svg
+        parse: false
 
-```sh
-proj add model foo
+  html:
+    requirements:
+      local: true
+      variables:
+        - name: "title"
+    files:
+      - source: src/index.html
+        target: src/{{ .name }}.html
+        parse: true
+
+  css:
+    requirements:
+      local: true
+    files:
+      - source: src/index.css
+        target: src/{{ .name }}.css
+        parse: false
+
+  js:
+    requirements:
+      local: true
+    files:
+      - source: src/index.js
+        target: src/{{ .name }}.js
+        parse: false
 ```
 
-## Development
-
-General tips:
-
-* Use `cobra-cli` to add commands
-* Run with `go run main.go`
-* Install modules with `go mod tidy`
-* compile with `go build`
-
-## General planning
-
-* read config from `~/.config/proj`, then from `$CWD/.proj`.
-* have templates stored in `~/.local/share/proj/templates`
-* `templates` have a structure: `~/.local.share/proj/templates/html`
-    * `README.md` a readme file
-    * `config.yml` variables etc. that come from config
-    * `before.lua(?)` a script that gets run before anything happens
-    * `after.lua(?)` a script that runs after everything happens
-    * `files/` the directory that will be 'cloned' to create the new project
-    * `add/` templates for adding individual files
-* `add/` holds files that look just like `templates` but don't have the `add` folder
-* `add/remove.lua` can be run to remove a file
-
-when you run `proj new html foobar`
-
-  0. check that `./foobar` doesn't exist: crash if it does
-  1. config loads from `~/.config/proj/config.yml`
-  2. config loads from `~/.local/share/proj/templates/html/config.yml`
-     verify sane config - resolve missing items || crash
-  3. run `~/.local/share/proj/templates/html/before.lua`
-     crash if return is non-zero
-  4. copy `~/.local/share/proj/templates/html/files` to `./foobar` (copy = process template)
-  5. run `~/.local/share/proj/templates/html/after.lua`
-     crash if return is non-zero
-  6. make `~/foobar/.proj/`
-
-when you run `proj add index`
-
-  0. check that `./proj` exists. traverse up the directory stack looking for it. crash if missing
-  1. config loads from `~/.config/proj/config.yml`
-  2. config loads from `./proj/config.yml`
-  3. config loads from `~/.local/share/proj/templates/html/config.yml` (pull html from proj config)
-  4. config loads from `~/.local/share/proj/templates/html/add/index/config.yml` (html from .proj)
-     verify sane config - resolve missing items || crash
-  5. run `~/.local/share/proj/templates/html/add/index/before.lua`
-     crash if return is non-zero
-  6. need some kind of 'pre compute destination file names before copying and crash if conflict
-  7. copy `~/.local/share/proj/templates/html/add/index/files` to `./foobar` (copy = process template)
-  8. run `~/.local/share/proj/templates/html/add/index/after.lua`
-     crash if return is non-zero
-
-config order of override: `~/.config`, `~/.local/share/proj/templates/foo/config`, `./proj/config`
-
-contents of config
-  * variables declarations:
-    * can be set as string, int bool, array, etc.
-    * can come from ENV or from process
-  * variable 'requirements': optional, mandatory
-  * pre-run/post-run scripts
-  * file mapping:
-    * files/index.html to .proj/../src/index.html
-    * files/index_test.py to .proj/../test/index_test.html
-
-We need some kind of 'setup' function you can run: 
-* creates a default config in ~/.config/proj
-* makes sure ~/.local/share/proj exists
-
-some kind of an "info" service would be nice. Display the details about an installed project:
-requirements, the readme, what variables are used (and current values), etc.
-
-Allowing for a global before/after scripts is worth considering. These would be different from the
-ones handling files or projects being run.
-
-# it would be nice if you could define variables as 'prompt' types and those would display some kind
-of pretty UI for getting the value.  It would also be good to have variables declared as 'optional'
-vs 'mandatory'.  If mandatory then they become 'prompt' type.
-
-A basic go/charm(?) UI for getting strings, booleans, integers, choosing from a list, adding a list,
-etc. would be nice. Being able to trigger that from lua would be double-cool.
-
-
-Consider a makefile that builds a release version (stripped of symbols) with
-```sh
-go build -ldflags "-s -w"
+### Local
+```yaml
+---
+# ~/src/my_homepage/.proj/proj.yml
+kind: "html" # copied from when 'newed'
+template_path: "~/.local/share/proj/html" # only if explicitly set when 'newed'
+variables: # values that were explicitly set when `newd` otherwise we fall back to template/global
+  global: # reserving space for variables.template and variables.definition
+    title: foo
+    fontsize: 12
+    background: "#000000"
 ```
+
+## Commands
+All commands start by reading `~/.config/proj.yml` as `global_config`
+
+### New
+```sh
+proj new html my_homepage --var "title=hello world"
+```
+
+* Do `viper.Set("command", "new")`
+* Do `viper.Set("name", "my_homepage")`
+* Do `viper.Set("definition", "new")`
+
+* Ensure `.proj/proj.yml` does not exist: finding one is a fail.
+  * Set `project_config_path` to `filepath.join(viper.Get("target_path"), ".proj", "proj.yml")` 
+  * Set `project_config` to an empty `map[string]any`
+
+* Do `viper.Set("kind", "html")` so `viper.Get("template_path")` is `~/.local/share/proj/html`
+
+* Read `filepath.join(viper.Get("template_path"), "proj.yml")` as `template_config`
+* Do `viper.Set("target_path, filepath.join(viper.Get("target_root"), name))`
+* Ensure `viper.Get("target_path")` doesn't exist: finding one is a fail.
+
+### Add
+
+```sh
+proj add html about_me --var "title=hello world"
+```
+
+* Do `viper.Set("command", "add")`
+* Do `viper.set("name", "about_me")`
+* Do `viper.set("definition", "html")`
+
+* Ensure `.proj/proj.yml` exists in directory hierarchy: Not finding one is a fail.
+  * Set `viper.Set("project_config_path", project_config_path)`
+* Read `viper.Get("project_config_path")` as `project_config` and
+  * `viper.Set("kind", project_config['kind'])`
+  * `viper.Set("template_root", project_config['template_path'])` if present
+* Read `filepath.Join(viper.Get("template_path"), "proj.yml")` as `template_config`
+* Do `viper.Set("target_path", filepath.Dir(filepath.Dir(Viper.Get("project_config_path"))))`
+
+## Variable resolution
+
+1. `resolved = map[string]any`
+2. for each `variable` in `template_config['definitions.definition.requirements.variables']`
+   `resolved[variable.name]` = `variable.default`
+3. for each `variable` in `global_config['variables.global']`
+   `resolved[variable.name]` = `variable.value`
+4. for each `variable` in `project_config['variables.global'] -> name, value`
+   `resolved[variable.name]` = `variable.value`
+5. parse *argvars* for each `viper.GetStringSlice("set") -> (key, value)`
+   `resolved[variables.key]` = `global_config['key']` (because viper will have set this form the arg)
+
+* variables are set in config files. Nothing special happening here.
+  * I'm choosing not to template eval the whole config file because I don't want programmign to
+  happen both in lua and yaml.  If you need code stuff like setting a default for one thing based on
+  another then do it in lua.
+  * this means I am choosing to run go template resolution on each 'target' in the definition
+  files declaration.
+  * this means variable resolution must happen before any file copying can happen.
+
+* variables are set/changed by lua scripts. I'll write a `proj.exec()` function that lets you run a shell
+  command to do something like load a secret from keychain.
+
+We're going to need to figure out where flags come from in order to handle the 'overriding' that has
+to happen to make this all feel good.
+
+The priority system is:
+
+1. Args. Args always win.
+2. Project config. If this exists then it carries an explicit change from the defaults or info we
+   gathered at one time in the past and don't want to nag for in the future
+3. global config. If set I'm assuming this was intentional to replace any template-level defaults
+4. template config default
+
+In order to make this work I'm going to have to interrogate the `cmd.Flags()` and keep a list of any
+`--set` calls that were made
+
+```go
+cmd.Flags().StringArray("set", []string{}, "set variables with key=value pairs")
+viper.BindPFlag("set", cmd.Flags().Lookup("set"))
+```
+```go
+argvars := viper.GetStringSlice("set") // []string{"Buddy=dog", "Mittens=cat", ...}
+for _, s := range runSet {
+  key, value, found := strings.Cut(s, "=")
+  if !found { continue }
+  viper.Set("variables." + key, value)
+}
+```
+
+### Nested Maps
+This resolution happens only at the top level of the `resolved_variables` map.  if project config
+has default `vars = { animals: { dog: buddy, sport: basketball} }` and global defaults has
+`vars = { animals: { cat: mittens, sport: nil }}` then `animals` will be
+`animals{cat: mittens, sport: nil}` because global vars win and that's the end of it.
+No nested merging on for variables that are maps.
+
+```go
+// figure out where a flag was set
+type FlagSource int
+
+const (
+  FlagSourceDefault FlagSource = iota
+  FlagSourceConfig
+  FlagSourceCLI
+)
+
+func flagSource(cfg *viper.Viper, cmd *cobra.Command, name string) FlagSource {
+  flag := cmd.Flags().Lookup(name)
+  switch {
+    case flag != nil && flag.Changed:
+      return FlagSourceCLI
+    case cfg.InConfig(name):
+      return FlagSourceConfig
+    default:
+      return FlagSourceDefault
+  }
+}
+```
+
+## Execution order
+
+1. config files are read
+  * global_config `~/.config/proj.yml`
+  * project_config `./.proj/proj.yml`
+  * template_config `~/.local/share/proj/kind/proj.yml`
+
+2. resolve variables based on above process
+3. Evaluate "before" scripts:
+    1. global before `global_config.Get("scripts." + viper.Get("action") + "_before")` if present
+    2. template global before `template_config.Get("scripts." + "template_before")` if present
+    3. template definition before `template_config.Get(viper.get("definition") + ".scripts." + "definition_before")` if present
+
+4. for each file in `template_config['definitions.' + viper.Get("definition") '.files']` as file do
+  * `source` = `filepath.Join(viper.Get("template_root"), file['source'])`
+  * `target` = `GO_TEMPLATE_STRING(filepath.Join(viper.Get("target_path"), file['target'])), RESOLVED_VARIABLES)`
+  * `content` = `GO_TEMPLATE_FILE(source, RESOLVED_VARIABLES)`
+  * `file.Write(target, content)`
+
+5. run after scripts
+    7. template definition after `template_config.Get(viper.get("definition") + ".scripts." + "definition_after")` if present
+    8. template global after `template_config.Get("scripts." + "template_after")` if present
+    9. global after `global_config.Get("scripts." + viper.Get("action") + "_after")` if present

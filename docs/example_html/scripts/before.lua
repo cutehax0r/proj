@@ -11,23 +11,6 @@ function dump(t)
     return out .. "}"
 end
 
-print("------------------------")
-print "BEFORE Config:"
-print("------------------------")
-print(dump(VARIABLES))
-print("------------------------")
-
-
-
--- access a variable set globally in ~/.config/proj/config.yml in the 'variables' section:
-print("email: " .. VARIABLES["email"])
-
--- access a project template level variable. They are merged with global ones
-print("baz: " .. VARIABLES["baz"]) -- prints "true" - as a string because all variables are strings (for now)
-
--- change a variable and have it propagate through the system
-VARIALBES["user"] = "User from Lua"
-print("changed user")
-
--- add a new variable - it'll persist to other stages of execution
-VARIABLES["very_cute"] = "sure is"
+proj = require("proj")
+print(dump(proj))
+proj.logDebug("Hello, this is a debug message in before.lua")

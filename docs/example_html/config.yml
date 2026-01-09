@@ -1,63 +1,169 @@
 ---
-variables:
-  foo: "This is a string"
-  bar: 123.45
-  baz: true
-  bing:
-    - "Array"
-    - "of"
-    - "strings"
-  bang:
-    bang_a: "hash"
-    bang_b: "map"
-
-requirements:
-  - For now just a list
-  - only used for information
-  - variables that must be defined
-  - software that must be installed
-
-new:
-  description: "New HTML project"
-  scripts:
-    before: scripts/before.lua
-    after: scripts/after.lua
-  files:
-    - source: src/Dockerfile
-      dest: Dockerfile
-      parse: true
-    - source: src/Makefile
-      dest: Makefile
-      parse: true
-    - source: src/README.md
-      dest: README.md
-      parse: true
-    - source: src/index.html
-      dest: src/index.html
-      parse: true
-    - source: src/favicon.svg
-      dest: src/images/favicon.svg
-      parse: false
-
-add:
-  html:
-    description: "Add new empty HTML file"
+# ~/.local/share/proj/html/proj.yml
+scripts:
+  template_before: scripts/before.lua
+  template_after: scripts/after.lua
+definitions:
+  new:
+    requirements:
+      local: false
+      variables:
+        - name: "title"
+        - name: "has_date"
+        - name: "font_size"
+          default: 14
+        - name: "background"
+          default: "#202020"
     scripts:
-      before: scripts/before.lua
-      after: scripts/after.lua
+      definition_before: scripts/before.lua
+      definition_after: scripts/after.lua
+    files:
+      - source: src/Dockerfile
+        target: Dockerfile
+      - source: src/Makefile
+        target: Makefile
+      - source: src/README.md
+        target: README.md
+      - source: src/index.html
+        target: src/index.html
+      - source: src/favicon.svg
+        target: src/images/favicon.svg
+        parse: false
+
+  html:
+    requirements:
+      local: true
+      variables:
+        - name: "title"
     files:
       - source: src/index.html
-        dest: src/{{.name}}.html
-        parse: true
-  js:
-    description: "Add new javascript file"
-    files:
-      - source: src/javascript.js
-        dest: src/scripts/{{.name}}.js
-        parse: false
+        target: src/{{ .name }}.html
+
   css:
-    description: "add new stylesheet"
+    requirements:
+      local: true
     files:
-      - source: src/stylesheet.css
-        dest: src/styles/{{.name}}.css
+      - source: src/index.css
+        target: src/{{ .name }}.css
         parse: false
+
+  js:
+    requirements:
+      local: true
+    files:
+      - source: src/index.js
+        target: src/{{ .name }}.js
+        parse: false
+
+# ---
+# # This is read & parsed by the go template engine. You will have access to variables defined in
+# # global so that you can use them for setting defaults etc.
+#
+# # Name of the template. Should match directory name.
+# kind: "example_html"
+# # description of the kind of project. Shown in --help or `proj doc` style scenarios
+# description: "Tools for managing a static HTML website - no build steps"
+#
+# # These scripts run before and after anything in the this template happen
+# scripts:
+#   before: scripts/before.lua
+#   after: scripts/after.lua
+#
+# # each of the things you can call with.
+# # `new` will only run iff .proj/config.yml doesn't exist and it uses arg[0] to find which path in
+#   # ~/.local/share/proj to use for template root
+# # `add` will only work iff .proj/config.yml does exist. it reads from there `template_name` to
+# # figure out  what template to use. Maybe it should also include template/path?
+#
+# # if we did that we should have a single "do the work" flow that both can use.
+# definitions:
+#   # The code that controls what runs when you choose to make a 'new' project
+#   new:
+#     description: "A containerized static site running on Nginx: Makefile and first html/css/js included"
+#     requirements:
+#       # abort if a .proj folder exists in the directory stack
+#       dotproj: false
+#       # other kinds of requirements may be supported later (e.g. software installed)
+#       # for now these are variables required to generate the templates/filenames
+#       variables:
+#         # all have:
+#         # - name: the name of the variable in the proj module
+#         # - type: data type of the variable (used for prompting & validation)
+#         # - default (uses explicitly set value, then global variable, then default).
+#         # - options: a list of valid things you can choose from a list instead of freeform
+#         # if value isn't set set but is required then you're prompted for it.
+#         # it is implied that "kind" and "name" are set.
+#         # Templating means things like `default: {{ or (index . "fontsize") 12 }}`  is possible. this
+#         # would make the default value 'fontsize' in the global proj.yml config otherwise 12
+#         - name: "title"
+#           kind: "string"
+#           default: ~
+#         - name: "font_size"
+#           kind: "number"
+#           default: 14
+#         - name: "background"
+#           kind: "string"
+#           options: ["#000000", "#FFFFFF"]
+#         - name: "has_date"
+#           kind: "boolean"
+#           default: ~
+#     # these are run only when creating a new project. After the template level ones
+#     scripts:
+#       before: scripts/before.lua
+#       after: scripts/after.lua
+#     # these are the source/destination files for the new project.
+#     # - source; path to the source file
+#     # - target: where to copy it to (supports templated names}
+#     files:
+#       - source: src/Dockerfile
+#         target: Dockerfile
+#         parse: true
+#       - source: src/Makefile
+#         target: Makefile
+#         parse: true
+#       - source: src/README.md
+#         target: README.md
+#         parse: true
+#       - source: src/index.html
+#         target: src/index.html
+#         parse: true
+#       - source: src/favicon.svg
+#         target: src/images/favicon.svg
+#         parse: false
+#
+#   html:
+#     description: "Add new empty HTML file"
+#     # these are run only when adding a new html file
+#     requirements:
+#       # this item is only available if a .proj is available in the directory stack.
+#       # that was probably used to figure out which template to run with (unless explicitly overriden
+#       # with --template-path) 
+#       dotproj: true
+#       # these are only required for adding a new HTML page
+#       variables:
+#         - name: "title"
+#           kind: "string"
+#           default: ~
+#     scripts:
+#       before: scripts/before.lua
+#       after: scripts/after.lua
+#     files:
+#       - source: src/index.html
+#         target: src/{{.name}}.html
+#         parse: true
+#   js:
+#     requirements:
+#       dotproj: true
+#     description: "Add new javascript file"
+#     files:
+#       - source: src/javascript.js
+#         target: src/scripts/{{.name}}.js
+#         parse: false
+#   css:
+#     requirements:
+#       dotproj: true
+#     description: "add new stylesheet"
+#     files:
+#       - source: src/stylesheet.css
+#         target: src/styles/{{.name}}.css
+#         parse: false

@@ -1,15 +1,21 @@
 ---
 # Example configuration file. By default this should be
-# in ~/.config/proj/config.yml
+# in ~/.config/proj/proj.yml
 
 # This is the path to locate the project templates. See the example template for details of their
-templates_path: ~/.local/share/proj
+# by default XDG_DATA_HOME is used
+templates_root: ~/.local/share/proj
 
-# By default create projects in this path. If not set then $CWD will be used.
-default_path: ~/Documents/src/github.com/cutehax0r
+# By default create projects in this path.
+# By default current working directory is used
+target_root: ~/Documents/src/github.com/cutehax0r
 
-# How noisey should logs be. You probably only want `Error` unless you're debugging
-log_level: Debug
+# How noisy should logs be. Values from 0-3 are allowed, 0 is default
+# 0 = Error
+# 1 = Error + Warning
+# 2 = Error + Warning + Info
+# 3 = Error + Warning + Info + Debug
+log_level: 0
 
 # Specify global before/after scripts. These run for all projects
 scripts:
@@ -21,10 +27,17 @@ scripts:
   add:
     # before: nil # if set this script runs before the project level 'before.lua' when adding files
     # after: nil # if set this script runs after the project level 'after.lua' when adding files
+  new:
+    before: global_new_before.lua
+    after: global_new_after.lua
+  add:
+    before: global_new_before.lua
+    after: global_new_after.lua
 
-# These variables are available inside of lua scripts and templates.
-# Right now, owing to laziness they're passed around as a map[string]string but eventually I'll
-# write a nice recursive 'transformer' to make these go to sane primitive types in lua.
+# These are default values for variables.
+# They will override any template specific defaults
+# You can still provide customized ones with --set FOO=BAR
+# and force prompting by explicitly setting --prompt FOO,BAR,BAZ
 variables:
   email: cutehaxOr@example.com
   user: cute haxor
