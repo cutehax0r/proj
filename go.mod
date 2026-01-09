@@ -3,6 +3,7 @@ module proj
 go 1.25.5
 
 require (
+	github.com/Marlliton/slogpretty v0.1.3
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/yuin/gopher-lua v1.1.1
