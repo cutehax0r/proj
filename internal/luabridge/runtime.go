@@ -1,4 +1,4 @@
-package lua_runtime
+package luabridge
 
 import (
 	"github.com/yuin/gopher-lua"
