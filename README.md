@@ -4,8 +4,10 @@ A tool for setting up new projects or adding files to existing projects
 ## Usage
 
 Commands:
-  * proj new <kind> <name> [OPTIONS]
-  * proj add <kind> <name> [OPTIONS]
+  * proj new <template> <name> [OPTIONS]
+  * proj add <definition> <name> [OPTIONS]
+
+Running 'new' implises the definition `new`
 
 ## Config
 What is the minimal config that can work?
