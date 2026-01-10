@@ -56,4 +56,3 @@ func persistentPreRun(cmd *cobra.Command, args []string) {
 func runRoot(cmd *cobra.Command, args []string) {
 	cmd.Help()
 }
-
