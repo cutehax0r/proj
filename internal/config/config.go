@@ -21,10 +21,17 @@ func InitGlobalConfig(file string) error {
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
-		slog.Error("Unable to load global configuration", "Error", err)
+		slog.Error("Global configuration load failure", "Error", err)
 		return err
 	}
 
+	absolutePath, err := filepath.Abs(viper.ConfigFileUsed())
+	if err != nil {
+		slog.Error("Global configuration file path resolution failed", slog.String("globalConfig", viper.ConfigFileUsed()))
+		return err
+	}
 	slog.Debug("Loaded global configuration", "file", viper.ConfigFileUsed())
+
+	viper.Set("global-config", absolutePath)
 	return nil
 }

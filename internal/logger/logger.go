@@ -29,5 +29,4 @@ func Init(logLevel int) {
 	logHandler := slogpretty.New(os.Stdout, logOpts)
 	slog.SetDefault(slog.New(logHandler))
 	slog.Debug("Setup logging", slog.Int("Log Level", logLevel))
-
 }

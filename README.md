@@ -159,6 +159,9 @@ proj new html my_homepage --var "title=hello world"
 proj add html about_me --var "title=hello world"
 ```
 
+* add won't take a target-root target-path or template root/template path. They are looked up from targetconfigfile
+* add will have to set template name based on what it rad from the project config file
+
 * Do `viper.Set("command", "add")`
 * Do `viper.set("name", "about_me")`
 * Do `viper.set("definition", "html")`
@@ -311,3 +314,13 @@ func flagSource(cfg *viper.Viper, cmd *cobra.Command, name string) FlagSource {
 * makefile that does go build for arm/x86/apple.
 * makefile that can build bundles (brew, arch, deb, rpm, nix)
 * shell completion should be better. use ValidArgsFunc() on cobra.Command to read template root. 
+* add support for --input or something that reads in data from a file (or maybe STDin and exposes it
+  to lua-land and perhaps as a variable. That would allow you to automate filling content of certain
+  files.
+* allow add to support --template-path so that you can 'override' the source of where your templates
+  come from
+
+* document the 'overloading' that happens.
+  * no-write implies log info or log debug
+  * if you set template-path, then template root is 'ignored'
+  * if you set target-path, then target root is ignored

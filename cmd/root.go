@@ -1,6 +1,3 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -33,23 +30,18 @@ func init() {
 	viper.SetConfigName("proj")
 
 	rootCmd.PersistentFlags().BoolP("no-write", "w", false, "Print the plan and don't write anything")
-	viper.BindPFlag("noWrite", rootCmd.PersistentFlags().Lookup("no-write"))
-
 	rootCmd.PersistentFlags().IntP("log-level", "l", 0, "How much to log [0-3], bigger = more")
-	viper.BindPFlag("logLevel", rootCmd.PersistentFlags().Lookup("log-level"))
-
-	rootCmd.PersistentFlags().StringVarP(&globalConfig, "global-config", "c", "", "Use specific global configuration file")
+	rootCmd.PersistentFlags().StringVarP(&globalConfig, "global-config", "g", "", "Use specific global configuration file")
+	viper.BindPFlags(rootCmd.PersistentFlags())
 
 	// TODO: make better defaults
 	viper.SetDefault("requirements", make(map[string]any)) // { variables: array[string] } - get better later
 	viper.SetDefault("variables", make(map[string]any))    // map[string]any
 	viper.SetDefault("scripts", make(map[string]string))   // { before: nil, after: nil)
-
-	viper.BindPFlags(rootCmd.PersistentFlags())
 }
 
 func persistentPreRun(cmd *cobra.Command, args []string) {
-	logger.Init(viper.GetInt("logLevel"))
+	logger.Init(viper.GetInt("log-level"))
 	config.InitGlobalConfig(globalConfig)
 }
 

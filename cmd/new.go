@@ -3,6 +3,7 @@ package cmd
 import (
 	// "errors"
 	"log/slog"
+	"proj/internal/paths"
 	// "os"
 	// "path/filepath"
 
@@ -11,6 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"go.yaml.in/yaml/v3"
 	// "github.com/yuin/gopher-lua"
 )
 
@@ -27,26 +29,50 @@ func init() {
 	rootCmd.AddCommand(newCmd)
 
 	newCmd.Flags().StringP("target-root", "r", ".", "Path to create the project in")
-	viper.BindPFlag("targetRoot", newCmd.Flags().Lookup("target-root"))
+	viper.BindPFlag("target-root", newCmd.Flags().Lookup("target-root"))
 
 	newCmd.Flags().StringP("target-path", "p", "", "Path to write files at")
-	viper.BindPFlag("targetPath", newCmd.Flags().Lookup("target-path"))
+	viper.BindPFlag("target-path", newCmd.Flags().Lookup("target-path"))
 
 	newCmd.Flags().StringP("template-root", "s", ".", "Path containing project templates")
-	viper.BindPFlag("templateRoot", newCmd.Flags().Lookup("template-root"))
+	viper.BindPFlag("template-root", newCmd.Flags().Lookup("template-root"))
 
 	newCmd.Flags().StringP("template-path", "t", "", "Path to read files from")
-	viper.BindPFlag("templatePath", newCmd.Flags().Lookup("template-path"))
+	viper.BindPFlag("template-path", newCmd.Flags().Lookup("template-path"))
 
 	newCmd.Flags().StringArrayP("set-variable", "v", []string{}, "Set a variable using key=value")
-	viper.BindPFlag("setVariables", newCmd.Flags().Lookup("set-variable"))
+	viper.BindPFlag("set-variables", newCmd.Flags().Lookup("set-variable"))
 
 	newCmd.Flags().StringP("definition", "d", "new", "Definition in template to use")
 	viper.BindPFlag("definition", newCmd.Flags().Lookup("definition"))
 }
 
 func runNew(cmd *cobra.Command, args []string) {
-	slog.Debug("Execute New Command", slog.Group("Arguments", slog.String("Template", args[0]), slog.String("Name", args[1])))
+	slog.Debug("Execute New Command", slog.String("Definition", viper.GetString("definition")), slog.Group("Arguments", slog.String("Template Name", args[0]), slog.String("Target Name", args[1])))
+
+	viper.Set("template-name", args[0])
+	viper.Set("target-name", args[1])
+	viper.Set("target-config-file", "") // this should not exist yet if we're running new
+
+	yamlBytes, err := yaml.Marshal(viper.AllSettings())
+	if err != nil {
+		slog.Error("Marshal merged failed", slog.Any("error", err))
+		return
+	}
+
+	slog.Debug("Loaded settings so far", "all settings", string(yamlBytes))
+
+	paths, err := paths.NewPathsFromConfig(viper.AllSettings())
+	if err != nil {
+		slog.Error("Paths just couldn't be built", slog.Any("Error", err))
+	}
+	slog.Debug("Paths", slog.Any("paths", paths))
+
+	// init paths
+
+	// check that path doesn't exist || path is empty || --force
+	// check that if nothing in teh target root heiarchy has a .proj/ in it.
+	// 
 }
 
 // func buildAbsolutePath(source string, base string, ext string) {
