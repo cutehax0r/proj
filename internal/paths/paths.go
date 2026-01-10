@@ -95,6 +95,31 @@ func NewPathsFromConfig(config map[string]any) (*Paths, error) {
 	)
 }
 
+func (p *Paths) DefinitionSourcePath(source string) (string, error) {
+	// for resources in the template's definition's files source section: 
+	return "templatepath+source", nil
+}
+
+func (p *Paths) DefinitionTargetPath(target string, variables map[string]any) (string, error) {
+	// for resources in the template's definition's files target section: 
+	return "targetpath+templateify(target,vars)", nil
+}
+
+func (p *Paths) LogValue() slog.Value {
+	if p == nil {
+		return slog.Value{}
+	}
+	return slog.GroupValue(
+		slog.String("TargetRoot", p.TargetRoot),
+		slog.String("TargetPath", p.TargetPath),
+		slog.String("TargetConfigFile", p.TargetConfigFile),
+		slog.String("TemplateRoot", p.TemplateRoot),
+		slog.String("TemplatePath", p.TemplatePath),
+		slog.String("TemplateConfigFile", p.TemplateConfigFile),
+	)
+}
+
+
 func definedOrDefault(desc string, configVal string, components ...string) string {
 	if configVal != "" {
 		slog.Debug(fmt.Sprintf("Using defined value for %s",  desc), slog.String("Value", configVal))
@@ -106,7 +131,7 @@ func definedOrDefault(desc string, configVal string, components ...string) strin
 
 func resolve(desc string, components ...string) (string, error) {
 	path := filepath.Join(components...)
-	slog.Debug("resolve", "path", path)
+
 	expanded, err := expandPath(path)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Failed to expand %s", desc), slog.String("Path", path), slog.Any("Error", err))
@@ -115,6 +140,7 @@ func resolve(desc string, components ...string) (string, error) {
 	if err != nil {
 		slog.Error(fmt.Sprintf("Failed to resolve %s", desc), slog.String("Path", path), slog.String("Expanded", expanded), slog.Any("Error", err))
 	}
+	slog.Debug(fmt.Sprintf("Resolved %s", desc), slog.Any("Components", components), slog.String("Expanded", expanded), slog.String("Absolute", absPath))
 	return absPath, err
 }
 
@@ -135,26 +161,3 @@ func expandPath(path string) (string, error) {
 	return expanded, nil
 }
 
-func (p *Paths) LogValue() slog.Value {
-	if p == nil {
-		return slog.Value{}
-	}
-	return slog.GroupValue(
-		slog.String("TargetRoot", p.TargetRoot),
-		slog.String("TargetPath", p.TargetPath),
-		slog.String("TargetConfigFile", p.TargetConfigFile),
-		slog.String("TemplateRoot", p.TemplateRoot),
-		slog.String("TemplatePath", p.TemplatePath),
-		slog.String("TemplateConfigFile", p.TemplateConfigFile),
-	)
-}
-
-func (p *Paths) DefinitionSourcePath(source string) (string, error) {
-	// for resources in the template's definition's files source section: 
-	return "eh", nil
-}
-
-func (p *Paths) DefinitionTargetPath(target string, variables map[string]any) (string, error) {
-	// for resources in the template's definition's files target section: 
-	return "eh", nil
-}
