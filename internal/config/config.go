@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func InitGlobalConfig(file string) error {
+func InitGlobal(file string) error {
 	if file != "" {
 		viper.SetConfigFile(file)
 	} else {
@@ -32,6 +32,6 @@ func InitGlobalConfig(file string) error {
 	}
 	slog.Debug("Loaded global configuration", "file", viper.ConfigFileUsed())
 
-	viper.Set("global-config", absolutePath)
+	viper.Set("global-config-file", absolutePath)
 	return nil
 }

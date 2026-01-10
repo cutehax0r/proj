@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var globalConfig string
+var globalConfigFile string
 
 var rootCmd = &cobra.Command{
 	Use:              "proj",
@@ -31,7 +31,7 @@ func init() {
 
 	rootCmd.PersistentFlags().BoolP("no-write", "w", false, "Print the plan and don't write anything")
 	rootCmd.PersistentFlags().IntP("log-level", "l", 0, "How much to log [0-3], bigger = more")
-	rootCmd.PersistentFlags().StringVarP(&globalConfig, "global-config", "g", "", "Use specific global configuration file")
+	rootCmd.PersistentFlags().StringVarP(&globalConfigFile, "global-config-file", "g", "", "Use specific global configuration file")
 	viper.BindPFlags(rootCmd.PersistentFlags())
 
 	// TODO: make better defaults
@@ -42,7 +42,7 @@ func init() {
 
 func persistentPreRun(cmd *cobra.Command, args []string) {
 	logger.Init(viper.GetInt("log-level"))
-	config.InitGlobalConfig(globalConfig)
+	config.InitGlobal(globalConfigFile)
 }
 
 func runRoot(cmd *cobra.Command, args []string) {

@@ -3,7 +3,9 @@ package paths
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"path/filepath"
+	"strings"
 )
 
 const configFileName = "proj.yml"
@@ -17,9 +19,10 @@ type Paths struct {
 	TemplateRoot string
 	TemplatePath string
 	TemplateConfigFile string
+	GlobalConfigFile string
 }
 
-func NewPaths(targetRoot string, targetPath string, templateRoot string, templatePath string, targetConfigFile string) (*Paths, error) {
+func NewPaths(targetRoot string, targetPath string, templateRoot string, templatePath string, targetConfigFile string, globalConfigFile string) (*Paths, error) {
 	resolvedTargetRoot, err := resolve("target root", targetRoot)
 	if err != nil {
 		return nil, err
@@ -50,6 +53,11 @@ func NewPaths(targetRoot string, targetPath string, templateRoot string, templat
 		return nil, err
 	}
 
+	resolvedGlobalConfigFile, err := resolve("Global configuration file", globalConfigFile)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Paths {
 		TargetRoot: resolvedTargetRoot,
 		TargetPath: resolvedTargetPath,
@@ -57,6 +65,7 @@ func NewPaths(targetRoot string, targetPath string, templateRoot string, templat
 		TemplateRoot: resolvedTemplateRoot,
 		TemplatePath: resolvedTemplatePath,
 		TemplateConfigFile: resolvedTemplateConfigFile,
+		GlobalConfigFile: resolvedGlobalConfigFile,
 	}, nil
 }
 
@@ -82,25 +91,48 @@ func NewPathsFromConfig(config map[string]any) (*Paths, error) {
 		config["template-root"].(string),
 		templatePath,
 		targetConfigFile,
+		config["global-config-file"].(string),
 	)
 }
 
 func definedOrDefault(desc string, configVal string, components ...string) string {
 	if configVal != "" {
-		slog.Debug("Using defined value", slog.String("Description", desc), slog.String("Value", configVal))
+		slog.Debug(fmt.Sprintf("Using defined value for %s",  desc), slog.String("Value", configVal))
 		return configVal
 	}
-	slog.Debug("Value not provided, constructing it", slog.String("Description", desc), slog.Any("Componets", components))
+	slog.Debug(fmt.Sprintf("Value not provided, constructing %s", desc), slog.Any("Componets", components))
 	return filepath.Join(components...)
 }
 
 func resolve(desc string, components ...string) (string, error) {
 	path := filepath.Join(components...)
-	absPath, err := filepath.Abs(path)
+	slog.Debug("resolve", "path", path)
+	expanded, err := expandPath(path)
 	if err != nil {
-		slog.Error(fmt.Sprintf("Failed to resolve %s", desc), slog.String("Path", path), slog.Any("Error", err))
+		slog.Error(fmt.Sprintf("Failed to expand %s", desc), slog.String("Path", path), slog.Any("Error", err))
+	}
+	absPath, err := filepath.Abs(expanded)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Failed to resolve %s", desc), slog.String("Path", path), slog.String("Expanded", expanded), slog.Any("Error", err))
 	}
 	return absPath, err
+}
+
+func expandPath(path string) (string, error) {
+	expanded := os.ExpandEnv(path)
+	if strings.HasPrefix(expanded, "~") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		if expanded == "~" {
+			return home, nil
+		}
+		if strings.HasPrefix(expanded, "~/") {
+			expanded = filepath.Join(home, expanded[2:])
+		}
+	}
+	return expanded, nil
 }
 
 func (p *Paths) LogValue() slog.Value {
