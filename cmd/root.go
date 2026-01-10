@@ -4,10 +4,10 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"log/slog"
 	"os"
+	"proj/internal/config"
+	"proj/internal/logger"
 
-	"github.com/Marlliton/slogpretty"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -49,34 +49,11 @@ func init() {
 }
 
 func persistentPreRun(cmd *cobra.Command, args []string) {
-	initLogger(viper.GetInt("logLevel"))
+	logger.Init(viper.GetInt("logLevel"))
+	config.InitGlobalConfig(globalConfig)
 }
 
 func runRoot(cmd *cobra.Command, args []string) {
 	cmd.Help()
 }
 
-func initLogger(logLevel int) {
-	levels := []slog.Level{
-		slog.LevelError,
-		slog.LevelWarn,
-		slog.LevelInfo,
-		slog.LevelDebug,
-	}
-	level := slog.LevelDebug
-	if logLevel >= 0 && logLevel < len(levels) {
-		level = levels[logLevel]
-	} 
-
-	logOpts := &slogpretty.Options{
-		Level:      level,
-		AddSource:  true,
-		Colorful:   true,
-		Multiline:  true,
-		TimeFormat: "15:04:05",
-	}
-	logHandler := slogpretty.New(os.Stdout, logOpts)
-	slog.SetDefault(slog.New(logHandler))
-	slog.Debug("Setup logging", slog.Int("Log Level", logLevel))
-
-}

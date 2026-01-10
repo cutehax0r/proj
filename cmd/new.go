@@ -1,16 +1,17 @@
 package cmd
 
 import (
-	"errors"
+	// "errors"
 	"log/slog"
-	"os"
-	"path/filepath"
+	// "os"
+	// "path/filepath"
 
-	"proj/internal/lua_runtime"
+	// "proj/internal/config"
+	// "proj/internal/luabridge"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/yuin/gopher-lua"
+	// "github.com/yuin/gopher-lua"
 )
 
 // newCmd represents the new command
@@ -42,252 +43,81 @@ func init() {
 	newCmd.Flags().String("template-path", "", "Path to read files from")
 	viper.BindPFlag("template_path", newCmd.Flags().Lookup("template-path"))
 
-	// TOOD: we should also allow some kind of repeatable --variable FOO=bar flag
-}
-
-func buildAbsolutePath(source string, base string, ext string) {
-	value := viper.GetString(source)
-	if value != "" {
-		path, err := filepath.Abs(value)
-		if err != nil {
-			slog.Error("Failed to absolute-ize path", "value", value, "error", err)
-		}
-		slog.Debug("key provided", "source", source, "value", viper.GetString(source), "path", path)
-		viper.Set(source, path)
-	} else {
-		slog.Debug("BUILDING", "base", base, "val", viper.GetString(base))
-		path, err := filepath.Abs(filepath.Join(viper.GetString(base), ext))
-		if err != nil {
-			slog.Error("failed to absolute-ize path", "source", source, "value", viper.GetString(source), "ext", ext)
-		}
-		viper.Set(source, path)
-		slog.Debug("path not set, using default", "path", path)
-	}
-	slog.Debug("Added path", source, viper.GetString(source))
-}
-
-// TODO: maybe this should take a config to merge in with?
-func loadTemplateConfig(template_path string) (*viper.Viper, error) {
-	template_config := viper.New()
-	template_config.SetConfigName("config")
-	template_config.AddConfigPath(template_path)
-	if err := template_config.ReadInConfig(); err != nil {
-		slog.Error("Error reading template config", "template_path", template_path, "file", template_config.ConfigFileUsed(), "error", err)
-		return nil, err
-	}
-	slog.Debug("Read project config", "file", template_config.ConfigFileUsed(), "settings", template_config.AllSettings())
-	return template_config, nil
+	newCmd.Flags().StringArray("set", []string{}, "Set a variable using key=value")
+	viper.BindPFlag("set", newCmd.Flags().Lookup("set"))
 }
 
 func runNew(cmd *cobra.Command, args []string) {
-	slog.Debug("New called", "args", args)
-
-	viper.Set("kind", args[0])
-	buildAbsolutePath("template_root", "template_root", "")
-	buildAbsolutePath("template_path", "template_root", args[0])
-
-	viper.Set("name", args[1])
-	buildAbsolutePath("target_root", "target_root", "")
-	buildAbsolutePath("target_path", "target_root", args[1])
-
-	slog.Debug("loading template config")
-	template_config, err := loadTemplateConfig(viper.GetString("template_path"))
-	if err != nil {
-		os.Exit(1)
-	}
-	if err := template_config.MergeConfigMap(viper.AllSettings()); err != nil {
-		slog.Debug("Failed to merge global config with project config", "error", err)
-		os.Exit(1)
-	}
-
-
-	// TODO:
-	// run before scripts
-	// resolve variables
-	// check if target is okay (bail unless --force if it exists)
-	// do the copy / template dance
-	// run after scripts
-
-	// quick hack -- should be target-root, then target-path
-	lua_path := filepath.Join(viper.GetString("target_root"), "test.lua")
-
-	script_runner := lua_runtime.NewRuntime(template_config.AllSettings(), lua_path)
-	defer script_runner.CloseState()
-	script_runner.Run()
+	slog.Info("Hello from new")
 }
 
-// TODO: DELETE THIS DISASTER
-// responsible for building the new project
-func oldnewProject(cmd *cobra.Command, args []string) {
-	kind := args[0]
-	name := args[1]
-	slog.Debug("New called", "kind", kind, "name", name)
+// func buildAbsolutePath(source string, base string, ext string) {
+// 	value := viper.GetString(source)
+// 	if value != "" {
+// 		path, err := filepath.Abs(value)
+// 		if err != nil {
+// 			slog.Error("Failed to absolute-ize path", "value", value, "error", err)
+// 		}
+// 		slog.Debug("key provided", "source", source, "value", viper.GetString(source), "path", path)
+// 		viper.Set(source, path)
+// 	} else {
+// 		slog.Debug("BUILDING", "base", base, "val", viper.GetString(base))
+// 		path, err := filepath.Abs(filepath.Join(viper.GetString(base), ext))
+// 		if err != nil {
+// 			slog.Error("failed to absolute-ize path", "source", source, "value", viper.GetString(source), "ext", ext)
+// 		}
+// 		viper.Set(source, path)
+// 		slog.Debug("path not set, using default", "path", path)
+// 	}
+// 	slog.Debug("Added path", source, viper.GetString(source))
+// }
+//
+// // TODO: maybe this should take a config to merge in with?
+// func loadTemplateConfig(template_path string) (*viper.Viper, error) {
+// 	template_config := viper.New()
+// 	template_config.SetConfigName("config")
+// 	template_config.AddConfigPath(template_path)
+// 	if err := template_config.ReadInConfig(); err != nil {
+// 		slog.Error("Error reading template config", "template_path", template_path, "file", template_config.ConfigFileUsed(), "error", err)
+// 		return nil, err
+// 	}
+// 	slog.Debug("Read project config", "file", template_config.ConfigFileUsed(), "settings", template_config.AllSettings())
+// 	return template_config, nil
+// }
 
-	// generally it's better to just try and then crash with errors but I'm learning about how
-	// file management works in go so I'm being a bit cautious. This means I'm risking a race
-	// where the time between check & use allows things to change. I'll eat that for now and
-	// refactor later.
-	home, err := os.UserHomeDir()
-	if err != nil {
-		slog.Error("Couldn't get home directory", "home", home)
-		os.Exit(1)
-	}
-
-	src := filepath.Join(home, ".local", "share", "proj", kind)
-	slog.Debug("Set compute src path", "src", src, "home", home)
-	_, err = os.Stat(src)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			slog.Error("Template definition not found at expected path", "kind", kind, "src", src)
-		} else {
-			slog.Error("Template definition couldn't be read", "kind", kind, "src", src)
-		}
-		os.Exit(1)
-	}
-
-	slog.Debug("Parsing template config", "src", src)
-
-	// check that config.yml exists
-	proj_viper := viper.New()
-	proj_viper.SetConfigName("config")
-	proj_viper.AddConfigPath(src)
-	if err := proj_viper.ReadInConfig(); err != nil {
-		slog.Error("Project template config read error", "path", proj_viper.ConfigFileUsed(), "error", err)
-		os.Exit(1)
-	}
-	slog.Debug("Read project config", "keys", viper.AllSettings())
-	if err := proj_viper.MergeConfigMap(viper.AllSettings()); err != nil {
-		slog.Debug("Failed to merge global config with project config", "error", err)
-		os.Exit(1)
-	}
-
-	// check destination
-	dest, err := os.Getwd()
-	if err != nil {
-		slog.Error("Couldn't get working directory")
-		os.Exit(1)
-	}
-
-	// check working dir to see if we can mess with it
-	info, err := os.Stat(dest)
-	if err != nil {
-		slog.Error("Couldn't read working directory", "dest", dest)
-		os.Exit(1)
-	} else {
-		if info.Mode()&0200 == 0 {
-			slog.Error("No permission to write to working directory", "dest", dest)
-			os.Exit(1)
-		}
-	}
-
-	// then ensure our new target dir is okay
-	dest = filepath.Join(dest, name)
-	slog.Debug("Set dest path", "dest", dest)
-	_, err = os.Stat(dest)
-	if err == nil {
-		slog.Error("Destination path already exists", "dest", dest)
-		os.Exit(1)
-	} else {
-		if errors.Is(err, os.ErrNotExist) {
-			slog.Debug("Destination path doesn't exist, all good", "dest", dest)
-		} else {
-			slog.Error("Error checking for destination", "dest", "dest")
-			os.Exit(1)
-		}
-	}
-
-	// that's a lot of os.exits but if you get here we should be able to start the real work
-	config_vars := proj_viper.GetStringMapString("variables")
-	slog.Debug("building variables", "variables", config_vars)
-
-	// run "before" script -- should we have separate environments for each script?
-	before := filepath.Join(src, "scripts", "before.lua")
-	slog.Debug("Attempt to run 'before.lua' script", "path", before)
-	info, err = os.Stat(before)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			slog.Debug("No before script defined, skipping", "path", before)
-		} else {
-			slog.Error("Error accessing before script, aborting", "path", before)
-			os.Exit(1)
-		}
-	} else {
-		slog.Info("Running before script", "path", before)
-		L := lua.NewState()
-		defer L.Close()
-		L.OpenLibs()
-
-		// this needs to get more clever and recursively transform types
-		variables := L.NewTable()
-		for k, v := range config_vars {
-			variables.RawSetString(k, lua.LString(v))
-		}
-		// also expose source, target, log level kind, and name
-		L.SetGlobal("VARIABLES", variables)
-
-		err = L.DoFile(before)
-		if err != nil {
-			slog.Error("Lua error in before script", "path", before, "error", err)
-			os.Exit(1)
-		}
-		// We should copy back the changed variables to Go here.
-		raw_lua_variables := L.GetGlobal("VARIABLES")
-		lua_variables, ok := raw_lua_variables.(*lua.LTable)
-		if !ok {
-			slog.Error("Lua screwed up the variables")
-		}
-		go_variables := make(map[string]string)
-		lua_variables.ForEach(func(k, v lua.LValue) {
-			go_variables[k.String()] = v.String()
-		})
-		config_vars = go_variables
-
-	}
-
-	slog.Info("Creating target directory", "dest", dest)
-	// really need a 'dry run' flag
-	err = os.MkdirAll(dest, 0777) // umask will make this more restrictive
-	if err != nil {
-		slog.Error("Failed to create destination", "dest", dest)
-		os.Exit(1)
-	}
-
-	slog.Info("Copy each file to destination")
-
-	slog.Info("Run 'after' lua script")
-
-	// run "after" script - should this just be a do_script using the before env?
-	after := filepath.Join(src, "scripts", "after.lua")
-	slog.Debug("Attempt to run 'after.lua' script", "path", after)
-	info, err = os.Stat(after)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			slog.Debug("No after script defined, skipping", "path", after)
-		} else {
-			slog.Error("Error accessing after script, aborting", "path", after, "error", err)
-			os.Exit(1)
-		}
-	} else {
-		slog.Info("Running after script", "path", after)
-		L := lua.NewState()
-		defer L.Close()
-		L.OpenLibs()
-
-		// this needs to get more clever and recursively transform types
-		variables := L.NewTable()
-		for k, v := range config_vars { // note this was modified by before
-			variables.RawSetString(k, lua.LString(v))
-		}
-		// also expose source, target, log level kind, and name
-		L.SetGlobal("VARIABLES", variables)
-
-		err = L.DoFile(after)
-		if err != nil {
-			slog.Error("Lua error in after script", "path", after, "error", err)
-			os.Exit(1)
-		}
-		// we should copy stuff back here so that it's available for 'global' scripts even
-		// though this currently is the last step in the chain.
-	}
-
-}
+// func runNew(cmd *cobra.Command, args []string) {
+// 	slog.Debug("New called", "args", args)
+//
+// 	viper.Set("kind", args[0])
+// 	buildAbsolutePath("template_root", "template_root", "")
+// 	buildAbsolutePath("template_path", "template_root", args[0])
+//
+// 	viper.Set("name", args[1])
+// 	buildAbsolutePath("target_root", "target_root", "")
+// 	buildAbsolutePath("target_path", "target_root", args[1])
+//
+// 	slog.Debug("loading template config")
+// 	template_config, err := loadTemplateConfig(viper.GetString("template_path"))
+// 	if err != nil {
+// 		os.Exit(1)
+// 	}
+// 	if err := template_config.MergeConfigMap(viper.AllSettings()); err != nil {
+// 		slog.Debug("Failed to merge global config with project config", "error", err)
+// 		os.Exit(1)
+// 	}
+//
+//
+// 	// TODO:
+// 	// run before scripts
+// 	// resolve variables
+// 	// check if target is okay (bail unless --force if it exists)
+// 	// do the copy / template dance
+// 	// run after scripts
+//
+// 	// quick hack -- should be target-root, then target-path
+// 	lua_path := filepath.Join(viper.GetString("target_root"), "test.lua")
+//
+// 	script_runner := luabridge.NewRuntime(template_config.AllSettings(), lua_path)
+// 	defer script_runner.CloseState()
+// 	script_runner.Run()
+// }
