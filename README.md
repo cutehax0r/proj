@@ -310,4 +310,4 @@ func flagSource(cfg *viper.Viper, cmd *cobra.Command, name string) FlagSource {
 * add --version that dumps a version
 * makefile that does go build for arm/x86/apple.
 * makefile that can build bundles (brew, arch, deb, rpm, nix)
-* 
+* shell completion should be better. use ValidArgsFunc() on cobra.Command to read template root. 
