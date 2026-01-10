@@ -32,8 +32,8 @@ func Execute() {
 func init() {
 	viper.SetConfigName("proj")
 
-	rootCmd.PersistentFlags().BoolP("dry-run", "n", false, "Print the plan, don't write anything")
-	viper.BindPFlag("dryRun", rootCmd.PersistentFlags().Lookup("dry-run"))
+	rootCmd.PersistentFlags().BoolP("no-write", "w", false, "Print the plan and don't write anything")
+	viper.BindPFlag("noWrite", rootCmd.PersistentFlags().Lookup("no-write"))
 
 	rootCmd.PersistentFlags().IntP("log-level", "l", 0, "How much to log [0-3], bigger = more")
 	viper.BindPFlag("logLevel", rootCmd.PersistentFlags().Lookup("log-level"))

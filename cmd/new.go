@@ -19,36 +19,34 @@ var newCmd = &cobra.Command{
 	Use:   "new <kind> <name>",
 	Args:  cobra.ExactArgs(2),
 	Short: "Create a project called NAME based on the KIND template",
-	Long: `Create a new project based on a project template in the current directory.
-
-Uses the project template, name, and standard variables from config to create a new project ready to
-work on. Projects typically include skeleton files as well as shell scripts to pre-configure things
-like packaging, remote repositories, database creation, etc.
-`,
+	Long: `Create a new project based on a project template in the current directory.`,
 	Run: runNew,
 }
 
 func init() {
 	rootCmd.AddCommand(newCmd)
 
-	newCmd.Flags().String("target-root", ".", "Path to create the project in")
-	viper.BindPFlag("target_root", newCmd.Flags().Lookup("target-root"))
+	newCmd.Flags().StringP("target-root", "r", ".", "Path to create the project in")
+	viper.BindPFlag("targetRoot", newCmd.Flags().Lookup("target-root"))
 
-	newCmd.Flags().String("target-path", "", "Path to write files at")
-	viper.BindPFlag("target_path", newCmd.Flags().Lookup("target-path"))
+	newCmd.Flags().StringP("target-path", "p", "", "Path to write files at")
+	viper.BindPFlag("targetPath", newCmd.Flags().Lookup("target-path"))
 
-	newCmd.Flags().String("template-root", ".", "Path containing project templates")
-	viper.BindPFlag("template_root", newCmd.Flags().Lookup("template-root"))
+	newCmd.Flags().StringP("template-root", "s", ".", "Path containing project templates")
+	viper.BindPFlag("templateRoot", newCmd.Flags().Lookup("template-root"))
 
-	newCmd.Flags().String("template-path", "", "Path to read files from")
-	viper.BindPFlag("template_path", newCmd.Flags().Lookup("template-path"))
+	newCmd.Flags().StringP("template-path", "t", "", "Path to read files from")
+	viper.BindPFlag("templatePath", newCmd.Flags().Lookup("template-path"))
 
-	newCmd.Flags().StringArray("set", []string{}, "Set a variable using key=value")
-	viper.BindPFlag("set", newCmd.Flags().Lookup("set"))
+	newCmd.Flags().StringArrayP("set-variable", "v", []string{}, "Set a variable using key=value")
+	viper.BindPFlag("setVariables", newCmd.Flags().Lookup("set-variable"))
+
+	newCmd.Flags().StringP("definition", "d", "new", "Definition in template to use")
+	viper.BindPFlag("definition", newCmd.Flags().Lookup("definition"))
 }
 
 func runNew(cmd *cobra.Command, args []string) {
-	slog.Info("Hello from new")
+	slog.Debug("Execute New Command", slog.Group("Arguments", slog.String("Template", args[0]), slog.String("Name", args[1])))
 }
 
 // func buildAbsolutePath(source string, base string, ext string) {
