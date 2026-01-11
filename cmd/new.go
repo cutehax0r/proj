@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"log/slog"
+	"os"
 	"proj/internal/config"
 	"proj/internal/paths"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -48,24 +50,50 @@ func runNew(cmd *cobra.Command, args []string) {
 	viper.Set("target-name", args[1])
 	viper.Set("target-config-file", "") // this should not exist yet if we're running new
 
-	dumpViper("Global config loaded", viper.AllSettings())
+	logViperDebug("Global config loaded", viper.AllSettings())
 
 	paths, err := paths.NewPathsFromConfig(viper.AllSettings())
 	if err != nil {
-		slog.Error("Couldn't build paths", slog.Any("Error", err))
+		os.Exit(1)
 	}
 	slog.Debug("Paths", slog.Any("paths", paths))
 
-	config.InitTemplate(paths.TemplateConfigFile)
-	dumpViper("template config loaded", viper.AllSettings())
+	if err = config.InitTemplate(paths.TemplateConfigFile); err != nil {
+		os.Exit(1)
+	}
+	logViperDebug("template config loaded", viper.AllSettings())
 
-	slog.Info("Running new - checking paths")
-	// check that path doesn't exist || path is empty
-	// check that if nothing in teh target root heiarchy has a .proj/ in it.
+	if _, err := os.Stat(paths.TargetPath); err == nil {
+		slog.Error("Target path exists", slog.String("path", paths.TargetPath))
+		os.Exit(1)
+	}
+
+	// now we have to extract the definition from the template
+	// * build files
+	// * build scripts
+	// * build variables
+	dfnPath := strings.Join([]string{"definitions", viper.GetString("definition"), "requirements", "variables"}, ".")
+	dfnVars := viper.Get(dfnPath)
+	slog.Info("Definition", slog.String("path", dfnPath), slog.Any("variables", dfnVars))
+
+	// setup script execution environment
+	// run each before script (updating vars between each one?)
+	// check requirements
+	// copy files 
+	// run each after script
+	
+
+
+	// if err = config.InitTarget(paths.TargetConfigFile); err == nil {
+	// 	os.Exit(1)
+	// }
+	// logViperDebug("target config loaded", viper.AllSettings())
+
 }
 
-func dumpViper(desc string, settings map[string]any) {
-	yamlBytes, err := yaml.Marshal(viper.AllSettings())
+
+func logViperDebug(desc string, settings map[string]any) {
+	yamlBytes, err := yaml.Marshal(settings)
 	if err != nil {
 		slog.Error("Marshal merged failed", slog.Any("error", err))
 		return

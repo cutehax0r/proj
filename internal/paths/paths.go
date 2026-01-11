@@ -9,7 +9,6 @@ import (
 type Paths struct {
 	TargetRoot string
 	TargetPath string
-	TargetConfigDir string
 	TargetConfigFile string
 	TemplateRoot string
 	TemplatePath string
@@ -77,7 +76,7 @@ func NewPathsFromConfig(config map[string]any) (*Paths, error) {
 		targetPath = filepath.Dir(targetConfigFile)
 	} else {
 		targetPath = definedOrDefault("Target path", targetPath, config["target-root"].(string), config["target-name"].(string))
-		targetConfigFile = definedOrDefault("Target configuration file", "", targetPath, TargetConfigFileDir, targetConfigFile)
+		targetConfigFile = definedOrDefault("Target configuration file", "", targetPath, TargetConfigFileDir, TargetConfigFile)
 	}
 
 	return NewPaths(
