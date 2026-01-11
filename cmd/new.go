@@ -48,61 +48,32 @@ func runNew(cmd *cobra.Command, args []string) {
 	viper.Set("target-name", args[1])
 	viper.Set("target-config-file", "") // this should not exist yet if we're running new
 
-	// this is temporary
-	yamlBytes, err := yaml.Marshal(viper.AllSettings())
-	if err != nil {
-		slog.Error("Marshal merged failed", slog.Any("error", err))
-		return
-	}
-	slog.Debug("Loaded settings so far", "all settings", string(yamlBytes))
+	dumpViper("Global config loaded", viper.AllSettings())
 
 	paths, err := paths.NewPathsFromConfig(viper.AllSettings())
 	if err != nil {
 		slog.Error("Couldn't build paths", slog.Any("Error", err))
 	}
 	slog.Debug("Paths", slog.Any("paths", paths))
+
 	config.InitTemplate(paths.TemplateConfigFile)
+	dumpViper("template config loaded", viper.AllSettings())
 
-	yamlBytes, err = yaml.Marshal(viper.AllSettings())
-	if err != nil {
-		slog.Error("Marshal merged failed", slog.Any("error", err))
-		return
-	}
-	slog.Debug("Loaded settings from template", "all settings", string(yamlBytes))
-
+	slog.Info("Running new - checking paths")
 	// check that path doesn't exist || path is empty
 	// check that if nothing in teh target root heiarchy has a .proj/ in it.
 }
 
+func dumpViper(desc string, settings map[string]any) {
+	yamlBytes, err := yaml.Marshal(viper.AllSettings())
+	if err != nil {
+		slog.Error("Marshal merged failed", slog.Any("error", err))
+		return
+	}
+	slog.Debug(desc, "all settings", string(yamlBytes))
+}
+
 // func runNew(cmd *cobra.Command, args []string) {
-// 	slog.Debug("New called", "args", args)
-//
-// 	viper.Set("kind", args[0])
-// 	buildAbsolutePath("template_root", "template_root", "")
-// 	buildAbsolutePath("template_path", "template_root", args[0])
-//
-// 	viper.Set("name", args[1])
-// 	buildAbsolutePath("target_root", "target_root", "")
-// 	buildAbsolutePath("target_path", "target_root", args[1])
-//
-// 	slog.Debug("loading template config")
-// 	template_config, err := loadTemplateConfig(viper.GetString("template_path"))
-// 	if err != nil {
-// 		os.Exit(1)
-// 	}
-// 	if err := template_config.MergeConfigMap(viper.AllSettings()); err != nil {
-// 		slog.Debug("Failed to merge global config with project config", "error", err)
-// 		os.Exit(1)
-// 	}
-//
-//
-// 	// TODO:
-// 	// run before scripts
-// 	// resolve variables
-// 	// check if target is okay (bail unless --force if it exists)
-// 	// do the copy / template dance
-// 	// run after scripts
-//
 // 	// quick hack -- should be target-root, then target-path
 // 	lua_path := filepath.Join(viper.GetString("target_root"), "test.lua")
 //
