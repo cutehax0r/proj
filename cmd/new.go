@@ -28,7 +28,6 @@ func init() {
 	newCmd.Flags().StringP("target-path", "p", "", "Path to write files at")
 	viper.BindPFlag("target-path", newCmd.Flags().Lookup("target-path"))
 
-	// should be $xdg_data_home/proj for default
 	newCmd.Flags().StringP("template-root", "s", paths.TemplateRootDir(), "Path containing project templates")
 	viper.BindPFlag("template-root", newCmd.Flags().Lookup("template-root"))
 
