@@ -13,6 +13,8 @@ import (
 	// "github.com/yuin/gopher-lua"
 )
 
+
+
 var newCmd = &cobra.Command{
 	Use:   "new <kind> <name>",
 	Args:  cobra.ExactArgs(2),
@@ -68,13 +70,28 @@ func runNew(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	// now we have to extract the definition from the template
-	// * build files
-	// * build scripts
-	// * build variables
-	dfnPath := strings.Join([]string{"definitions", viper.GetString("definition"), "requirements", "variables"}, ".")
-	dfnVars := viper.Get(dfnPath)
-	slog.Info("Definition", slog.String("path", dfnPath), slog.Any("variables", dfnVars))
+	defPath := strings.Join([]string{"definitions", viper.GetString("definition")}, ".")
+	if viper.IsSet(defPath) == false {
+		slog.Error("Definition does not exist in template",
+			slog.String("path", defPath),
+			slog.String("definition", viper.GetString("definition")),
+			slog.String("template name", viper.GetString("template-name")),
+			slog.String("template config file", viper.GetString("template-config-file")),
+		)
+	}
+	def := viper.GetStringMap(defPath)
+
+	defScripts := def["scripts"]
+	slog.Debug("scripts", slog.Any("scripts", defScripts))
+
+	defVars := def["files"]
+	slog.Debug("vars", slog.Any("vars", defVars))
+
+	defFiles := def["files"]
+	slog.Debug("files", slog.Any("files", defFiles))
+
+	// use the path checker to ensure that .proj doesn't exist in the dir hierarchy if 'local' =
+	// true
 
 	// setup script execution environment
 	// run each before script (updating vars between each one?)
@@ -90,7 +107,6 @@ func runNew(cmd *cobra.Command, args []string) {
 	// logViperDebug("target config loaded", viper.AllSettings())
 
 }
-
 
 func logViperDebug(desc string, settings map[string]any) {
 	yamlBytes, err := yaml.Marshal(settings)

@@ -322,3 +322,6 @@ func flagSource(cfg *viper.Viper, cmd *cobra.Command, name string) FlagSource {
   * no-write implies log info or log debug
   * if you set template-path, then template root is 'ignored'
   * if you set target-path, then target root is ignored
+
+* Bolt on context when returning errors  func foo() (int, error) { x, err := givesErr(); err != nil
+  { return fmt.Errorf("addcontext %w", err) } }
