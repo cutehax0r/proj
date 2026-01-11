@@ -3,7 +3,9 @@ package cmd
 import (
 	// "errors"
 	"log/slog"
+	"os"
 	"proj/internal/paths"
+
 	// "os"
 	// "path/filepath"
 
@@ -34,6 +36,7 @@ func init() {
 	newCmd.Flags().StringP("target-path", "p", "", "Path to write files at")
 	viper.BindPFlag("target-path", newCmd.Flags().Lookup("target-path"))
 
+	// should be $xdg_data_home/proj for default
 	newCmd.Flags().StringP("template-root", "s", ".", "Path containing project templates")
 	viper.BindPFlag("template-root", newCmd.Flags().Lookup("template-root"))
 
@@ -67,6 +70,9 @@ func runNew(cmd *cobra.Command, args []string) {
 		slog.Error("Paths just couldn't be built", slog.Any("Error", err))
 	}
 	slog.Debug("Paths", slog.Any("paths", paths))
+	home, _ := os.UserHomeDir()
+	conf, _ := os.UserConfigDir()
+	slog.Info("Go dirs", "home", home, "conf", conf, "xxx", "xxx")
 
 	// init paths
 

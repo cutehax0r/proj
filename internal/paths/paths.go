@@ -3,13 +3,8 @@ package paths
 import (
 	"fmt"
 	"log/slog"
-	"os"
 	"path/filepath"
-	"strings"
 )
-
-const configFileName = "proj.yml"
-const configFileFolder = ".proj"
 
 type Paths struct {
 	TargetRoot string
@@ -48,7 +43,7 @@ func NewPaths(targetRoot string, targetPath string, templateRoot string, templat
 		return nil, err
 	}
 
-	resolvedTemplateConfigFile, err := resolve("Template configuration file", templatePath, configFileName)
+	resolvedTemplateConfigFile, err := resolve("Template configuration file", templatePath, TemplateConfigFile)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +77,7 @@ func NewPathsFromConfig(config map[string]any) (*Paths, error) {
 		targetPath = filepath.Dir(targetConfigFile)
 	} else {
 		targetPath = definedOrDefault("Target path", targetPath, config["target-root"].(string), config["target-name"].(string))
-		targetConfigFile = definedOrDefault("Target configuration file", "", targetPath, configFileFolder, configFileName)
+		targetConfigFile = definedOrDefault("Target configuration file", "", targetPath, TargetConfigFileDir, targetConfigFile)
 	}
 
 	return NewPaths(
@@ -122,42 +117,11 @@ func (p *Paths) LogValue() slog.Value {
 
 func definedOrDefault(desc string, configVal string, components ...string) string {
 	if configVal != "" {
-		slog.Debug(fmt.Sprintf("Using defined value for %s",  desc), slog.String("Value", configVal))
+		slog.Debug(fmt.Sprintf("%s provided, using it",  desc), slog.String("Path", configVal))
 		return configVal
 	}
-	slog.Debug(fmt.Sprintf("Value not provided, constructing %s", desc), slog.Any("Componets", components))
-	return filepath.Join(components...)
-}
-
-func resolve(desc string, components ...string) (string, error) {
 	path := filepath.Join(components...)
-
-	expanded, err := expandPath(path)
-	if err != nil {
-		slog.Error(fmt.Sprintf("Failed to expand %s", desc), slog.String("Path", path), slog.Any("Error", err))
-	}
-	absPath, err := filepath.Abs(expanded)
-	if err != nil {
-		slog.Error(fmt.Sprintf("Failed to resolve %s", desc), slog.String("Path", path), slog.String("Expanded", expanded), slog.Any("Error", err))
-	}
-	slog.Debug(fmt.Sprintf("Resolved %s", desc), slog.Any("Components", components), slog.String("Expanded", expanded), slog.String("Absolute", absPath))
-	return absPath, err
-}
-
-func expandPath(path string) (string, error) {
-	expanded := os.ExpandEnv(path)
-	if strings.HasPrefix(expanded, "~") {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-		if expanded == "~" {
-			return home, nil
-		}
-		if strings.HasPrefix(expanded, "~/") {
-			expanded = filepath.Join(home, expanded[2:])
-		}
-	}
-	return expanded, nil
+	slog.Debug(fmt.Sprintf("%s not provided, constructing it", desc), slog.Any("Componets", components), slog.String("Path", path))
+	return path
 }
 
