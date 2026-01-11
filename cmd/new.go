@@ -10,7 +10,6 @@ import (
 	// "github.com/yuin/gopher-lua"
 )
 
-// newCmd represents the new command
 var newCmd = &cobra.Command{
 	Use:   "new <kind> <name>",
 	Args:  cobra.ExactArgs(2),
