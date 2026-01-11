@@ -4,6 +4,7 @@ import (
 	"os"
 	"proj/internal/config"
 	"proj/internal/logger"
+	"proj/internal/paths"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -27,7 +28,7 @@ func Execute() {
 }
 
 func init() {
-	viper.SetConfigName("proj")
+	viper.SetConfigName(paths.GlobalConfigFile)
 
 	rootCmd.PersistentFlags().BoolP("no-write", "w", false, "Print the plan and don't write anything")
 	rootCmd.PersistentFlags().IntP("log-level", "l", 0, "How much to log [0-3], bigger = more")

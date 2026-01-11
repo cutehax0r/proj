@@ -27,14 +27,14 @@ What is the minimal config that can work?
 ```yaml
 ---
 # ~/.config/proj/proj.yml
-template_root: ~/.local/share/proj
-target_root: .
-log_level: 0
+template-root: ~/.local/share/proj
+target-root: .
+log-level: 0
 scripts:
-  new_before: scripts/before.lua
-  new_after: scripts/after.lua
-  add_before: scripts/before.lua
-  add_after: scripts/after.lua
+  new-before: scripts/before.lua
+  new-after: scripts/after.lua
+  add-before: scripts/before.lua
+  add-after: scripts/after.lua
 variables:
   global: #reserving space for variables.template && variables.template.definition
     aboolean: true
@@ -58,8 +58,8 @@ variables:
 ---
 # ~/.local/share/proj/html/proj.yml
 scripts:
-  template_before: scripts/before.lua
-  template_after: scripts/after.lua
+  template-before: scripts/before.lua
+  template-after: scripts/after.lua
 definitions:
   new:
     requirements:
@@ -72,8 +72,8 @@ definitions:
         - name: "background"
           default: "#202020"
     scripts:
-      definition_before: scripts/before.lua
-      definition_after: scripts/after.lua
+      definition-before: scripts/before.lua
+      definition-after: scripts/after.lua
     files:
       - source: src/Dockerfile
         target: Dockerfile
@@ -317,8 +317,6 @@ func flagSource(cfg *viper.Viper, cmd *cobra.Command, name string) FlagSource {
 * add support for --input or something that reads in data from a file (or maybe STDin and exposes it
   to lua-land and perhaps as a variable. That would allow you to automate filling content of certain
   files.
-* allow add to support --template-path so that you can 'override' the source of where your templates
-  come from
 
 * document the 'overloading' that happens.
   * no-write implies log info or log debug

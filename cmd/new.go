@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log/slog"
+	"proj/internal/config"
 	"proj/internal/paths"
 
 	"github.com/spf13/cobra"
@@ -47,6 +48,7 @@ func runNew(cmd *cobra.Command, args []string) {
 	viper.Set("target-name", args[1])
 	viper.Set("target-config-file", "") // this should not exist yet if we're running new
 
+	// this is temporary
 	yamlBytes, err := yaml.Marshal(viper.AllSettings())
 	if err != nil {
 		slog.Error("Marshal merged failed", slog.Any("error", err))
@@ -56,50 +58,21 @@ func runNew(cmd *cobra.Command, args []string) {
 
 	paths, err := paths.NewPathsFromConfig(viper.AllSettings())
 	if err != nil {
-		slog.Error("Paths just couldn't be built", slog.Any("Error", err))
+		slog.Error("Couldn't build paths", slog.Any("Error", err))
 	}
 	slog.Debug("Paths", slog.Any("paths", paths))
+	config.InitTemplate(paths.TemplateConfigFile)
 
-	// init paths
+	yamlBytes, err = yaml.Marshal(viper.AllSettings())
+	if err != nil {
+		slog.Error("Marshal merged failed", slog.Any("error", err))
+		return
+	}
+	slog.Debug("Loaded settings from template", "all settings", string(yamlBytes))
 
-	// check that path doesn't exist || path is empty || --force
+	// check that path doesn't exist || path is empty
 	// check that if nothing in teh target root heiarchy has a .proj/ in it.
-	// 
 }
-
-// func buildAbsolutePath(source string, base string, ext string) {
-// 	value := viper.GetString(source)
-// 	if value != "" {
-// 		path, err := filepath.Abs(value)
-// 		if err != nil {
-// 			slog.Error("Failed to absolute-ize path", "value", value, "error", err)
-// 		}
-// 		slog.Debug("key provided", "source", source, "value", viper.GetString(source), "path", path)
-// 		viper.Set(source, path)
-// 	} else {
-// 		slog.Debug("BUILDING", "base", base, "val", viper.GetString(base))
-// 		path, err := filepath.Abs(filepath.Join(viper.GetString(base), ext))
-// 		if err != nil {
-// 			slog.Error("failed to absolute-ize path", "source", source, "value", viper.GetString(source), "ext", ext)
-// 		}
-// 		viper.Set(source, path)
-// 		slog.Debug("path not set, using default", "path", path)
-// 	}
-// 	slog.Debug("Added path", source, viper.GetString(source))
-// }
-//
-// // TODO: maybe this should take a config to merge in with?
-// func loadTemplateConfig(template_path string) (*viper.Viper, error) {
-// 	template_config := viper.New()
-// 	template_config.SetConfigName("config")
-// 	template_config.AddConfigPath(template_path)
-// 	if err := template_config.ReadInConfig(); err != nil {
-// 		slog.Error("Error reading template config", "template_path", template_path, "file", template_config.ConfigFileUsed(), "error", err)
-// 		return nil, err
-// 	}
-// 	slog.Debug("Read project config", "file", template_config.ConfigFileUsed(), "settings", template_config.AllSettings())
-// 	return template_config, nil
-// }
 
 // func runNew(cmd *cobra.Command, args []string) {
 // 	slog.Debug("New called", "args", args)

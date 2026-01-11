@@ -2,7 +2,6 @@ package config
 
 import (
 	"log/slog"
-	"path/filepath"
 	"proj/internal/paths"
 
 	"github.com/spf13/viper"
@@ -25,14 +24,20 @@ func InitGlobal(file string) error {
 		slog.Error("Global configuration load failure", "Error", err)
 		return err
 	}
+	slog.Debug("global configuration read", "file", viper.ConfigFileUsed())
+	viper.Set("global-config-file", viper.ConfigFileUsed())
+	return nil
+}
 
-	absolutePath, err := filepath.Abs(viper.ConfigFileUsed())
-	if err != nil {
-		slog.Error("Global configuration file path resolution failed", slog.String("globalConfig", viper.ConfigFileUsed()))
+func InitTemplate(file string) error {
+	conf := viper.New()
+	conf.SetConfigFile(file)
+	if err := conf.ReadInConfig(); err != nil {
+		slog.Error("Template configuration load failure", slog.Any("error", err))
 		return err
 	}
-	slog.Debug("Loaded global configuration", "file", viper.ConfigFileUsed())
-
-	viper.Set("global-config-file", absolutePath)
+	conf.Set("template-config-file", conf.ConfigFileUsed())
+	// maybe this isn't safe?
+	viper.MergeConfigMap(conf.AllSettings())
 	return nil
 }
