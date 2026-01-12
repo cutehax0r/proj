@@ -45,7 +45,7 @@ func BuildRequirements() (RequirementSpec, error) {
 			return result, errors.New("RequirementSpec parse error: bad variable declaration")
 		}
 		name, _ := vdef["name"].(string)
-		def, _ := vdef["default"].(string)
+		def, _ := vdef["default"]
 		resultVars = append(resultVars, VariableSpec{Name: name, Default: def})
 	}
 
@@ -55,18 +55,27 @@ func BuildRequirements() (RequirementSpec, error) {
 	return result, nil
 }
 
-func BuildVariables() (map[string]any, error) {
-	slog.Debug("Prepare Variables", slog.String("Placeholder", "resolving variables"), slog.String("Desc", "Generate all combinations of variables and values by combining global, template, and definition descriptions of variables"))
+func BuildVariables(reqvars []VariableSpec) (map[string]any, error) {
 	result := make(map[string]any)
+
+	slog.Debug("Prepare Variables", slog.String("Placeholder", "resolving variables"), slog.String("Desc", "Generate all combinations of variables and values by combining global, template, and definition descriptions of variables"))
 	setvars := buildMapFromSetVariables()
-	slog.Debug("Explicitly set variables", slog.Any("from set-variable", setvars))
-	// now we walk through requirements.variables
-	// ans for each do result[name] if setvars[name] is present
+	globalvars := viper.GetStringMap("variables.global")
+	slog.Debug("Building variables", slog.Any("globalvars", globalvars), slog.Any("from set-variable", setvars))
+
+	for _, v := range reqvars {
+		var finalval any
+		if _, ok := setvars[v.Name]; ok {
+			finalval = setvars[v.Name]
+		} else if _, ok := globalvars[v.Name]; ok {
+			finalval = globalvars[v.Name]
+		} else {
+			finalval = v.Default
+		}
+		result[v.Name] = finalval
+	}
+
 	return result, nil
-	// step through requirements.variables
-	// result[name] = setvars[name] (have to parse that into a map[string]any)
-	// result[name] = global[name]
-	// result[name] = default
 }
 
 func buildMapFromSetVariables() map[string]any {

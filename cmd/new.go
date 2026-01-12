@@ -74,29 +74,10 @@ func runNew(cmd *cobra.Command, args []string) {
 		slog.Error("Definition does not exist in template", slog.String("path", defPath), slog.String("definition", viper.GetString("definition")), slog.String("template name", viper.GetString("template-name")), slog.String("template config file", viper.GetString("template-config-file")),)
 	}
 
-	// defVars := def["variables"]
-	// slog.Debug("variables", slog.Any("scripts", defVars))
-	// if running --definition is set and requirements.lcoal is false: error
-
-	// defScripts := def["scripts"]
-	// slog.Debug("scripts", slog.Any("scripts", defScripts))
-	// merge these scripts in with the ones in viper
-	// lua_path := filepath.Join(viper.GetString("target_root"), "test.lua")
-	// script_runner := luabridge.NewRuntime(template_config.AllSettings(), lua_path)
-	// defer script_runner.CloseState()
-	// script_runner.Run()
-	// runScript(template-root + scrips['global-before']
-	// runScript(template-root + scripts['template-before']
-	// runScript(template-root + scripts['defn-before']
-
-
-	// defReqs := def["requirements"]
-	// slog.Debug("requirements", slog.Any("requirements", defReqs))
-	// ensure these are all met
-
-
-	config.BuildRequirements()
-	config.BuildVariables()
+	reqs, _ := config.BuildRequirements()
+	vars, _ := config.BuildVariables(reqs.Variables)
+	slog.Debug("Final Requirements", slog.Any("reqs", reqs))
+	slog.Info("Final Variables", slog.Any("vars", vars))
 	// copyFiles()
 
 	// runScript(template-root + scripts['defn-before']

@@ -326,3 +326,5 @@ func flagSource(cfg *viper.Viper, cmd *cobra.Command, name string) FlagSource {
 * Bolt on context when returning errors  func foo() (int, error) { x, err := givesErr(); err != nil
   { return fmt.Errorf("addcontext %w", err) } }
 * maybe --set-variables FOO=BAR should try to be case-insentive when matching variables?
+* maybe we should have a --force-set that forces variables to a value (so it gets applied after all the
+scripts run)
