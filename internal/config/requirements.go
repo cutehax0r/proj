@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"log/slog"
 	"strings"
 
@@ -22,37 +23,43 @@ func BuildRequirements() (RequirementSpec, error) {
 	path := strings.Join([]string{"definitions", viper.GetString("definition"), "requirements"}, ".")
 	reqs := viper.Get(path)
 	slog.Debug("Loaded requirements", slog.String("path", path), slog.Any("Requirements", reqs))
-	return result, nil
 
-	
-	// fileSlice, ok := files.([]any)
-	// if !ok {
-	// 	slog.Error("FileSpec parse failure", slog.Any("Files", files))
-	// 	return nil, errors.New("FileSpec parse failure: entire files section is busted")
-	// }
-	// for i, fileDef := range fileSlice {
-	// 	spec, ok := fileDef.(map[string]any)
-	// 	if !ok {
-	// 		slog.Error("Invalid file declaration", slog.Int("Index", i), slog.Any("definition", fileDef))
-	// 		return nil, errors.New("FileSpec parse failure: bad file declaration")
-	// 	}
-	// 	source, _ := spec["source"].(string)
-	// 	target, _ := spec["target"].(string)
-	// 	parse, ok := spec["parse"].(bool)
-	// 	if !ok {
-	// 		parse = true
-	// 	}
-	// 	result = append(result, FileSpec{Source: source, Target: target, Parse: parse})
-	// }
-	//
-	// return result, nil
+	reqsMap, ok := reqs.(map[string]any)
+	if !ok {
+		slog.Error("Requirements parse failure", slog.Any("requirements", reqs))
+		return result, errors.New("RequirementsSpec parse failed: entire requirements section is busted")
+	}
+	// pluck out Local
+	local, ok := reqsMap["local"].(bool)
+	if !ok {
+		local = false
+	}
+
+	// pluck out variables
+	var resultVars []VariableSpec
+	varSlice := reqsMap["variables"].([]any)
+	for i, varDef := range varSlice {
+		vdef, ok := varDef.(map[string]any)
+		if !ok {
+			slog.Error("Invalid variable declaration", slog.Int("index", i), slog.Any("definition", varDef))
+			return result, errors.New("RequirementSpec parse error: bad variable declaration")
+		}
+		name, _ := vdef["name"].(string)
+		def, _ := vdef["default"].(string)
+		resultVars = append(resultVars, VariableSpec{Name: name, Default: def})
+	}
+
+	result.Local = local
+	result.Variables = resultVars
+	slog.Debug("Parsed requirements", slog.Bool("local", result.Local), slog.Any("variables", result.Variables))
+	return result, nil
 }
 
 func BuildVariables() (map[string]any, error) {
 	slog.Debug("Prepare Variables", slog.String("Placeholder", "resolving variables"), slog.String("Desc", "Generate all combinations of variables and values by combining global, template, and definition descriptions of variables"))
 	result := make(map[string]any)
 	setvars := buildMapFromSetVariables()
-	slog.Debug("Explicitly set varaibles", slog.Any("from set-variable", setvars))
+	slog.Debug("Explicitly set variables", slog.Any("from set-variable", setvars))
 	// now we walk through requirements.variables
 	// ans for each do result[name] if setvars[name] is present
 	return result, nil
