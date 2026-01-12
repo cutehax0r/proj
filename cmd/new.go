@@ -13,14 +13,12 @@ import (
 	// "github.com/yuin/gopher-lua"
 )
 
-
-
 var newCmd = &cobra.Command{
 	Use:   "new <kind> <name>",
 	Args:  cobra.ExactArgs(2),
 	Short: "Create a project called NAME based on the KIND template",
-	Long: `Create a new project based on a project template in the current directory.`,
-	Run: runNew,
+	Long:  `Create a new project based on a project template in the current directory.`,
+	Run:   runNew,
 }
 
 func init() {
@@ -48,6 +46,7 @@ func init() {
 func runNew(cmd *cobra.Command, args []string) {
 	slog.Debug("Execute New Command", slog.String("Definition", viper.GetString("definition")), slog.Group("Arguments", slog.String("Template Name", args[0]), slog.String("Target Name", args[1])))
 
+	// mangling viper at this point feels kinda wrong. Maybe we update the 'new paths from config' to just take some arguments?
 	viper.Set("template-name", args[0])
 	viper.Set("target-name", args[1])
 	viper.Set("target-config-file", "") // this should not exist yet if we're running new
@@ -72,40 +71,51 @@ func runNew(cmd *cobra.Command, args []string) {
 
 	defPath := strings.Join([]string{"definitions", viper.GetString("definition")}, ".")
 	if viper.IsSet(defPath) == false {
-		slog.Error("Definition does not exist in template",
-			slog.String("path", defPath),
-			slog.String("definition", viper.GetString("definition")),
-			slog.String("template name", viper.GetString("template-name")),
-			slog.String("template config file", viper.GetString("template-config-file")),
-		)
+		slog.Error("Definition does not exist in template", slog.String("path", defPath), slog.String("definition", viper.GetString("definition")), slog.String("template name", viper.GetString("template-name")), slog.String("template config file", viper.GetString("template-config-file")),)
 	}
-	def := viper.GetStringMap(defPath)
 
-	defScripts := def["scripts"]
-	slog.Debug("scripts", slog.Any("scripts", defScripts))
+	// defVars := def["variables"]
+	// slog.Debug("variables", slog.Any("scripts", defVars))
+	// if running --definition is set and requirements.lcoal is false: error
 
-	defVars := def["files"]
-	slog.Debug("vars", slog.Any("vars", defVars))
-
-	defFiles := def["files"]
-	slog.Debug("files", slog.Any("files", defFiles))
-
-	// use the path checker to ensure that .proj doesn't exist in the dir hierarchy if 'local' =
-	// true
-
-	// setup script execution environment
-	// run each before script (updating vars between each one?)
-	// check requirements
-	// copy files 
-	// run each after script
-	
+	// defScripts := def["scripts"]
+	// slog.Debug("scripts", slog.Any("scripts", defScripts))
+	// merge these scripts in with the ones in viper
+	// lua_path := filepath.Join(viper.GetString("target_root"), "test.lua")
+	// script_runner := luabridge.NewRuntime(template_config.AllSettings(), lua_path)
+	// defer script_runner.CloseState()
+	// script_runner.Run()
+	// runScript(template-root + scrips['global-before']
+	// runScript(template-root + scripts['template-before']
+	// runScript(template-root + scripts['defn-before']
 
 
-	// if err = config.InitTarget(paths.TargetConfigFile); err == nil {
-	// 	os.Exit(1)
-	// }
-	// logViperDebug("target config loaded", viper.AllSettings())
+	// defReqs := def["requirements"]
+	// slog.Debug("requirements", slog.Any("requirements", defReqs))
+	// ensure these are all met
 
+
+	config.BuildRequirements()
+	config.BuildVariables()
+	// copyFiles()
+
+	// runScript(template-root + scripts['defn-before']
+	// runScript(template-root + scripts['template-before']
+	// runScript(template-root + scrips['global-before']
+
+}
+
+
+func copyFiles() error {
+	files, err := config.ParseFileSpecs()
+	if err != nil {
+		slog.Error("Failed to load files from template definition", slog.Any("error", err))
+		return err
+	}
+	for _, file := range files {
+		slog.Info("Copying", slog.Bool("parse", file.Parse), slog.String("source", file.Source), slog.String("target", file.Target))
+	}
+	return nil
 }
 
 func logViperDebug(desc string, settings map[string]any) {
@@ -116,12 +126,3 @@ func logViperDebug(desc string, settings map[string]any) {
 	}
 	slog.Debug(desc, "all settings", string(yamlBytes))
 }
-
-// func runNew(cmd *cobra.Command, args []string) {
-// 	// quick hack -- should be target-root, then target-path
-// 	lua_path := filepath.Join(viper.GetString("target_root"), "test.lua")
-//
-// 	script_runner := luabridge.NewRuntime(template_config.AllSettings(), lua_path)
-// 	defer script_runner.CloseState()
-// 	script_runner.Run()
-// }
