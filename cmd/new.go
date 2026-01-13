@@ -77,8 +77,16 @@ func runNew(cmd *cobra.Command, args []string) {
 	reqs, _ := config.BuildRequirements()
 	vars, _ := config.BuildVariables(reqs.Variables)
 	slog.Debug("Final Requirements", slog.Any("reqs", reqs))
-	slog.Info("Final Variables", slog.Any("vars", vars))
-	// copyFiles()
+	slog.Debug("Final Variables", slog.Any("vars", vars))
+
+	for key, value := range vars {
+		if value == nil {
+		slog.Error("Required variable is not set. Use --set-variable. Aborting.", slog.Any(key, value))
+			// this is where you put a 'while nil { prompt }' loop in v2.
+			os.Exit(1)
+		}
+	}
+	copyFiles()
 
 	// runScript(template-root + scripts['defn-before']
 	// runScript(template-root + scripts['template-before']
