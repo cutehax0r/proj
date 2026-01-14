@@ -82,8 +82,8 @@ func runNew(cmd *cobra.Command, args []string) {
 		slog.Error("Couldn't build scripts")
 		os.Exit(1)
 	}
-	slog.Debug("Scripts", slog.Any("scripts", scripts), slog.Any("before", scripts.BeforeScripts()))
-	slog.Debug("Scripts", slog.Any("scripts", scripts), slog.Any("after", scripts.AfterScripts()))
+
+	runScripts(scripts.BeforeScripts())
 
 	slog.Debug("Final Requirements", slog.Any("reqs", reqs))
 	slog.Debug("Final Variables", slog.Any("vars", vars))
@@ -102,10 +102,13 @@ func runNew(cmd *cobra.Command, args []string) {
 		copyFiles()
 	}
 
-	// runScript(template-root + scripts['defn-after']
-	// runScript(template-root + scripts['template-after']
-	// runScript(template-root + scrips['global-after']
+	runScripts(scripts.AfterScripts())
+}
 
+func runScripts(scripts []string) {
+	for _, script := range scripts {
+		slog.Info("Running script", slog.String("script", script))
+	}
 }
 
 func copyFiles() error {
