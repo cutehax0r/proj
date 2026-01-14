@@ -20,36 +20,6 @@ type ScriptSpec struct {
 	DefinitionAfter  string
 }
 
-func (s *ScriptSpec) BeforeScripts() []string {
-	var result []string
-	if scriptExists(s.GlobalBefore) {
-		result = append(result, s.GlobalBefore)
-	}
-	if scriptExists(s.TemplateBefore) {
-		result = append(result, s.TemplateBefore)
-	}
-	if scriptExists(s.DefinitionBefore) {
-		result = append(result, s.DefinitionBefore)
-	}
-	return result
-}
-
-func scriptExists(s string) bool {
-	if s == "" {
-		return false
-	}
-	_, err := os.Stat(s)
-	if err != nil {
-		slog.Debug("Checking script exists failed", slog.Any("error", err), "script", s)
-		return false
-	}
-	return true
-}
-
-func (s *ScriptSpec) AfterScripts() []string {
-	return []string{}
-}
-
 func ParseScriptSpecs(paths *paths.Paths) (ScriptSpec, error) {
 	var result ScriptSpec
 
@@ -115,8 +85,47 @@ func ParseScriptSpecs(paths *paths.Paths) (ScriptSpec, error) {
 		}
 		result.GlobalAfter = fp
 	}
-
-	//should normalize all paths
-
 	return result, nil
 }
+
+func (s *ScriptSpec) BeforeScripts() []string {
+	var result []string
+	if scriptExists(s.GlobalBefore) {
+		result = append(result, s.GlobalBefore)
+	}
+	if scriptExists(s.TemplateBefore) {
+		result = append(result, s.TemplateBefore)
+	}
+	if scriptExists(s.DefinitionBefore) {
+		result = append(result, s.DefinitionBefore)
+	}
+	return result
+}
+
+func (s *ScriptSpec) AfterScripts() []string {
+	var result []string
+	if scriptExists(s.DefinitionAfter) {
+		result = append(result, s.DefinitionAfter)
+	}
+	if scriptExists(s.TemplateAfter) {
+		result = append(result, s.TemplateAfter)
+	}
+	if scriptExists(s.GlobalAfter) {
+		result = append(result, s.GlobalAfter)
+	}
+	return result
+}
+
+func scriptExists(s string) bool {
+	if s == "" {
+		return false
+	}
+	_, err := os.Stat(s)
+	if err != nil {
+		slog.Debug("Checking script exists failed", slog.Any("error", err), "script", s)
+		return false
+	}
+	return true
+}
+
+

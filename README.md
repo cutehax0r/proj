@@ -328,3 +328,4 @@ func flagSource(cfg *viper.Viper, cmd *cobra.Command, name string) FlagSource {
 * maybe --set-variables FOO=BAR should try to be case-insentive when matching variables?
 * maybe we should have a --force-set that forces variables to a value (so it gets applied after all the
 scripts run)
+* maybe we should merge scripts and paths together.
