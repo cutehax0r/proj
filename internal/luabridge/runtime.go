@@ -1,35 +1,39 @@
 package luabridge
 
 import (
-	"github.com/yuin/gopher-lua"
 	"log/slog"
+	"proj/internal/paths"
+
+	lua "github.com/yuin/gopher-lua"
 )
 
 type Runtime struct {
-	Path   string
-	Config map[string]any
+	Variables map[string]any
+	Paths *paths.Paths
+	Nowrite bool
 	Error  error
 	state  *lua.LState
 }
 
-func NewRuntime(config map[string]any, path string) *Runtime {
-	// should also accept 'viper config'
+func NewRuntime(variables map[string]any, paths *paths.Paths, nowrite bool) *Runtime {
 	r := Runtime{
-		Path:   path,
-		Config: config,
+		Variables: variables,
+		Paths: paths,
+		Nowrite: nowrite,
 	}
 	r.setupExecutionEnvironment()
 	return &r
 }
 
-func (r *Runtime) Run() error { // take a 'reason' to pass to debug?
-	slog.Debug("Executing script", "path", r.Path)
-	err := r.state.DoFile(r.Path)
+func (r *Runtime) Run(script string) error {
+	slog.Debug("Executing script", "script", script)
+	err := r.state.DoFile(script)
 	if err != nil {
-		slog.Error("Lua Error", "path", r.Path, "error", err)
+		slog.Error("Lua Error", "script", script, "error", err)
 		r.Error = err
 	}
-	slog.Debug("Execution finished", "path", r.Path, "success", err == nil)
+	slog.Debug("Execution finished", "script", script, "success", err == nil)
+	// maybe have to capture stdout?
 	return err
 }
 
@@ -41,25 +45,22 @@ func (r *Runtime) setupExecutionEnvironment() {
 		mod := l.NewTable()
 
 		// TODO: this variable binding stuff kinda sucks
-		keys := make([]string, 0, len(r.Config))
-		for k := range r.Config {
+		keys := make([]string, 0, len(r.Variables))
+		for k := range r.Variables {
 			keys = append(keys, k)
 		}
 		slog.Error("KEYS", "keys", keys)
 		
-		mod.RawSetString("name", lua.LString(r.Config["name"].(string)))
-		mod.RawSetString("kind", lua.LString(r.Config["kind"].(string)))
-		mod.RawSetString("dry_run", lua.LBool(r.Config["dry_run"].(bool)))
-		mod.RawSetString("global_config_file", lua.LString(r.Config["config"].(string)))
-		mod.RawSetString("template_root", lua.LString(r.Config["template_root"].(string)))
-		mod.RawSetString("template_path", lua.LString(r.Config["template_path"].(string)))
-		mod.RawSetString("target_root", lua.LString(r.Config["target_root"].(string)))
-		mod.RawSetString("target_path", lua.LString(r.Config["target_path"].(string)))
+		mod.RawSetString("name", lua.LString(r.Variables["name"].(string)))
+		mod.RawSetString("template", lua.LString(r.Variables["template"].(string)))
+		mod.RawSetString("definition", lua.LString(r.Variables["definition"].(string)))
+		mod.RawSetString("nowrite", lua.LBool(r.Variables["nowrite"].(bool)))
 
 		// TODO: pull these from config
 		mod.RawSetString("variables", lua.LString("this will be a map"))
-		mod.RawSetString("requirements", lua.LString("this will be a map"))
-		mod.RawSetString("files", lua.LString("this will be a map"))
+		mod.RawSetString("requirements", lua.LString("this will be a requirementspec"))
+		mod.RawSetString("paths", lua.LString("paths"))
+		mod.RawSetString("files", lua.LString("this will be a []filespec"))
 
 		// functions read from ./functions.go
 		for name, fn := range LuaRuntimeFunctions {
