@@ -12,9 +12,11 @@ type Runtime struct {
 	Paths *paths.Paths
 	Nowrite bool
 	Error  error
+	// will gain reqs and files
 	state  *lua.LState
 }
 
+// will gain reqs and files
 func NewRuntime(variables map[string]any, paths *paths.Paths, nowrite bool) *Runtime {
 	r := Runtime{
 		Variables: variables,

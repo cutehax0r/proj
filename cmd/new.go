@@ -86,7 +86,10 @@ func runNew(cmd *cobra.Command, args []string) {
 
 	// will need files && requirements
 	luaenv := luabridge.NewRuntime(vars, paths, viper.GetBool("no-write"))
-	runScripts(scripts.BeforeScripts(), luaenv)
+	for _, script := range scripts.BeforeScripts() {
+		luaenv.Run(script)
+		// check for errors and if they exist then os.exit
+	}
 
 	slog.Debug("Final Requirements", slog.Any("reqs", reqs))
 	slog.Debug("Final Variables", slog.Any("vars", vars))
@@ -105,11 +108,7 @@ func runNew(cmd *cobra.Command, args []string) {
 		copyFiles()
 	}
 
-	runScripts(scripts.AfterScripts(), luaenv)
-}
-
-func runScripts(scripts []string, luaenv *luabridge.Runtime) {
-	for _, script := range scripts {
+	for _, script := range scripts.AfterScripts() {
 		luaenv.Run(script)
 	}
 }
