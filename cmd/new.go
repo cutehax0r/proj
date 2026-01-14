@@ -71,12 +71,11 @@ func runNew(cmd *cobra.Command, args []string) {
 
 	defPath := strings.Join([]string{"definitions", viper.GetString("definition")}, ".")
 	if viper.IsSet(defPath) == false {
-		slog.Error("Definition does not exist in template", slog.String("path", defPath), slog.String("definition", viper.GetString("definition")), slog.String("template name", viper.GetString("template-name")), slog.String("template config file", viper.GetString("template-config-file")),)
+		slog.Error("Definition does not exist in template", slog.String("path", defPath), slog.String("definition", viper.GetString("definition")), slog.String("template name", viper.GetString("template-name")), slog.String("template config file", viper.GetString("template-config-file")))
 	}
 
 	reqs, _ := config.BuildRequirements()
 	vars, _ := config.BuildVariables(reqs.Variables)
-
 
 	scripts, err := config.ParseScriptSpecs(paths)
 	if err != nil {
@@ -91,7 +90,7 @@ func runNew(cmd *cobra.Command, args []string) {
 
 	for key, value := range vars {
 		if value == nil {
-		slog.Error("Required variable is not set. Use --set-variable. Aborting.", slog.Any(key, value))
+			slog.Error("Required variable is not set. Use --set-variable. Aborting.", slog.Any(key, value))
 			// this is where you put a 'while nil { prompt }' loop in v2.
 			os.Exit(1)
 		}
@@ -108,7 +107,6 @@ func runNew(cmd *cobra.Command, args []string) {
 	// runScript(template-root + scrips['global-after']
 
 }
-
 
 func copyFiles() error {
 	files, err := config.ParseFileSpecs()
