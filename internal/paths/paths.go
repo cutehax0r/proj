@@ -13,10 +13,11 @@ type Paths struct {
 	TemplateRoot string
 	TemplatePath string
 	TemplateConfigFile string
-	GlobalConfigFile string
+	GlobalConfigPath string
+	GlobalConfigRoot string
 }
 
-func NewPaths(targetRoot string, targetPath string, templateRoot string, templatePath string, targetConfigFile string, globalConfigFile string) (*Paths, error) {
+func NewPaths(targetRoot string, targetPath string, templateRoot string, templatePath string, targetConfigFile string, globalConfigFile string, globalConfigRoot string) (*Paths, error) {
 	resolvedTargetRoot, err := resolve("target root", targetRoot)
 	if err != nil {
 		return nil, err
@@ -52,6 +53,10 @@ func NewPaths(targetRoot string, targetPath string, templateRoot string, templat
 		return nil, err
 	}
 
+	resolvedGlobalConfigDir, err := resolve("Global configuration dir", globalConfigRoot)
+	if err != nil {
+		return nil, err
+	}
 	return &Paths {
 		TargetRoot: resolvedTargetRoot,
 		TargetPath: resolvedTargetPath,
@@ -59,7 +64,8 @@ func NewPaths(targetRoot string, targetPath string, templateRoot string, templat
 		TemplateRoot: resolvedTemplateRoot,
 		TemplatePath: resolvedTemplatePath,
 		TemplateConfigFile: resolvedTemplateConfigFile,
-		GlobalConfigFile: resolvedGlobalConfigFile,
+		GlobalConfigPath: resolvedGlobalConfigFile,
+		GlobalConfigRoot: resolvedGlobalConfigDir,
 	}, nil
 }
 
@@ -86,6 +92,7 @@ func NewPathsFromConfig(config map[string]any) (*Paths, error) {
 		templatePath,
 		targetConfigFile,
 		config["global-config-file"].(string),
+		filepath.Dir(config["global-config-file"].(string)),
 	)
 }
 
@@ -110,6 +117,8 @@ func (p *Paths) LogValue() slog.Value {
 		slog.String("TemplateRoot", p.TemplateRoot),
 		slog.String("TemplatePath", p.TemplatePath),
 		slog.String("TemplateConfigFile", p.TemplateConfigFile),
+		slog.String("GlobalConfigRoot", p.GlobalConfigRoot),
+		slog.String("GlobalConfigPath", p.GlobalConfigPath),
 	)
 }
 

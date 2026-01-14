@@ -76,6 +76,16 @@ func runNew(cmd *cobra.Command, args []string) {
 
 	reqs, _ := config.BuildRequirements()
 	vars, _ := config.BuildVariables(reqs.Variables)
+
+
+	scripts, err := config.ParseScriptSpecs(paths)
+	if err != nil {
+		slog.Error("Couldn't build scripts")
+		os.Exit(1)
+	}
+	slog.Debug("Scripts", slog.Any("scripts", scripts), slog.Any("before", scripts.BeforeScripts()))
+	slog.Debug("Scripts", slog.Any("scripts", scripts), slog.Any("after", scripts.AfterScripts()))
+
 	slog.Debug("Final Requirements", slog.Any("reqs", reqs))
 	slog.Debug("Final Variables", slog.Any("vars", vars))
 
@@ -86,11 +96,16 @@ func runNew(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 	}
-	copyFiles()
 
-	// runScript(template-root + scripts['defn-before']
-	// runScript(template-root + scripts['template-before']
-	// runScript(template-root + scrips['global-before']
+	if viper.GetBool("no-write") == true {
+		slog.Info("No-write set: skipping copy")
+	} else {
+		copyFiles()
+	}
+
+	// runScript(template-root + scripts['defn-after']
+	// runScript(template-root + scripts['template-after']
+	// runScript(template-root + scrips['global-after']
 
 }
 

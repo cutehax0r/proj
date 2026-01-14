@@ -1,3 +1,6 @@
+// This should be replaced by some proper YAML parsing library. We should split the regular proj
+// config with the definition of templates. Maybe support splitting individual templates into their
+// own config files.
 package config
 
 import (
