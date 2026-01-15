@@ -11,23 +11,23 @@ import (
 )
 
 type Runtime struct {
-	Variables map[string]any
-	Paths *paths.Paths
+	Variables    map[string]any
+	Paths        *paths.Paths
 	Requirements *config.RequirementSpec
-	NoWrite bool
-	Error  error
+	NoWrite      bool
+	Error        error
 	// will gain reqs and files
-	state  *lua.LState
+	state *lua.LState
 }
 
 // will gain reqs and files
 func NewRuntime(variables map[string]any, paths *paths.Paths, requirements *config.RequirementSpec, nowrite bool) *Runtime {
 	slog.Debug("Lua Bridge setup", "variables", variables)
 	r := Runtime{
-		Variables: variables,
-		Paths: paths,
+		Variables:    variables,
+		Paths:        paths,
 		Requirements: requirements,
-		NoWrite: nowrite,
+		NoWrite:      nowrite,
 	}
 	r.setupExecutionEnvironment()
 	return &r
@@ -77,7 +77,7 @@ func (r *Runtime) setupExecutionEnvironment() {
 			keys = append(keys, k)
 		}
 		slog.Debug("Go variable keys", "keys", keys)
-		
+
 		// mod.RawSetString("name", lua.LString(r.Variables["name"].(string)))
 		// mod.RawSetString("template", lua.LString(r.Variables["template"].(string)))
 		// mod.RawSetString("definition", lua.LString(r.Variables["definition"].(string)))
@@ -102,6 +102,7 @@ func (r *Runtime) CloseState() {
 }
 
 func (r *Runtime) toLuaValue(value any) lua.LValue {
+	// Keep existing primitive type handling
 	switch v := value.(type) {
 	case nil:
 		return lua.LNil
@@ -113,19 +114,36 @@ func (r *Runtime) toLuaValue(value any) lua.LValue {
 		return lua.LNumber(reflect.ValueOf(v).Convert(reflect.TypeOf(int64(0))).Int())
 	case float32, float64:
 		return lua.LNumber(reflect.ValueOf(v).Convert(reflect.TypeOf(float64(0))).Float())
-	case []any:
+	}
+
+	// Use reflection recursively for maps and slices - don't forget the keys
+	val := reflect.ValueOf(value)
+	switch val.Kind() {
+	case reflect.Map:
 		tbl := r.state.NewTable()
-		for _, i := range v {
-			tbl.Append(r.toLuaValue(i))
+		for _, key := range val.MapKeys() {
+			mapKey := key.Interface()
+			mapValue := val.MapIndex(key).Interface()
+
+			var luaKey string
+			switch k := mapKey.(type) {
+			case string:
+				luaKey = k
+			default:
+				luaKey = fmt.Sprintf("%v", k)
+			}
+
+			tbl.RawSetString(luaKey, r.toLuaValue(mapValue))
 		}
 		return tbl
-	case map[string]any:
+
+	case reflect.Slice, reflect.Array:
 		tbl := r.state.NewTable()
-		for key, val := range(v) {
-			tbl.RawSetString(key, r.toLuaValue(val))
+		for i := 0; i < val.Len(); i++ {
+			tbl.Append(r.toLuaValue(val.Index(i).Interface()))
 		}
 		return tbl
 	default:
-		return lua.LString(fmt.Sprintf("%v", v))
+		return lua.LString(fmt.Sprintf("%v", value))
 	}
 }
