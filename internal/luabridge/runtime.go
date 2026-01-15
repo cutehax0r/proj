@@ -55,13 +55,13 @@ func (r *Runtime) setupExecutionEnvironment() {
 
 		// setup Requirements
 		reqtable := l.NewTable()
-		// reqtable.RawSetString("variables", reqvars)
 		reqtable.RawSetString("isLocal", lua.LBool(r.Requirements.Local))
 
 		reqvars := l.NewTable()
 		for _, v := range r.Requirements.Variables {
 			rte := l.NewTable()
-			rte.RawSetString("name", lua.LString(v.Name))
+			rte.RawSetString("name", r.toLuaValue(v.Name))
+			rte.RawSetString("default", r.toLuaValue(v.Default))
 			reqvars.Append(rte)
 		}
 		reqtable.RawSetString("variables", reqvars)
@@ -97,7 +97,7 @@ func (r *Runtime) CloseState() {
 	r.state.Close()
 }
 
-func toLuaValue(l *lua.LState, value any) lua.LValue {
+func (r *Runtime) toLuaValue(value any) lua.LValue {
 	switch v := value.(type) {
 	case nil:
 		return lua.LNil
@@ -110,12 +110,17 @@ func toLuaValue(l *lua.LState, value any) lua.LValue {
 	case float32, float64:
 		return lua.LNumber(reflect.ValueOf(v).Convert(reflect.TypeOf(float64(0))).Float())
 	case []any:
-		tbl := l.NewTable()
+		tbl := r.state.NewTable()
 		for _, i := range v {
-			tbl.Append(toLuaValue(l, i))
+			tbl.Append(r.toLuaValue(i))
 		}
 		return tbl
-	// iou map
+	case map[string]any:
+		tbl := r.state.NewTable()
+		for key, val := range(v) {
+			tbl.RawSetString(key, r.toLuaValue(val))
+		}
+		return tbl
 	default:
 		return lua.LString(fmt.Sprintf("%v", v))
 	}
