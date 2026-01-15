@@ -143,7 +143,8 @@ func (r *Runtime) toLuaValue(value any) lua.LValue {
 			tbl.Append(r.toLuaValue(val.Index(i).Interface()))
 		}
 		return tbl
-	default:
-		return lua.LString(fmt.Sprintf("%v", value))
 	}
+
+	// then just all through to a default representation
+	return lua.LString(fmt.Sprintf("%v", value))
 }
