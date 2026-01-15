@@ -18,6 +18,7 @@ type Runtime struct {
 
 // will gain reqs and files
 func NewRuntime(variables map[string]any, paths *paths.Paths, nowrite bool) *Runtime {
+	slog.Debug("Lua Bridge setup", "variables", variables)
 	r := Runtime{
 		Variables: variables,
 		Paths: paths,
@@ -51,18 +52,17 @@ func (r *Runtime) setupExecutionEnvironment() {
 		for k := range r.Variables {
 			keys = append(keys, k)
 		}
-		slog.Error("KEYS", "keys", keys)
+		slog.Debug("Go variable keys", "keys", keys)
 		
-		mod.RawSetString("name", lua.LString(r.Variables["name"].(string)))
-		mod.RawSetString("template", lua.LString(r.Variables["template"].(string)))
-		mod.RawSetString("definition", lua.LString(r.Variables["definition"].(string)))
-		mod.RawSetString("nowrite", lua.LBool(r.Variables["nowrite"].(bool)))
+		// mod.RawSetString("name", lua.LString(r.Variables["name"].(string)))
+		// mod.RawSetString("template", lua.LString(r.Variables["template"].(string)))
+		// mod.RawSetString("definition", lua.LString(r.Variables["definition"].(string)))
+		// mod.RawSetString("nowrite", lua.LBool(r.Variables["nowrite"].(bool)))
 
-		// TODO: pull these from config
-		mod.RawSetString("variables", lua.LString("this will be a map"))
-		mod.RawSetString("requirements", lua.LString("this will be a requirementspec"))
-		mod.RawSetString("paths", lua.LString("paths"))
-		mod.RawSetString("files", lua.LString("this will be a []filespec"))
+		// need to bind:
+		//* variables
+		//* requirements
+		//* files
 
 		// functions read from ./functions.go
 		for name, fn := range LuaRuntimeFunctions {

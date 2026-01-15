@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.yaml.in/yaml/v3"
-	// "github.com/yuin/gopher-lua"
 )
 
 var newCmd = &cobra.Command{
