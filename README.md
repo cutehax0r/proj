@@ -329,3 +329,8 @@ func flagSource(cfg *viper.Viper, cmd *cobra.Command, name string) FlagSource {
 * maybe we should have a --force-set that forces variables to a value (so it gets applied after all the
 scripts run)
 * maybe we should merge scripts and paths together.
+
+* All this fussing with variables.  It might make more sense to route everything to JSON and pass
+that to the toluavalue function.  Tag your structs with `json:"foo"` pass an instance of the struct
+to json.Marshal(somestruct) to get a map[string]any. then pass that over to .toluavalue Investigate
+later. For now it works and that's good enough.  Just write some more ToMap() functions
