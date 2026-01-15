@@ -21,7 +21,7 @@ type RequirementSpec struct {
 	Variables []VariableSpec `yaml:"variables"`
 }
 
-func BuildRequirements() (RequirementSpec, error) {
+func BuildRequirements() (*RequirementSpec, error) {
 	var result RequirementSpec
 	path := strings.Join([]string{"definitions", viper.GetString("definition"), "requirements"}, ".")
 	reqs := viper.Get(path)
@@ -30,7 +30,7 @@ func BuildRequirements() (RequirementSpec, error) {
 	reqsMap, ok := reqs.(map[string]any)
 	if !ok {
 		slog.Error("Requirements parse failure", slog.Any("requirements", reqs))
-		return result, errors.New("RequirementsSpec parse failed: entire requirements section is busted")
+		return &result, errors.New("RequirementsSpec parse failed: entire requirements section is busted")
 	}
 	// pluck out Local
 	local, ok := reqsMap["local"].(bool)
@@ -45,7 +45,7 @@ func BuildRequirements() (RequirementSpec, error) {
 		vdef, ok := varDef.(map[string]any)
 		if !ok {
 			slog.Error("Invalid variable declaration", slog.Int("index", i), slog.Any("definition", varDef))
-			return result, errors.New("RequirementSpec parse error: bad variable declaration")
+			return &result, errors.New("RequirementSpec parse error: bad variable declaration")
 		}
 		name, _ := vdef["name"].(string)
 		def, _ := vdef["default"]
@@ -55,7 +55,7 @@ func BuildRequirements() (RequirementSpec, error) {
 	result.Local = local
 	result.Variables = resultVars
 	slog.Debug("Parsed requirements", slog.Bool("local", result.Local), slog.Any("variables", result.Variables))
-	return result, nil
+	return &result, nil
 }
 
 func BuildVariables(reqvars []VariableSpec) (map[string]any, error) {

@@ -1,8 +1,11 @@
 package luabridge
 
 import (
+	"fmt"
 	"log/slog"
+	"proj/internal/config"
 	"proj/internal/paths"
+	"reflect"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -10,19 +13,21 @@ import (
 type Runtime struct {
 	Variables map[string]any
 	Paths *paths.Paths
-	Nowrite bool
+	Requirements *config.RequirementSpec
+	NoWrite bool
 	Error  error
 	// will gain reqs and files
 	state  *lua.LState
 }
 
 // will gain reqs and files
-func NewRuntime(variables map[string]any, paths *paths.Paths, nowrite bool) *Runtime {
+func NewRuntime(variables map[string]any, paths *paths.Paths, requirements *config.RequirementSpec, nowrite bool) *Runtime {
 	slog.Debug("Lua Bridge setup", "variables", variables)
 	r := Runtime{
 		Variables: variables,
 		Paths: paths,
-		Nowrite: nowrite,
+		Requirements: requirements,
+		NoWrite: nowrite,
 	}
 	r.setupExecutionEnvironment()
 	return &r
@@ -46,6 +51,21 @@ func (r *Runtime) setupExecutionEnvironment() {
 
 	r.state.PreloadModule("proj", func(l *lua.LState) int {
 		mod := l.NewTable()
+		mod.RawSetString("noWrite", lua.LBool(r.NoWrite))
+
+		// setup Requirements
+		reqtable := l.NewTable()
+		// reqtable.RawSetString("variables", reqvars)
+		reqtable.RawSetString("isLocal", lua.LBool(r.Requirements.Local))
+
+		reqvars := l.NewTable()
+		for _, v := range r.Requirements.Variables {
+			rte := l.NewTable()
+			rte.RawSetString("name", lua.LString(v.Name))
+			reqvars.Append(rte)
+		}
+		reqtable.RawSetString("variables", reqvars)
+		mod.RawSetString("requirements", reqtable)
 
 		// TODO: this variable binding stuff kinda sucks
 		keys := make([]string, 0, len(r.Variables))
@@ -57,7 +77,6 @@ func (r *Runtime) setupExecutionEnvironment() {
 		// mod.RawSetString("name", lua.LString(r.Variables["name"].(string)))
 		// mod.RawSetString("template", lua.LString(r.Variables["template"].(string)))
 		// mod.RawSetString("definition", lua.LString(r.Variables["definition"].(string)))
-		// mod.RawSetString("nowrite", lua.LBool(r.Variables["nowrite"].(bool)))
 
 		// need to bind:
 		//* variables
@@ -76,4 +95,28 @@ func (r *Runtime) setupExecutionEnvironment() {
 
 func (r *Runtime) CloseState() {
 	r.state.Close()
+}
+
+func toLuaValue(l *lua.LState, value any) lua.LValue {
+	switch v := value.(type) {
+	case nil:
+		return lua.LNil
+	case bool:
+		return lua.LBool(v)
+	case string:
+		return lua.LString(v)
+	case int, int8, int16, int32, int64:
+		return lua.LNumber(reflect.ValueOf(v).Convert(reflect.TypeOf(int64(0))).Int())
+	case float32, float64:
+		return lua.LNumber(reflect.ValueOf(v).Convert(reflect.TypeOf(float64(0))).Float())
+	case []any:
+		tbl := l.NewTable()
+		for _, i := range v {
+			tbl.Append(toLuaValue(l, i))
+		}
+		return tbl
+	// iou map
+	default:
+		return lua.LString(fmt.Sprintf("%v", v))
+	}
 }

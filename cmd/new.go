@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.yaml.in/yaml/v3"
+	// "github.com/yuin/gopher-lua"
 )
 
 var newCmd = &cobra.Command{
@@ -74,6 +75,7 @@ func runNew(cmd *cobra.Command, args []string) {
 		slog.Error("Definition does not exist in template", slog.String("path", defPath), slog.String("definition", viper.GetString("definition")), slog.String("template name", viper.GetString("template-name")), slog.String("template config file", viper.GetString("template-config-file")))
 	}
 
+	// ioy
 	reqs, _ := config.BuildRequirements()
 	vars, _ := config.BuildVariables(reqs.Variables)
 
@@ -84,7 +86,7 @@ func runNew(cmd *cobra.Command, args []string) {
 	}
 
 	// will need files && requirements
-	luaenv := luabridge.NewRuntime(vars, paths, viper.GetBool("no-write"))
+	luaenv := luabridge.NewRuntime(vars, paths, reqs, viper.GetBool("no-write"))
 	for _, script := range scripts.BeforeScripts() {
 		luaenv.Run(script)
 		// check for errors and if they exist then os.exit
