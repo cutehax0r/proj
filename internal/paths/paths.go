@@ -96,16 +96,6 @@ func NewPathsFromConfig(config map[string]any) (*Paths, error) {
 	)
 }
 
-func (p *Paths) DefinitionSourcePath(source string) (string, error) {
-	// for resources in the template's definition's files source section: 
-	return "templatepath+source", nil
-}
-
-func (p *Paths) DefinitionTargetPath(target string, variables map[string]any) (string, error) {
-	// for resources in the template's definition's files target section: 
-	return "targetpath+templateify(target,vars)", nil
-}
-
 func (p *Paths) LogValue() slog.Value {
 	if p == nil {
 		return slog.Value{}
@@ -122,6 +112,27 @@ func (p *Paths) LogValue() slog.Value {
 	)
 }
 
+func (p *Paths) ToMap() map[string]string {
+	return map[string]string{
+		"targetRoot": p.TargetRoot,
+		"targetPath": p.TargetPath,
+		"templateRoot": p.TemplateRoot,
+		"templatePath": p.TemplatePath,
+		"templateConfigFile": p.TemplateConfigFile,
+		"globalConfigRoot": p.GlobalConfigRoot,
+		"globalConfigPath": p.GlobalConfigPath,
+	}
+}
+
+// func (p *Paths) DefinitionSourcePath(source string) (string, error) {
+// 	// for resources in the template's definition's files source section: 
+// 	return "templatepath+source", nil
+// }
+//
+// func (p *Paths) DefinitionTargetPath(target string, variables map[string]any) (string, error) {
+// 	// for resources in the template's definition's files target section: 
+// 	return "targetpath+templateify(target,vars)", nil
+// }
 
 func definedOrDefault(desc string, configVal string, components ...string) string {
 	if configVal != "" {

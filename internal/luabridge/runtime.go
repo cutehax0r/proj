@@ -53,6 +53,10 @@ func (r *Runtime) setupExecutionEnvironment() {
 		mod := l.NewTable()
 		mod.RawSetString("noWrite", lua.LBool(r.NoWrite))
 
+		// setup paths (alternate approach - create a map and pass it to the toluavalue)
+		pathstable := r.Paths.ToMap()
+		mod.RawSetString("paths", r.toLuaValue(pathstable))
+
 		// setup Requirements
 		reqtable := l.NewTable()
 		reqtable.RawSetString("isLocal", lua.LBool(r.Requirements.Local))
