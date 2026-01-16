@@ -85,8 +85,14 @@ func runNew(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	files, err := config.ParseFileSpecs()
+	if err != nil {
+		slog.Error("Failed to load files from template definition", slog.Any("error", err))
+		os.Exit(1)
+	}
+
 	// will need files && requirements
-	luaenv := luabridge.NewRuntime(vars, paths, reqs, viper.GetBool("no-write"))
+	luaenv := luabridge.NewRuntime(vars, paths, reqs, files, viper.GetBool("no-write"))
 	for _, script := range scripts.BeforeScripts() {
 		luaenv.Run(script)
 		// check for errors and if they exist then os.exit
@@ -106,24 +112,14 @@ func runNew(cmd *cobra.Command, args []string) {
 	if viper.GetBool("no-write") == true {
 		slog.Info("No-write set: skipping copy")
 	} else {
-		copyFiles()
+		for _, file := range(*files) {
+			slog.Info("Copying", slog.Bool("parse", file.Parse), slog.String("source", file.Source), slog.String("target", file.Target))
+		}
 	}
 
 	for _, script := range scripts.AfterScripts() {
 		luaenv.Run(script)
 	}
-}
-
-func copyFiles() error {
-	files, err := config.ParseFileSpecs()
-	if err != nil {
-		slog.Error("Failed to load files from template definition", slog.Any("error", err))
-		return err
-	}
-	for _, file := range files {
-		slog.Info("Copying", slog.Bool("parse", file.Parse), slog.String("source", file.Source), slog.String("target", file.Target))
-	}
-	return nil
 }
 
 func logViperDebug(desc string, settings map[string]any) {

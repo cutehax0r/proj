@@ -14,7 +14,15 @@ type FileSpec struct {
 	Parse  bool   `yaml:"parse" default:"true"`
 }
 
-func ParseFileSpecs() ([]FileSpec, error) {
+func (f *FileSpec) ToMap() map[string]any {
+	return map[string]any{
+		"source": f.Source,
+		"target": f.Target,
+		"parse": f.Parse,
+	}
+}
+
+func ParseFileSpecs() (*[]FileSpec, error) {
 	var result []FileSpec
 
 	path := strings.Join([]string{"definitions", viper.GetString("definition"), "files"}, ".")
@@ -40,6 +48,6 @@ func ParseFileSpecs() ([]FileSpec, error) {
 		result = append(result, FileSpec{Source: source, Target: target, Parse: parse})
 	}
 
-	return result, nil
+	return &result, nil
 }
 

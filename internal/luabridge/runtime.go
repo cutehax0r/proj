@@ -14,6 +14,7 @@ type Runtime struct {
 	Variables    map[string]any
 	Paths        *paths.Paths
 	Requirements *config.RequirementSpec
+	Files	     *[]config.FileSpec
 	NoWrite      bool
 	Error        error
 	// will gain reqs and files
@@ -21,12 +22,13 @@ type Runtime struct {
 }
 
 // will gain reqs and files
-func NewRuntime(variables map[string]any, paths *paths.Paths, requirements *config.RequirementSpec, nowrite bool) *Runtime {
+func NewRuntime(variables map[string]any, paths *paths.Paths, requirements *config.RequirementSpec, files *[]config.FileSpec, nowrite bool) *Runtime {
 	slog.Debug("Lua Bridge setup", "variables", variables)
 	r := Runtime{
 		Variables:    variables,
 		Paths:        paths,
 		Requirements: requirements,
+		Files:        files,
 		NoWrite:      nowrite,
 	}
 	r.setupExecutionEnvironment()
@@ -56,6 +58,15 @@ func (r *Runtime) setupExecutionEnvironment() {
 		// setup paths (alternate approach - create a map and pass it to the toluavalue)
 		pathstable := r.Paths.ToMap()
 		mod.RawSetString("paths", r.toLuaValue(pathstable))
+
+		// setup files
+		var filestable []map[string]any
+		if r.Files != nil {
+			for _, file := range *r.Files {
+				filestable = append(filestable, file.ToMap())
+			}
+		}
+		mod.RawSetString("files", r.toLuaValue(filestable))
 
 		// setup Requirements
 		reqtable := l.NewTable()
