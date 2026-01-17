@@ -55,6 +55,10 @@ func (r *Runtime) setupExecutionEnvironment() {
 		mod := l.NewTable()
 		mod.RawSetString("noWrite", lua.LBool(r.NoWrite))
 
+		// mod.RawSetString("name", lua.LString(r.Variables["name"].(string)))
+		// mod.RawSetString("template", lua.LString(r.Variables["template"].(string)))
+		// mod.RawSetString("definition", lua.LString(r.Variables["definition"].(string)))
+
 		// setup paths (alternate approach - create a map and pass it to the toluavalue)
 		pathstable := r.Paths.ToMap()
 		mod.RawSetString("paths", r.toLuaValue(pathstable))
@@ -89,14 +93,8 @@ func (r *Runtime) setupExecutionEnvironment() {
 		}
 		slog.Debug("Go variable keys", "keys", keys)
 
-		// mod.RawSetString("name", lua.LString(r.Variables["name"].(string)))
-		// mod.RawSetString("template", lua.LString(r.Variables["template"].(string)))
-		// mod.RawSetString("definition", lua.LString(r.Variables["definition"].(string)))
-
 		// need to bind:
 		//* variables
-		//* requirements
-		//* files
 
 		// functions read from ./functions.go
 		for name, fn := range LuaRuntimeFunctions {

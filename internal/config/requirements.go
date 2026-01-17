@@ -6,6 +6,7 @@ package config
 import (
 	"errors"
 	"log/slog"
+	"maps"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -59,13 +60,16 @@ func BuildRequirements() (*RequirementSpec, error) {
 }
 
 func BuildVariables(reqvars []VariableSpec) (map[string]any, error) {
+
 	result := make(map[string]any)
 
-	slog.Debug("Prepare Variables", slog.String("Placeholder", "resolving variables"), slog.String("Desc", "Generate all combinations of variables and values by combining global, template, and definition descriptions of variables"))
-	setvars := buildMapFromSetVariables()
 	globalvars := viper.GetStringMap("variables.global")
-	slog.Debug("Building variables", slog.Any("globalvars", globalvars), slog.Any("from set-variable", setvars))
+	maps.Copy(result, globalvars)
 
+	setvars := buildMapFromSetVariables()
+	maps.Copy(result, setvars)
+
+	reqd := make(map[string]any)
 	for _, v := range reqvars {
 		var finalval any
 		if _, ok := setvars[v.Name]; ok {
@@ -75,8 +79,9 @@ func BuildVariables(reqvars []VariableSpec) (map[string]any, error) {
 		} else {
 			finalval = v.Default
 		}
-		result[v.Name] = finalval
+		reqd[v.Name] = finalval
 	}
+	maps.Copy(result, reqd)
 
 	return result, nil
 }

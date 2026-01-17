@@ -75,39 +75,43 @@ func runNew(cmd *cobra.Command, args []string) {
 		slog.Error("Definition does not exist in template", slog.String("path", defPath), slog.String("definition", viper.GetString("definition")), slog.String("template name", viper.GetString("template-name")), slog.String("template config file", viper.GetString("template-config-file")))
 	}
 
-	// ioy
 	reqs, _ := config.BuildRequirements()
+	slog.Debug("Final Requirements", slog.Any("reqs", reqs))
+
 	vars, _ := config.BuildVariables(reqs.Variables)
+	slog.Debug("Final Variables", slog.Any("vars", vars))
+
 
 	scripts, err := config.ParseScriptSpecs(paths)
 	if err != nil {
 		slog.Error("Couldn't build scripts")
 		os.Exit(1)
 	}
+	slog.Debug("Final scripts", slog.Any("scripts", scripts))
 
 	files, err := config.ParseFileSpecs()
 	if err != nil {
 		slog.Error("Failed to load files from template definition", slog.Any("error", err))
 		os.Exit(1)
 	}
+	slog.Debug("Final files", slog.Any("files", files))
 
-	// will need files && requirements
 	luaenv := luabridge.NewRuntime(vars, paths, reqs, files, viper.GetBool("no-write"))
 	for _, script := range scripts.BeforeScripts() {
 		luaenv.Run(script)
 		// check for errors and if they exist then os.exit
 	}
 
-	slog.Debug("Final Requirements", slog.Any("reqs", reqs))
-	slog.Debug("Final Variables", slog.Any("vars", vars))
-
-	for key, value := range vars {
-		if value == nil {
-			slog.Error("Required variable is not set. Use --set-variable. Aborting.", slog.Any(key, value))
+	// this should only happen for 'required' vars
+	for _, varspec := range reqs.Variables {
+		if vars[varspec.Name] == nil {
+			slog.Error("Required variable is not set. Use --set-variable. Aborting.", slog.Any("Name", varspec.Name))
 			// this is where you put a 'while nil { prompt }' loop in v2.
+			slog.Info("All variables", slog.Any("vars", vars))
 			os.Exit(1)
 		}
 	}
+	slog.Info("All the variables are ready so we can do the work")
 
 	if viper.GetBool("no-write") == true {
 		slog.Info("No-write set: skipping copy")
