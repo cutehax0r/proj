@@ -37,6 +37,7 @@ func NewRuntime(variables map[string]any, paths *paths.Paths, requirements *conf
 
 func (r *Runtime) Run(script string) error {
 	slog.Debug("Executing script", "script", script)
+	// absolutize path to script - paths has "resolve" that might work
 	err := r.state.DoFile(script)
 	if err != nil {
 		slog.Error("Lua Error", "script", script, "error", err)
