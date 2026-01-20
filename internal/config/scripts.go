@@ -127,5 +127,3 @@ func scriptExists(s string) bool {
 	}
 	return true
 }
-
-

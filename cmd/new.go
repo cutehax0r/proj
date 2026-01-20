@@ -100,6 +100,11 @@ func runNew(cmd *cobra.Command, args []string) {
 	luaenv := luabridge.NewRuntime(vars, paths, reqs, files, viper.GetBool("no-write"))
 	for _, script := range scripts.BeforeScripts() {
 		luaenv.Run(script)
+		if luaenv.Error != nil {
+			slog.Error("Error in lua script. Aborting", slog.Any("error", luaenv.Error), slog.String("script", script))
+			os.Exit(1)
+		}
+
 		// check for errors and if they exist then os.exit
 	}
 
@@ -114,6 +119,10 @@ func runNew(cmd *cobra.Command, args []string) {
 	}
 	slog.Debug("All the variables are ready so we can do the work")
 
+	// we're going to read all of the files that we're going to parse into memory. Two copies
+	// (before and after parsing). That's not very ram efficient but it lets us do some nice
+	// debugging with --no-write by forcing parsing to happen without writing.  Computers have
+	// lots of ram and text files are small so I'm not sweating it.
 	for _, file := range *files {
 		desttemp, err := template.New("filename").Parse(file.Target)
 		var deststr bytes.Buffer
@@ -125,11 +134,25 @@ func runNew(cmd *cobra.Command, args []string) {
 		if err != nil {
 			slog.Error("Error templating target filename", slog.Any("error", err), slog.String("target", file.Target))
 		}
+		if file.Parse == true {
+			// path needs to be 'absoluteifyied.
+			slog.Info("parsing content of file", slog.String("source", file.Source))
+			conttemp, err := template.ParseFiles(file.Source)
+			if err != nil {
+				slog.Error("Error parsing template", slog.Any("err", err), slog.Any("file", file.Source))
+				os.Exit(1)
+			}
+			var contbuff bytes.Buffer
+			conttemp.Execute(&contbuff, vars)
+			// set result
+		} else {
+			slog.Debug("Nothing to do, just copy the content raw")
+		}
 
 		if viper.GetBool("no-write") == true {
-			slog.Info("No-write set: skipping copy", slog.String("source", file.Source), slog.String("target", deststr.String()))
+			slog.Debug("No-write set: skipping copy", slog.String("source", file.Source), slog.String("target", deststr.String()))
 		} else {
-			slog.Info("Copying", slog.Bool("parse", file.Parse), slog.String("source", file.Source), slog.String("target", deststr.String()))
+			slog.Debug("Copying", slog.Bool("parse", file.Parse), slog.String("source", file.Source), slog.String("target", deststr.String()))
 		}
 	}
 
