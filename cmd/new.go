@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"bytes"
 	"log/slog"
 	"os"
 	"proj/internal/config"
 	"proj/internal/luabridge"
 	"proj/internal/paths"
 	"strings"
+	"text/template"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -40,12 +42,12 @@ func init() {
 	newCmd.Flags().StringArrayP("set-variable", "v", []string{}, "Set a variable using key=value")
 	viper.BindPFlag("set-variables", newCmd.Flags().Lookup("set-variable"))
 
-	newCmd.Flags().StringP("definition", "d", "new", "Definition in template to use")
-	viper.BindPFlag("definition", newCmd.Flags().Lookup("definition"))
+	newCmd.Flags().StringP("definition-name", "d", "new", "Definition in template to use")
+	viper.BindPFlag("definition-name", newCmd.Flags().Lookup("definition-name"))
 }
 
 func runNew(cmd *cobra.Command, args []string) {
-	slog.Debug("Execute New Command", slog.String("Definition", viper.GetString("definition")), slog.Group("Arguments", slog.String("Template Name", args[0]), slog.String("Target Name", args[1])))
+	slog.Debug("Execute New Command", slog.String("Definition", viper.GetString("definition-name")), slog.Group("Arguments", slog.String("Template Name", args[0]), slog.String("Target Name", args[1])))
 
 	// mangling viper at this point feels kinda wrong. Maybe we update the 'new paths from config' to just take some arguments?
 	viper.Set("template-name", args[0])
@@ -70,9 +72,9 @@ func runNew(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	defPath := strings.Join([]string{"definitions", viper.GetString("definition")}, ".")
+	defPath := strings.Join([]string{"definitions", viper.GetString("definition-name")}, ".")
 	if viper.IsSet(defPath) == false {
-		slog.Error("Definition does not exist in template", slog.String("path", defPath), slog.String("definition", viper.GetString("definition")), slog.String("template name", viper.GetString("template-name")), slog.String("template config file", viper.GetString("template-config-file")))
+		slog.Error("Definition does not exist in template", slog.String("path", defPath), slog.String("definition-name", viper.GetString("definition-name")), slog.String("template name", viper.GetString("template-name")), slog.String("template config file", viper.GetString("template-config-file")))
 	}
 
 	reqs, _ := config.BuildRequirements()
@@ -80,7 +82,6 @@ func runNew(cmd *cobra.Command, args []string) {
 
 	vars, _ := config.BuildVariables(reqs.Variables)
 	slog.Debug("Final Variables", slog.Any("vars", vars))
-
 
 	scripts, err := config.ParseScriptSpecs(paths)
 	if err != nil {
@@ -111,13 +112,24 @@ func runNew(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 	}
-	slog.Info("All the variables are ready so we can do the work")
+	slog.Debug("All the variables are ready so we can do the work")
 
-	if viper.GetBool("no-write") == true {
-		slog.Info("No-write set: skipping copy")
-	} else {
-		for _, file := range(*files) {
-			slog.Info("Copying", slog.Bool("parse", file.Parse), slog.String("source", file.Source), slog.String("target", file.Target))
+	for _, file := range *files {
+		desttemp, err := template.New("filename").Parse(file.Target)
+		var deststr bytes.Buffer
+		// consider adding 'funcs' here
+		if err != nil {
+			slog.Error("Couldn't template the target filename", slog.String("target", file.Target), slog.Any("err", err))
+		}
+		err = desttemp.Execute(&deststr, vars)
+		if err != nil {
+			slog.Error("Error templating target filename", slog.Any("error", err), slog.String("target", file.Target))
+		}
+
+		if viper.GetBool("no-write") == true {
+			slog.Info("No-write set: skipping copy", slog.String("source", file.Source), slog.String("target", deststr.String()))
+		} else {
+			slog.Info("Copying", slog.Bool("parse", file.Parse), slog.String("source", file.Source), slog.String("target", deststr.String()))
 		}
 	}
 

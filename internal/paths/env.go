@@ -69,6 +69,7 @@ func TemplateRootDir() string {
 	}
 	return TemplateRootPaths()[0]
 }
+
 func uniqPreserveOrder(paths []string) (uniq []string) {
 	seen := make(map[string]struct{})
 	for _, p := range paths {
@@ -112,4 +113,3 @@ func expandPath(path string) (string, error) {
 	}
 	return expanded, nil
 }
-

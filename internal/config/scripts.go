@@ -24,7 +24,7 @@ func ParseScriptSpecs(paths *paths.Paths) (ScriptSpec, error) {
 	var result ScriptSpec
 
 	// target level
-	path := strings.Join([]string{"definitions", viper.GetString("definition"), "scripts"}, ".")
+	path := strings.Join([]string{"definitions", viper.GetString("definition-name"), "scripts"}, ".")
 	scripts := viper.Get(path)
 	scriptMap, ok := scripts.(map[string]any)
 	if !ok {

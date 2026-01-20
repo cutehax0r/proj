@@ -124,16 +124,6 @@ func (p *Paths) ToMap() map[string]string {
 	}
 }
 
-// func (p *Paths) DefinitionSourcePath(source string) (string, error) {
-// 	// for resources in the template's definition's files source section: 
-// 	return "templatepath+source", nil
-// }
-//
-// func (p *Paths) DefinitionTargetPath(target string, variables map[string]any) (string, error) {
-// 	// for resources in the template's definition's files target section: 
-// 	return "targetpath+templateify(target,vars)", nil
-// }
-
 func definedOrDefault(desc string, configVal string, components ...string) string {
 	if configVal != "" {
 		slog.Debug(fmt.Sprintf("%s provided, using it",  desc), slog.String("Path", configVal))
@@ -143,4 +133,3 @@ func definedOrDefault(desc string, configVal string, components ...string) strin
 	slog.Debug(fmt.Sprintf("%s not provided, constructing it", desc), slog.Any("Componets", components), slog.String("Path", path))
 	return path
 }
-

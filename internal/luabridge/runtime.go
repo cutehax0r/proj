@@ -17,7 +17,7 @@ type Runtime struct {
 	Files	     *[]config.FileSpec
 	NoWrite      bool
 	Error        error
-	// will gain reqs and files
+	// need cli parts: template/target/defn
 	state *lua.LState
 }
 
@@ -55,10 +55,6 @@ func (r *Runtime) setupExecutionEnvironment() {
 		mod := l.NewTable()
 		mod.RawSetString("noWrite", lua.LBool(r.NoWrite))
 
-		// mod.RawSetString("name", lua.LString(r.Variables["name"].(string)))
-		// mod.RawSetString("template", lua.LString(r.Variables["template"].(string)))
-		// mod.RawSetString("definition", lua.LString(r.Variables["definition"].(string)))
-
 		// setup paths (alternate approach - create a map and pass it to the toluavalue)
 		pathstable := r.Paths.ToMap()
 		mod.RawSetString("paths", r.toLuaValue(pathstable))
@@ -86,15 +82,9 @@ func (r *Runtime) setupExecutionEnvironment() {
 		reqtable.RawSetString("variables", reqvars)
 		mod.RawSetString("requirements", reqtable)
 
-		// TODO: this variable binding stuff kinda sucks
-		keys := make([]string, 0, len(r.Variables))
-		for k := range r.Variables {
-			keys = append(keys, k)
-		}
-		slog.Debug("Go variable keys", "keys", keys)
-
-		// need to bind:
-		//* variables
+		vartable := l.NewTable()
+		vartable.RawSetString("variables", r.toLuaValue(r.Variables))
+		mod.RawSetString("variables", vartable)
 
 		// functions read from ./functions.go
 		for name, fn := range LuaRuntimeFunctions {

@@ -24,7 +24,7 @@ type RequirementSpec struct {
 
 func BuildRequirements() (*RequirementSpec, error) {
 	var result RequirementSpec
-	path := strings.Join([]string{"definitions", viper.GetString("definition"), "requirements"}, ".")
+	path := strings.Join([]string{"definitions", viper.GetString("definition-name"), "requirements"}, ".")
 	reqs := viper.Get(path)
 	slog.Debug("Loaded requirements", slog.String("path", path), slog.Any("Requirements", reqs))
 
@@ -45,7 +45,7 @@ func BuildRequirements() (*RequirementSpec, error) {
 	for i, varDef := range varSlice {
 		vdef, ok := varDef.(map[string]any)
 		if !ok {
-			slog.Error("Invalid variable declaration", slog.Int("index", i), slog.Any("definition", varDef))
+			slog.Error("Invalid variable declaration", slog.Int("index", i), slog.Any("definition-name", varDef))
 			return &result, errors.New("RequirementSpec parse error: bad variable declaration")
 		}
 		name, _ := vdef["name"].(string)
@@ -60,7 +60,6 @@ func BuildRequirements() (*RequirementSpec, error) {
 }
 
 func BuildVariables(reqvars []VariableSpec) (map[string]any, error) {
-
 	result := make(map[string]any)
 
 	globalvars := viper.GetStringMap("variables.global")
@@ -82,6 +81,10 @@ func BuildVariables(reqvars []VariableSpec) (map[string]any, error) {
 		reqd[v.Name] = finalval
 	}
 	maps.Copy(result, reqd)
+
+	result["targetName"] = viper.GetString("target-name")
+	result["templateName"] = viper.GetString("template-name")
+	result["definitionName"] = viper.GetString("definition-name")
 
 	return result, nil
 }
