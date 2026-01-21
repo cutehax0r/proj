@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"log/slog"
+	"proj/internal/paths"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -22,11 +23,11 @@ func (f *FileSpec) ToMap() map[string]any {
 	}
 }
 
-func ParseFileSpecs() (*[]FileSpec, error) {
+func ParseFileSpecs(paths *paths.Paths) (*[]FileSpec, error) {
 	var result []FileSpec
 
-	path := strings.Join([]string{"definitions", viper.GetString("definition-name"), "files"}, ".")
-	files := viper.Get(path)
+	datapath := strings.Join([]string{"definitions", viper.GetString("definition-name"), "files"}, ".")
+	files := viper.Get(datapath)
 
 	fileSlice, ok := files.([]any)
 	if !ok {
@@ -39,8 +40,8 @@ func ParseFileSpecs() (*[]FileSpec, error) {
 			slog.Error("Invalid file declaration", slog.Int("Index", i), slog.Any("definition", fileDef))
 			return nil, errors.New("FileSpec parse failure: bad file declaration")
 		}
-		source, _ := spec["source"].(string)
-		target, _ := spec["target"].(string)
+		source, _ := resolve(paths.TemplatePath, spec["source"].(string))
+		target, _ := resolve(paths.TargetRoot, spec["target"].(string))
 		parse, ok := spec["parse"].(bool)
 		if !ok {
 			parse = true

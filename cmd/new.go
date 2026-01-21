@@ -90,7 +90,7 @@ func runNew(cmd *cobra.Command, args []string) {
 	}
 	slog.Debug("Final scripts", slog.Any("scripts", scripts))
 
-	files, err := config.ParseFileSpecs()
+	files, err := config.ParseFileSpecs(paths)
 	if err != nil {
 		slog.Error("Failed to load files from template definition", slog.Any("error", err))
 		os.Exit(1)
@@ -136,10 +136,10 @@ func runNew(cmd *cobra.Command, args []string) {
 		}
 		if file.Parse == true {
 			// path needs to be 'absoluteifyied.
-			slog.Info("parsing content of file", slog.String("source", file.Source))
+			slog.Info("parsing content of file", slog.String("source", file.Source), slog.String("target", deststr.String()))
 			conttemp, err := template.ParseFiles(file.Source)
 			if err != nil {
-				slog.Error("Error parsing template", slog.Any("err", err), slog.Any("file", file.Source))
+				slog.Error("Error parsing template", slog.Any("err", err), slog.Any("file", file.Source), slog.Any("paths", paths))
 				os.Exit(1)
 			}
 			var contbuff bytes.Buffer
