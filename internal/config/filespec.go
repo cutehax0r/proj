@@ -41,7 +41,7 @@ func ParseFileSpecs(paths *paths.Paths) (*[]FileSpec, error) {
 			return nil, errors.New("FileSpec parse failure: bad file declaration")
 		}
 		source, _ := resolve(paths.TemplatePath, spec["source"].(string))
-		target, _ := resolve(paths.TargetRoot, spec["target"].(string))
+		target, _ := resolve(paths.TargetPath, spec["target"].(string))
 		parse, ok := spec["parse"].(bool)
 		if !ok {
 			parse = true

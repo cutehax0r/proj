@@ -146,7 +146,7 @@ func runNew(cmd *cobra.Command, args []string) {
 			conttemp.Execute(&contbuff, vars)
 			// set result
 		} else {
-			slog.Debug("Nothing to do, just copy the content raw")
+			slog.Info("Nothing to do, just copy the content raw", slog.String("source", file.Source), slog.String("target", deststr.String()))
 		}
 
 		if viper.GetBool("no-write") == true {
