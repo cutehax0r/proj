@@ -134,9 +134,13 @@ func runNew(cmd *cobra.Command, args []string) {
 		if err != nil {
 			slog.Error("Error templating target filename", slog.Any("error", err), slog.String("target", file.Target))
 		}
+		// this whole mess could become a method
 		if file.Parse == true {
-			// path needs to be 'absoluteifyied.
 			slog.Info("parsing content of file", slog.String("source", file.Source), slog.String("target", deststr.String()))
+			// you have to manually read a file  contentBytes, err :=
+			// os.ReadFile(filePath); if err != nil {...}; file.Raw =
+			// string(contentBytes). This step isn't required for rendering: PraseFile()
+			// does that. This is more for debugging than anything
 			conttemp, err := template.ParseFiles(file.Source)
 			if err != nil {
 				slog.Error("Error parsing template", slog.Any("err", err), slog.Any("file", file.Source), slog.Any("paths", paths))
@@ -144,9 +148,11 @@ func runNew(cmd *cobra.Command, args []string) {
 			}
 			var contbuff bytes.Buffer
 			conttemp.Execute(&contbuff, vars)
+			file.Rendered = contbuff.String()
+			slog.Info("result", slog.String("rendered", file.Rendered))
 			// set result
 		} else {
-			slog.Info("Nothing to do, just copy the content raw", slog.String("source", file.Source), slog.String("target", deststr.String()))
+			slog.Info("Nothing to do, just copy the content raw", slog.String("source", file.Source), slog.String("target", deststr.String()) )
 		}
 
 		if viper.GetBool("no-write") == true {

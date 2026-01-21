@@ -13,6 +13,9 @@ type FileSpec struct {
 	Source string `yaml:"source"`
 	Target string `yaml:"target"`
 	Parse  bool   `yaml:"parse" default:"true"`
+	Raw  string `yaml:"raw"`
+	Rendered string `yaml:"rendered"`
+
 }
 
 func (f *FileSpec) ToMap() map[string]any {
