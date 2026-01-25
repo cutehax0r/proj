@@ -124,6 +124,7 @@ func runNew(cmd *cobra.Command, args []string) {
 	// debugging with --no-write by forcing parsing to happen without writing.  Computers have
 	// lots of ram and text files are small so I'm not sweating it.
 	for _, file := range *files {
+		// this is building the destination name, not the content of that file
 		desttemp, err := template.New("filename").Parse(file.Target)
 		var deststr bytes.Buffer
 		// consider adding 'funcs' here
@@ -134,13 +135,15 @@ func runNew(cmd *cobra.Command, args []string) {
 		if err != nil {
 			slog.Error("Error templating target filename", slog.Any("error", err), slog.String("target", file.Target))
 		}
-		// this whole mess could become a method
 		if file.Parse == true {
 			slog.Info("parsing content of file", slog.String("source", file.Source), slog.String("target", deststr.String()))
-			// you have to manually read a file  contentBytes, err :=
-			// os.ReadFile(filePath); if err != nil {...}; file.Raw =
-			// string(contentBytes). This step isn't required for rendering: PraseFile()
-			// does that. This is more for debugging than anything
+			rawtemp, err := os.ReadFile(file.Target)
+			// set raw value
+			if err != nil {
+				slog.Error("Couldn't read the raw template data", slog.String("target", file.Target), slog.Any("err", err))
+				os.Exit(1)
+			}
+			slog.Debug("rendering template", slog.String("raw data", string(rawtemp)))
 			conttemp, err := template.ParseFiles(file.Source)
 			if err != nil {
 				slog.Error("Error parsing template", slog.Any("err", err), slog.Any("file", file.Source), slog.Any("paths", paths))
@@ -151,6 +154,7 @@ func runNew(cmd *cobra.Command, args []string) {
 			file.Rendered = contbuff.String()
 			slog.Info("result", slog.String("rendered", file.Rendered))
 			// set result
+			// write the file to the target location
 		} else {
 			slog.Info("Nothing to do, just copy the content raw", slog.String("source", file.Source), slog.String("target", deststr.String()) )
 		}
