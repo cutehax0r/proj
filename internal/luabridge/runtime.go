@@ -83,9 +83,8 @@ func (r *Runtime) setupExecutionEnvironment() {
 		reqtable.RawSetString("variables", reqvars)
 		mod.RawSetString("requirements", reqtable)
 
-		vartable := l.NewTable()
-		vartable.RawSetString("variables", r.toLuaValue(r.Variables))
-		mod.RawSetString("variables", vartable)
+		// Expose variables directly at proj.variables (not nested)
+		mod.RawSetString("variables", r.toLuaValue(r.Variables))
 
 		// functions read from ./functions.go
 		for name, fn := range LuaRuntimeFunctions {
@@ -217,10 +216,37 @@ func (r *Runtime) fromLuaValue(value lua.LValue) any {
 func (r *Runtime) GetVariables() map[string]any {
 	result := make(map[string]any)
 
-	// Get the proj.variables table from the Lua state
-	mod := r.state.GetGlobal("proj")
+	// Get the proj module from package.loaded (where require stores it)
+	// First get the package table
+	packageTable := r.state.GetGlobal("package")
+	if packageTable == lua.LNil {
+		slog.Warn("package table not found in Lua state")
+		return result
+	}
+
+	pkgTable, ok := packageTable.(*lua.LTable)
+	if !ok {
+		slog.Warn("package is not a table in Lua state")
+		return result
+	}
+
+	// Get package.loaded
+	loadedTable := pkgTable.RawGetString("loaded")
+	if loadedTable == lua.LNil {
+		slog.Warn("package.loaded not found")
+		return result
+	}
+
+	loaded, ok := loadedTable.(*lua.LTable)
+	if !ok {
+		slog.Warn("package.loaded is not a table")
+		return result
+	}
+
+	// Get the proj module from package.loaded
+	mod := loaded.RawGetString("proj")
 	if mod == lua.LNil {
-		slog.Warn("proj module not found in Lua state")
+		slog.Warn("proj module not found in package.loaded")
 		return result
 	}
 
@@ -230,6 +256,7 @@ func (r *Runtime) GetVariables() map[string]any {
 		return result
 	}
 
+	// Get the variables table (now directly at proj.variables)
 	varTable := modTable.RawGetString("variables")
 	if varTable == lua.LNil {
 		slog.Warn("variables not found in proj module")
@@ -242,21 +269,8 @@ func (r *Runtime) GetVariables() map[string]any {
 		return result
 	}
 
-	// Get the nested variables table
-	actualVars := varTableObj.RawGetString("variables")
-	if actualVars == lua.LNil {
-		slog.Warn("variables.variables not found")
-		return result
-	}
-
-	actualVarsTable, ok := actualVars.(*lua.LTable)
-	if !ok {
-		slog.Warn("proj.variables.variables is not a table")
-		return result
-	}
-
 	// Convert the Lua table back to a Go map
-	actualVarsTable.ForEach(func(key, val lua.LValue) {
+	varTableObj.ForEach(func(key, val lua.LValue) {
 		var keyStr string
 		switch k := key.(type) {
 		case lua.LString:
