@@ -136,9 +136,9 @@ func runNew(cmd *cobra.Command, args []string) {
 		}
 		if file.Parse == true {
 			slog.Info("parsing content of file", slog.String("source", file.Source), slog.String("target", deststr.String()))
-			rawtemp, err := os.ReadFile(file.Target)
+			rawtemp, err := os.ReadFile(file.Source)
 			if err != nil {
-				slog.Error("Couldn't read the raw template data", slog.String("target", file.Target), slog.Any("err", err))
+				slog.Error("Couldn't read the raw template data", slog.String("Source", file.Source), slog.Any("err", err))
 				os.Exit(1)
 			}
 			file.Raw = string(rawtemp)

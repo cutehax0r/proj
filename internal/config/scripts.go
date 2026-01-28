@@ -22,30 +22,33 @@ type ScriptSpec struct {
 
 func ParseScriptSpecs(paths *paths.Paths) (ScriptSpec, error) {
 	var result ScriptSpec
+	var ok bool
 
 	// target level
 	path := strings.Join([]string{"definitions", viper.GetString("definition-name"), "scripts"}, ".")
 	scripts := viper.Get(path)
-	scriptMap, ok := scripts.(map[string]any)
-	if !ok {
-		slog.Error("ScriptSpec parse failure", slog.Any("Scripts", scripts))
-		return result, errors.New("ScriptSpec parse failure: entire scripts section is busted in definition")
-	}
-	if before, ok := scriptMap["definition-before"].(string); ok {
-		fp, err := resolve(paths.TemplatePath, before)
-		if err != nil {
-			slog.Error("Bad path for definition-before", slog.String("definition-before", before), slog.Any("err", err))
-			return result, err
+	if scripts != nil {
+		scriptMap, ok := scripts.(map[string]any)
+		if !ok {
+			slog.Error("ScriptSpec parse failure", slog.Any("Scripts", scripts))
+			return result, errors.New("ScriptSpec parse failure: entire scripts section is busted in definition")
 		}
-		result.DefinitionBefore = fp
-	}
-	if after, ok := scriptMap["definition-after"].(string); ok {
-		fp, err := resolve(paths.TemplatePath, after)
-		if err != nil {
-			slog.Error("Bad path for definition-after", slog.String("definition-after", after), slog.Any("err", err))
-			return result, err
+		if before, ok := scriptMap["definition-before"].(string); ok {
+			fp, err := resolve(paths.TemplatePath, before)
+			if err != nil {
+				slog.Error("Bad path for definition-before", slog.String("definition-before", before), slog.Any("err", err))
+				return result, err
+			}
+			result.DefinitionBefore = fp
 		}
-		result.DefinitionAfter = fp
+		if after, ok := scriptMap["definition-after"].(string); ok {
+			fp, err := resolve(paths.TemplatePath, after)
+			if err != nil {
+				slog.Error("Bad path for definition-after", slog.String("definition-after", after), slog.Any("err", err))
+				return result, err
+			}
+			result.DefinitionAfter = fp
+		}
 	}
 
 	csm := viper.GetStringMapString("scripts")
@@ -159,4 +162,3 @@ func expandPath(path string) (string, error) {
 	}
 	return expanded, nil
 }
-
