@@ -13,12 +13,12 @@ import (
 )
 
 type VariableSpec struct {
-	Name string
+	Name    string
 	Default any
 }
 
 type RequirementSpec struct {
-	Local bool `yaml:"local" default:"false"`
+	Local     bool           `yaml:"local" default:"false"`
 	Variables []VariableSpec `yaml:"variables"`
 }
 
@@ -41,16 +41,18 @@ func BuildRequirements() (*RequirementSpec, error) {
 
 	// pluck out variables
 	var resultVars []VariableSpec
-	varSlice := reqsMap["variables"].([]any)
-	for i, varDef := range varSlice {
-		vdef, ok := varDef.(map[string]any)
-		if !ok {
-			slog.Error("Invalid variable declaration", slog.Int("index", i), slog.Any("definition-name", varDef))
-			return &result, errors.New("RequirementSpec parse error: bad variable declaration")
+	if variables, ok := reqsMap["variables"]; ok && variables != nil {
+		varSlice := variables.([]any)
+		for i, varDef := range varSlice {
+			vdef, ok := varDef.(map[string]any)
+			if !ok {
+				slog.Error("Invalid variable declaration", slog.Int("index", i), slog.Any("definition-name", varDef))
+				return &result, errors.New("RequirementSpec parse error: bad variable declaration")
+			}
+			name, _ := vdef["name"].(string)
+			def, _ := vdef["default"]
+			resultVars = append(resultVars, VariableSpec{Name: name, Default: def})
 		}
-		name, _ := vdef["name"].(string)
-		def, _ := vdef["default"]
-		resultVars = append(resultVars, VariableSpec{Name: name, Default: def})
 	}
 
 	result.Local = local
