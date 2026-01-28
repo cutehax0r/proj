@@ -13,7 +13,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.yaml.in/yaml/v3"
-	// "github.com/yuin/gopher-lua"
 )
 
 var newCmd = &cobra.Command{
@@ -108,7 +107,7 @@ func runNew(cmd *cobra.Command, args []string) {
 		// check for errors and if they exist then os.exit
 	}
 
-	// this should only happen for 'required' vars
+	// ensure required variables are present
 	for _, varspec := range reqs.Variables {
 		if vars[varspec.Name] == nil {
 			slog.Error("Required variable is not set. Use --set-variable. Aborting.", slog.Any("Name", varspec.Name))
@@ -138,12 +137,12 @@ func runNew(cmd *cobra.Command, args []string) {
 		if file.Parse == true {
 			slog.Info("parsing content of file", slog.String("source", file.Source), slog.String("target", deststr.String()))
 			rawtemp, err := os.ReadFile(file.Target)
-			// set raw value
 			if err != nil {
 				slog.Error("Couldn't read the raw template data", slog.String("target", file.Target), slog.Any("err", err))
 				os.Exit(1)
 			}
-			slog.Debug("rendering template", slog.String("raw data", string(rawtemp)))
+			file.Raw = string(rawtemp)
+			slog.Debug("rendering template", slog.String("raw data", file.Raw))
 			conttemp, err := template.ParseFiles(file.Source)
 			if err != nil {
 				slog.Error("Error parsing template", slog.Any("err", err), slog.Any("file", file.Source), slog.Any("paths", paths))
@@ -153,10 +152,9 @@ func runNew(cmd *cobra.Command, args []string) {
 			conttemp.Execute(&contbuff, vars)
 			file.Rendered = contbuff.String()
 			slog.Info("result", slog.String("rendered", file.Rendered))
-			// set result
 			// write the file to the target location
 		} else {
-			slog.Info("Nothing to do, just copy the content raw", slog.String("source", file.Source), slog.String("target", deststr.String()) )
+			slog.Info("Nothing to render, skipping read.", slog.String("source", file.Source), slog.String("target", deststr.String()) )
 		}
 
 		if viper.GetBool("no-write") == true {
