@@ -14,7 +14,7 @@ type Runtime struct {
 	Variables    map[string]any
 	Paths        *paths.Paths
 	Requirements *config.RequirementSpec
-	Files	     *[]config.FileSpec
+	Files        *[]config.FileSpec
 	NoWrite      bool
 	Error        error
 	// need cli parts: template/target/defn
@@ -147,4 +147,128 @@ func (r *Runtime) toLuaValue(value any) lua.LValue {
 
 	// then just all through to a default representation
 	return lua.LString(fmt.Sprintf("%v", value))
+}
+
+func (r *Runtime) fromLuaValue(value lua.LValue) any {
+	if value == lua.LNil {
+		return nil
+	}
+
+	switch v := value.(type) {
+	case lua.LBool:
+		return bool(v)
+	case lua.LString:
+		return string(v)
+	case lua.LNumber:
+		// Try to preserve integer type if it's a whole number
+		num := float64(v)
+		if num == float64(int64(num)) {
+			return int64(num)
+		}
+		return num
+	case *lua.LTable:
+		// Determine if this is an array or a map by checking for consecutive integer keys
+		isArray := true
+		maxIndex := 0
+
+		v.ForEach(func(key, val lua.LValue) {
+			if lnum, ok := key.(lua.LNumber); ok {
+				idx := int(lnum)
+				if idx > maxIndex {
+					maxIndex = idx
+				}
+			} else {
+				isArray = false
+			}
+		})
+
+		if isArray && maxIndex > 0 {
+			// Convert to slice
+			result := make([]any, 0, maxIndex)
+			for i := 1; i <= maxIndex; i++ {
+				val := v.RawGetInt(i)
+				result = append(result, r.fromLuaValue(val))
+			}
+			return result
+		} else {
+			// Convert to map
+			result := make(map[string]any)
+			v.ForEach(func(key, val lua.LValue) {
+				var keyStr string
+				switch k := key.(type) {
+				case lua.LString:
+					keyStr = string(k)
+				case lua.LNumber:
+					keyStr = fmt.Sprintf("%v", k)
+				default:
+					keyStr = fmt.Sprintf("%v", k)
+				}
+				result[keyStr] = r.fromLuaValue(val)
+			})
+			return result
+		}
+	default:
+		return fmt.Sprintf("%v", value)
+	}
+}
+
+// GetVariables extracts the modified variables from the Lua state
+// and returns them as a Go map with deep copies of any nested structures
+func (r *Runtime) GetVariables() map[string]any {
+	result := make(map[string]any)
+
+	// Get the proj.variables table from the Lua state
+	mod := r.state.GetGlobal("proj")
+	if mod == lua.LNil {
+		slog.Warn("proj module not found in Lua state")
+		return result
+	}
+
+	modTable, ok := mod.(*lua.LTable)
+	if !ok {
+		slog.Warn("proj is not a table in Lua state")
+		return result
+	}
+
+	varTable := modTable.RawGetString("variables")
+	if varTable == lua.LNil {
+		slog.Warn("variables not found in proj module")
+		return result
+	}
+
+	varTableObj, ok := varTable.(*lua.LTable)
+	if !ok {
+		slog.Warn("proj.variables is not a table")
+		return result
+	}
+
+	// Get the nested variables table
+	actualVars := varTableObj.RawGetString("variables")
+	if actualVars == lua.LNil {
+		slog.Warn("variables.variables not found")
+		return result
+	}
+
+	actualVarsTable, ok := actualVars.(*lua.LTable)
+	if !ok {
+		slog.Warn("proj.variables.variables is not a table")
+		return result
+	}
+
+	// Convert the Lua table back to a Go map
+	actualVarsTable.ForEach(func(key, val lua.LValue) {
+		var keyStr string
+		switch k := key.(type) {
+		case lua.LString:
+			keyStr = string(k)
+		case lua.LNumber:
+			keyStr = fmt.Sprintf("%v", k)
+		default:
+			keyStr = fmt.Sprintf("%v", k)
+		}
+		result[keyStr] = r.fromLuaValue(val)
+	})
+
+	slog.Debug("Extracted variables from Lua", slog.Any("variables", result))
+	return result
 }

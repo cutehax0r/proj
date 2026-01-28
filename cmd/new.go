@@ -107,6 +107,10 @@ func runNew(cmd *cobra.Command, args []string) {
 		// check for errors and if they exist then os.exit
 	}
 
+	// Extract variables modified by lua scripts back into Go
+	vars = luaenv.GetVariables()
+	slog.Debug("Variables after before-scripts", slog.Any("vars", vars))
+
 	// ensure required variables are present
 	for _, varspec := range reqs.Variables {
 		if vars[varspec.Name] == nil {
@@ -154,7 +158,7 @@ func runNew(cmd *cobra.Command, args []string) {
 			slog.Info("result", slog.String("rendered", file.Rendered))
 			// write the file to the target location
 		} else {
-			slog.Info("Nothing to render, skipping read.", slog.String("source", file.Source), slog.String("target", deststr.String()) )
+			slog.Info("Nothing to render, skipping read.", slog.String("source", file.Source), slog.String("target", deststr.String()))
 		}
 
 		if viper.GetBool("no-write") == true {
