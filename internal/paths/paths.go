@@ -13,69 +13,55 @@ type Paths struct {
 	TargetConfigFile   string
 	TemplateRoot       string
 	TemplatePath       string
-	TemplateConfigFile string
+	TemplateConfigPath string
 	GlobalConfigPath   string
 	GlobalConfigRoot   string
 }
 
-func NewPaths(targetRoot string, targetPath string, templateRoot string, templatePath string, targetConfigFile string, globalConfigFile string, globalConfigRoot string) (*Paths, error) {
-	resolvedTargetRoot, err := resolve(targetRoot)
-	if err != nil {
-		slog.Error("failed to resolve target root", slog.Any("error", err))
+func NewPaths(targetRoot string, targetPath string, templateRoot string, templatePath string, targetConfigFile string, globalConfigPath string, globalConfigRoot string) (*Paths, error) {
+	p := &Paths{}
+	var err error
+
+	if p.TargetRoot, err = resolve(targetRoot); err != nil {
+		slog.Error("Resolve target root failed", slog.Any("error", err))
 		return nil, err
 	}
 
-	resolvedTargetPath, err := resolve(targetPath)
-	if err != nil {
-		slog.Error("failed to resolve target path", slog.Any("error", err))
+	if p.TargetPath, err = resolve(targetPath); err != nil {
+		slog.Error("Resolve target path failed", slog.Any("error", err))
 		return nil, err
 	}
 
-	resolvedTargetConfigFile, err := resolve(targetConfigFile)
-	if err != nil {
-		slog.Error("failed to resolve target configuration file", slog.Any("error", err))
+	if p.TargetConfigFile, err = resolve(targetConfigFile); err != nil {
+		slog.Error("Resolve target configuration file failed", slog.Any("error", err))
 		return nil, err
 	}
 
-	resolvedTemplateRoot, err := resolve(templateRoot)
-	if err != nil {
-		slog.Error("failed to resolve template root", slog.Any("error", err))
+	if p.TemplateRoot, err = resolve(templateRoot); err != nil {
+		slog.Error("Resolve template root failed", slog.Any("error", err))
 		return nil, err
 	}
 
-	resolvedTemplatePath, err := resolve(templatePath)
-	if err != nil {
-		slog.Error("failed to resolve template path", slog.Any("error", err))
+	if p.TemplatePath, err = resolve(templatePath); err != nil {
+		slog.Error("Resolve template path failed", slog.Any("error", err))
 		return nil, err
 	}
 
-	resolvedTemplateConfigFile, err := resolve(templatePath, TemplateConfigFile)
-	if err != nil {
-		slog.Error("failed to resolve template configuration file", slog.Any("error", err))
+	if p.TemplateConfigPath, err = resolve(templatePath, TemplateConfigFile); err != nil {
+		slog.Error("Resolve template configuration file failed", slog.Any("error", err))
 		return nil, err
 	}
 
-	resolvedGlobalConfigFile, err := resolve(globalConfigFile)
-	if err != nil {
-		slog.Error("failed to resolve global configuration file", slog.Any("error", err))
+	if p.GlobalConfigPath, err = resolve(globalConfigPath); err != nil {
+		slog.Error("Resolve global configuration path failed", slog.Any("error", err))
 		return nil, err
 	}
 
-	resolvedGlobalConfigDir, err := resolve(globalConfigRoot)
-	if err != nil {
-		slog.Error("failed to resolve global configuration dir", slog.Any("error", err))
+	if p.GlobalConfigRoot, err = resolve(globalConfigRoot); err != nil {
+		slog.Error("Resolve global configuration root failed", slog.Any("error", err))
 		return nil, err
 	}
-	return &Paths{
-		TargetRoot:         resolvedTargetRoot,
-		TargetPath:         resolvedTargetPath,
-		TargetConfigFile:   resolvedTargetConfigFile,
-		TemplateRoot:       resolvedTemplateRoot,
-		TemplatePath:       resolvedTemplatePath,
-		TemplateConfigFile: resolvedTemplateConfigFile,
-		GlobalConfigPath:   resolvedGlobalConfigFile,
-		GlobalConfigRoot:   resolvedGlobalConfigDir,
-	}, nil
+	return p, nil
 }
 
 func NewPathsFromConfig(config map[string]any) (*Paths, error) {
@@ -117,7 +103,7 @@ func (p *Paths) LogValue() slog.Value {
 		slog.String("TargetConfigFile", p.TargetConfigFile),
 		slog.String("TemplateRoot", p.TemplateRoot),
 		slog.String("TemplatePath", p.TemplatePath),
-		slog.String("TemplateConfigFile", p.TemplateConfigFile),
+		slog.String("TemplateConfigPath", p.TemplateConfigPath),
 		slog.String("GlobalConfigRoot", p.GlobalConfigRoot),
 		slog.String("GlobalConfigPath", p.GlobalConfigPath),
 	)
@@ -130,7 +116,7 @@ func (p *Paths) ToMap() map[string]string {
 		"targetConfigFile":   p.TargetConfigFile,
 		"templateRoot":       p.TemplateRoot,
 		"templatePath":       p.TemplatePath,
-		"templateConfigFile": p.TemplateConfigFile,
+		"templateConfigPath": p.TemplateConfigPath,
 		"globalConfigRoot":   p.GlobalConfigRoot,
 		"globalConfigPath":   p.GlobalConfigPath,
 	}

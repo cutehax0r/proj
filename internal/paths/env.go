@@ -1,11 +1,9 @@
 package paths
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
 	// https://github.com/adrg/xdg
 )
 
