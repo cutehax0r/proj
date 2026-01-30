@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"bytes"
+	"io"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"proj/internal/config"
 	"proj/internal/luabridge"
 	"proj/internal/paths"
@@ -103,8 +105,6 @@ func runNew(cmd *cobra.Command, args []string) {
 			slog.Error("Error in lua script. Aborting", slog.Any("error", luaenv.Error), slog.String("script", script))
 			os.Exit(1)
 		}
-
-		// check for errors and if they exist then os.exit
 	}
 
 	// Extract variables modified by lua scripts back into Go
@@ -165,6 +165,47 @@ func runNew(cmd *cobra.Command, args []string) {
 			slog.Debug("No-write set: skipping copy", slog.String("source", file.Source), slog.String("target", deststr.String()))
 		} else {
 			slog.Debug("Copying", slog.Bool("parse", file.Parse), slog.String("source", file.Source), slog.String("target", deststr.String()))
+			if file.Parse {
+				targetDir := filepath.Dir(deststr.String())
+				if err := os.MkdirAll(targetDir, 0755); err != nil {
+					slog.Error("Failed to create target directory", slog.String("directory", targetDir), slog.Any("error", err))
+					os.Exit(1)
+				}
+				slog.Debug("Created target directory", slog.String("directory", targetDir))
+
+				if err := os.WriteFile(deststr.String(), []byte(file.Rendered), 0644); err != nil {
+					slog.Error("Failed to write rendered file", slog.String("target", deststr.String()), slog.Any("error", err))
+					os.Exit(1)
+				}
+				slog.Debug("Wrote rendered file", slog.String("target", deststr.String()))
+			} else {
+				targetDir := filepath.Dir(deststr.String())
+				if err := os.MkdirAll(targetDir, 0755); err != nil {
+					slog.Error("Failed to create target directory", slog.String("directory", targetDir), slog.Any("error", err))
+					os.Exit(1)
+				}
+				slog.Debug("Created target directory", slog.String("directory", targetDir))
+
+				sourceFile, err := os.Open(file.Source)
+				if err != nil {
+					slog.Error("Failed to open source file", slog.String("source", file.Source), slog.Any("error", err))
+					os.Exit(1)
+				}
+				defer sourceFile.Close()
+
+				targetFile, err := os.Create(deststr.String())
+				if err != nil {
+					slog.Error("Failed to create target file", slog.String("target", deststr.String()), slog.Any("error", err))
+					os.Exit(1)
+				}
+				defer targetFile.Close()
+
+				if _, err := io.Copy(targetFile, sourceFile); err != nil {
+					slog.Error("Failed to copy file", slog.String("source", file.Source), slog.String("target", deststr.String()), slog.Any("error", err))
+					os.Exit(1)
+				}
+				slog.Debug("Copied file", slog.String("source", file.Source), slog.String("target", deststr.String()))
+			}
 		}
 	}
 
