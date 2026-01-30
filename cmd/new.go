@@ -173,7 +173,7 @@ func runNew(cmd *cobra.Command, args []string) {
 				}
 				slog.Debug("Created target directory", slog.String("directory", targetDir))
 
-				if err := os.WriteFile(deststr.String(), []byte(file.Rendered), 0644); err != nil {
+				if err := os.WriteFile(deststr.String(), []byte(file.Rendered), file.SourceMode); err != nil {
 					slog.Error("Failed to write rendered file", slog.String("target", deststr.String()), slog.Any("error", err))
 					os.Exit(1)
 				}
@@ -205,6 +205,11 @@ func runNew(cmd *cobra.Command, args []string) {
 					os.Exit(1)
 				}
 				slog.Debug("Copied file", slog.String("source", file.Source), slog.String("target", deststr.String()))
+
+				if err := os.Chmod(deststr.String(), file.SourceMode); err != nil {
+					slog.Warn("Failed to set permissions on copied file", slog.String("target", deststr.String()), slog.Any("error", err))
+				}
+				slog.Debug("Set permissions on copied file", slog.String("target", deststr.String()), slog.Any("mode", file.SourceMode))
 			}
 		}
 	}
