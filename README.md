@@ -301,15 +301,13 @@ func flagSource(cfg *viper.Viper, cmd *cobra.Command, name string) FlagSource {
 * write a `shell exec` function exposed to lua that can run commands and recieve std err/in
 * add "descriptions" to most things
 * allow requirements to define mandatory software, checked with `which foo`
-* add --action param on new that lets you have multiple 'new' types and you can choose between them
 * add `setup` command that writes a default config to and an example template
+* add `create` that builds a new template in ~/.local/share/proj
 * add `info` command that shows details about what's allowed/required for templates/definitions
 * add `install` command that does a `git clone ...` to template_root
 * add `remove` command that does an `rm -rf ` in template root
 * make `new` list all available templates if run with no arguments
 * make `add` list all available definitions if run with no arguments
-* make `dry run` actually do nothing
-* make a prettier logger
 * add --version that dumps a version
 * makefile that does go build for arm/x86/apple.
 * makefile that can build bundles (brew, arch, deb, rpm, nix)
@@ -328,7 +326,6 @@ func flagSource(cfg *viper.Viper, cmd *cobra.Command, name string) FlagSource {
 * maybe --set-variables FOO=BAR should try to be case-insentive when matching variables?
 * maybe we should have a --force-set that forces variables to a value (so it gets applied after all the
 scripts run)
-* maybe we should merge scripts and paths together.
 
 * All this fussing with variables.  It might make more sense to route everything to JSON and pass
 that to the toluavalue function.  Tag your structs with `json:"foo"` pass an instance of the struct
