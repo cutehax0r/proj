@@ -1,78 +1,90 @@
 package paths
 
 import (
-	"fmt"
 	"log/slog"
+	"os"
 	"path/filepath"
+	"strings"
 )
 
 type Paths struct {
-	TargetRoot string
-	TargetPath string
-	TargetConfigFile string
-	TemplateRoot string
-	TemplatePath string
+	TargetRoot         string
+	TargetPath         string
+	TargetConfigFile   string
+	TemplateRoot       string
+	TemplatePath       string
 	TemplateConfigFile string
-	GlobalConfigPath string
-	GlobalConfigRoot string
+	GlobalConfigPath   string
+	GlobalConfigRoot   string
 }
 
 func NewPaths(targetRoot string, targetPath string, templateRoot string, templatePath string, targetConfigFile string, globalConfigFile string, globalConfigRoot string) (*Paths, error) {
-	resolvedTargetRoot, err := resolve("target root", targetRoot)
+	resolvedTargetRoot, err := resolve(targetRoot)
 	if err != nil {
+		slog.Error("failed to resolve target root", slog.Any("error", err))
 		return nil, err
 	}
 
-	resolvedTargetPath, err := resolve("target path", targetPath)
+	resolvedTargetPath, err := resolve(targetPath)
 	if err != nil {
+		slog.Error("failed to resolve target path", slog.Any("error", err))
 		return nil, err
 	}
 
-	resolvedTargetConfigFile, err := resolve("target configuration file", targetConfigFile)
+	resolvedTargetConfigFile, err := resolve(targetConfigFile)
 	if err != nil {
+		slog.Error("failed to resolve target configuration file", slog.Any("error", err))
 		return nil, err
 	}
 
-	resolvedTemplateRoot, err := resolve("template root", templateRoot)
+	resolvedTemplateRoot, err := resolve(templateRoot)
 	if err != nil {
+		slog.Error("failed to resolve template root", slog.Any("error", err))
 		return nil, err
 	}
 
-	resolvedTemplatePath, err := resolve("template path", templatePath)
+	resolvedTemplatePath, err := resolve(templatePath)
 	if err != nil {
+		slog.Error("failed to resolve template path", slog.Any("error", err))
 		return nil, err
 	}
 
-	resolvedTemplateConfigFile, err := resolve("Template configuration file", templatePath, TemplateConfigFile)
+	resolvedTemplateConfigFile, err := resolve(templatePath, TemplateConfigFile)
 	if err != nil {
+		slog.Error("failed to resolve template configuration file", slog.Any("error", err))
 		return nil, err
 	}
 
-	resolvedGlobalConfigFile, err := resolve("Global configuration file", globalConfigFile)
+	resolvedGlobalConfigFile, err := resolve(globalConfigFile)
 	if err != nil {
+		slog.Error("failed to resolve global configuration file", slog.Any("error", err))
 		return nil, err
 	}
 
-	resolvedGlobalConfigDir, err := resolve("Global configuration dir", globalConfigRoot)
+	resolvedGlobalConfigDir, err := resolve(globalConfigRoot)
 	if err != nil {
+		slog.Error("failed to resolve global configuration dir", slog.Any("error", err))
 		return nil, err
 	}
-	return &Paths {
-		TargetRoot: resolvedTargetRoot,
-		TargetPath: resolvedTargetPath,
-		TargetConfigFile: resolvedTargetConfigFile,
-		TemplateRoot: resolvedTemplateRoot,
-		TemplatePath: resolvedTemplatePath,
+	return &Paths{
+		TargetRoot:         resolvedTargetRoot,
+		TargetPath:         resolvedTargetPath,
+		TargetConfigFile:   resolvedTargetConfigFile,
+		TemplateRoot:       resolvedTemplateRoot,
+		TemplatePath:       resolvedTemplatePath,
 		TemplateConfigFile: resolvedTemplateConfigFile,
-		GlobalConfigPath: resolvedGlobalConfigFile,
-		GlobalConfigRoot: resolvedGlobalConfigDir,
+		GlobalConfigPath:   resolvedGlobalConfigFile,
+		GlobalConfigRoot:   resolvedGlobalConfigDir,
 	}, nil
 }
 
 func NewPathsFromConfig(config map[string]any) (*Paths, error) {
 	targetConfigFile := config["target-config-file"].(string)
 	targetPath := config["target-path"].(string)
-	templatePath := definedOrDefault("Template path", config["template-path"].(string), config["template-root"].(string), config["template-name"].(string))
+	templatePath := config["template-path"].(string)
+	if templatePath == "" {
+		templatePath = filepath.Join(config["template-root"].(string), config["template-name"].(string))
+	}
 
 	// If we have a target configuration file then we can work back from there to figure out the target
 	// root. If not then we can build the target path - either from being set explicitly
@@ -81,8 +93,10 @@ func NewPathsFromConfig(config map[string]any) (*Paths, error) {
 	if targetConfigFile != "" {
 		targetPath = filepath.Dir(targetConfigFile)
 	} else {
-		targetPath = definedOrDefault("Target path", targetPath, config["target-root"].(string), config["target-name"].(string))
-		targetConfigFile = definedOrDefault("Target configuration file", "", targetPath, TargetConfigFileDir, TargetConfigFile)
+		if targetPath == "" {
+			targetPath = filepath.Join(config["target-root"].(string), config["target-name"].(string))
+		}
+		targetConfigFile = filepath.Join(targetPath, TargetConfigFileDir, TargetConfigFile)
 	}
 
 	return NewPaths(
@@ -97,9 +111,6 @@ func NewPathsFromConfig(config map[string]any) (*Paths, error) {
 }
 
 func (p *Paths) LogValue() slog.Value {
-	if p == nil {
-		return slog.Value{}
-	}
 	return slog.GroupValue(
 		slog.String("TargetRoot", p.TargetRoot),
 		slog.String("TargetPath", p.TargetPath),
@@ -114,22 +125,44 @@ func (p *Paths) LogValue() slog.Value {
 
 func (p *Paths) ToMap() map[string]string {
 	return map[string]string{
-		"targetRoot": p.TargetRoot,
-		"targetPath": p.TargetPath,
-		"templateRoot": p.TemplateRoot,
-		"templatePath": p.TemplatePath,
+		"targetRoot":         p.TargetRoot,
+		"targetPath":         p.TargetPath,
+		"targetConfigFile":   p.TargetConfigFile,
+		"templateRoot":       p.TemplateRoot,
+		"templatePath":       p.TemplatePath,
 		"templateConfigFile": p.TemplateConfigFile,
-		"globalConfigRoot": p.GlobalConfigRoot,
-		"globalConfigPath": p.GlobalConfigPath,
+		"globalConfigRoot":   p.GlobalConfigRoot,
+		"globalConfigPath":   p.GlobalConfigPath,
 	}
 }
 
-func definedOrDefault(desc string, configVal string, components ...string) string {
-	if configVal != "" {
-		slog.Debug(fmt.Sprintf("%s provided, using it",  desc), slog.String("Path", configVal))
-		return configVal
-	}
+func resolve(components ...string) (string, error) {
 	path := filepath.Join(components...)
-	slog.Debug(fmt.Sprintf("%s not provided, constructing it", desc), slog.Any("Componets", components), slog.String("Path", path))
-	return path
+
+	expanded, err := expandPath(path)
+	if err != nil {
+		return "", err
+	}
+	absPath, err := filepath.Abs(expanded)
+	if err != nil {
+		return "", err
+	}
+	return absPath, nil
+}
+
+func expandPath(path string) (string, error) {
+	expanded := os.ExpandEnv(path)
+	if strings.HasPrefix(expanded, "~") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		if expanded == "~" {
+			return home, nil
+		}
+		if strings.HasPrefix(expanded, "~/") {
+			expanded = filepath.Join(home, expanded[2:])
+		}
+	}
+	return expanded, nil
 }

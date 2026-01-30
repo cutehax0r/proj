@@ -81,35 +81,3 @@ func uniqPreserveOrder(paths []string) (uniq []string) {
 	}
 	return uniq
 }
-
-func resolve(desc string, components ...string) (string, error) {
-	path := filepath.Join(components...)
-
-	expanded, err := expandPath(path)
-	if err != nil {
-		slog.Error(fmt.Sprintf("Failed to expand %s", desc), slog.String("Path", path), slog.Any("Error", err))
-	}
-	absPath, err := filepath.Abs(expanded)
-	if err != nil {
-		slog.Error(fmt.Sprintf("Failed to resolve %s", desc), slog.String("Path", path), slog.String("Expanded", expanded), slog.Any("Error", err))
-	}
-	slog.Debug(fmt.Sprintf("Resolved %s", desc), slog.Any("Components", components), slog.String("Expanded", expanded), slog.String("Absolute", absPath))
-	return absPath, err
-}
-
-func expandPath(path string) (string, error) {
-	expanded := os.ExpandEnv(path)
-	if strings.HasPrefix(expanded, "~") {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-		if expanded == "~" {
-			return home, nil
-		}
-		if strings.HasPrefix(expanded, "~/") {
-			expanded = filepath.Join(home, expanded[2:])
-		}
-	}
-	return expanded, nil
-}
