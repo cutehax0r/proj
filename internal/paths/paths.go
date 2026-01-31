@@ -10,7 +10,7 @@ import (
 type Paths struct {
 	TargetRoot         string
 	TargetPath         string
-	TargetConfigFile   string
+	TargetConfigPath   string
 	TemplateRoot       string
 	TemplatePath       string
 	TemplateConfigPath string
@@ -18,7 +18,7 @@ type Paths struct {
 	GlobalConfigRoot   string
 }
 
-func NewPaths(targetRoot string, targetPath string, templateRoot string, templatePath string, targetConfigFile string, globalConfigPath string, globalConfigRoot string) (*Paths, error) {
+func NewPaths(targetRoot string, targetPath string, templateRoot string, templatePath string, targetConfigPath string, globalConfigPath string) (*Paths, error) {
 	p := &Paths{}
 	var err error
 
@@ -32,8 +32,8 @@ func NewPaths(targetRoot string, targetPath string, templateRoot string, templat
 		return nil, err
 	}
 
-	if p.TargetConfigFile, err = resolve(targetConfigFile); err != nil {
-		slog.Error("Resolve target configuration file failed", slog.Any("error", err))
+	if p.TargetConfigPath, err = resolve(targetConfigPath); err != nil {
+		slog.Error("Resolve target configuration path failed", slog.Any("error", err))
 		return nil, err
 	}
 
@@ -57,10 +57,8 @@ func NewPaths(targetRoot string, targetPath string, templateRoot string, templat
 		return nil, err
 	}
 
-	if p.GlobalConfigRoot, err = resolve(globalConfigRoot); err != nil {
-		slog.Error("Resolve global configuration root failed", slog.Any("error", err))
-		return nil, err
-	}
+	p.GlobalConfigRoot = filepath.Dir(p.GlobalConfigPath)
+
 	return p, nil
 }
 
@@ -92,7 +90,6 @@ func NewPathsFromConfig(config map[string]any) (*Paths, error) {
 		templatePath,
 		targetConfigFile,
 		config["global-config-file"].(string),
-		filepath.Dir(config["global-config-file"].(string)),
 	)
 }
 
@@ -100,7 +97,7 @@ func (p *Paths) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("TargetRoot", p.TargetRoot),
 		slog.String("TargetPath", p.TargetPath),
-		slog.String("TargetConfigFile", p.TargetConfigFile),
+		slog.String("TargetConfigPath", p.TargetConfigPath),
 		slog.String("TemplateRoot", p.TemplateRoot),
 		slog.String("TemplatePath", p.TemplatePath),
 		slog.String("TemplateConfigPath", p.TemplateConfigPath),
@@ -113,7 +110,7 @@ func (p *Paths) ToMap() map[string]string {
 	return map[string]string{
 		"targetRoot":         p.TargetRoot,
 		"targetPath":         p.TargetPath,
-		"targetConfigFile":   p.TargetConfigFile,
+		"targetConfigPath":   p.TargetConfigPath,
 		"templateRoot":       p.TemplateRoot,
 		"templatePath":       p.TemplatePath,
 		"templateConfigPath": p.TemplateConfigPath,
