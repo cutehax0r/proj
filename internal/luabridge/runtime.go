@@ -52,6 +52,8 @@ func (r *Runtime) setupExecutionEnvironment() {
 	r.state = lua.NewState()
 	r.state.OpenLibs()
 
+	// Create the proj module and immediately load it into package.loaded
+	// This ensures GetVariables() can find it later
 	r.state.PreloadModule("proj", func(l *lua.LState) int {
 		mod := l.NewTable()
 		mod.RawSetString("noWrite", lua.LBool(r.NoWrite))
@@ -94,6 +96,15 @@ func (r *Runtime) setupExecutionEnvironment() {
 		l.Push(mod)
 		return 1
 	})
+
+	// Load the proj module into package.loaded and set it as a global
+	// This allows scripts to access it without requiring explicit require() calls
+	if err := r.state.DoString(`
+		require('proj')
+		proj = package.loaded.proj
+	`); err != nil {
+		slog.Error("Failed to setup proj module", slog.Any("error", err))
+	}
 }
 
 func (r *Runtime) CloseState() {

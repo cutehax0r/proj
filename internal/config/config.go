@@ -18,8 +18,6 @@ func InitGlobal(file string) error {
 		}
 	}
 
-	// needs to set a default for template root  XDG_DATA_HOME
-
 	if err := viper.ReadInConfig(); err != nil {
 		slog.Error("Global configuration load failure", slog.String("file", file), "Error", err)
 		return err
@@ -37,18 +35,6 @@ func InitTemplate(file string) error {
 		return err
 	}
 	conf.Set("template-config-file", conf.ConfigFileUsed())
-	viper.MergeConfigMap(conf.AllSettings())
-	return nil
-}
-
-func InitTarget(file string) error {
-	conf := viper.New()
-	conf.SetConfigFile(file)
-	if err := conf.ReadInConfig(); err != nil {
-		slog.Error("Target configuration load failure", slog.String("file", file), slog.Any("error", err))
-		return err
-	}
-	conf.Set("target-config-file", conf.ConfigFileUsed())
 	viper.MergeConfigMap(conf.AllSettings())
 	return nil
 }

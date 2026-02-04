@@ -29,8 +29,8 @@ func (f *FileSpec) ToMap() map[string]any {
 	}
 }
 
-func ParseFileSpecs(paths *paths.Paths) (*[]FileSpec, error) {
-	var result []FileSpec
+func NewFileSpecs(paths *paths.Paths) ([]FileSpec, error) {
+	result := make([]FileSpec, 0)
 
 	datapath := strings.Join([]string{"definitions", viper.GetString("definition-name"), "files"}, ".")
 	files := viper.Get(datapath)
@@ -63,5 +63,5 @@ func ParseFileSpecs(paths *paths.Paths) (*[]FileSpec, error) {
 		result = append(result, FileSpec{Source: source, Target: target, Parse: parse, SourceMode: sourceMode})
 	}
 
-	return &result, nil
+	return result, nil
 }

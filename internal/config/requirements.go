@@ -1,6 +1,4 @@
-// This should be replaced by some proper YAML parsing library. We should split the regular proj
-// config with the definition of templates. Maybe support splitting individual templates into their
-// own config files.
+// TODO: This should be replaced by some proper YAML parsing library.
 package config
 
 import (
@@ -11,13 +9,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-
 type RequirementSpec struct {
 	Local     bool           `yaml:"local" default:"false"`
 	Variables []VariableSpec `yaml:"variables"`
 }
 
-func BuildRequirements() (*RequirementSpec, error) {
+func NewRequirements() (*RequirementSpec, error) {
 	var result RequirementSpec
 	path := strings.Join([]string{"definitions", viper.GetString("definition-name"), "requirements"}, ".")
 	reqs := viper.Get(path)
@@ -28,13 +25,12 @@ func BuildRequirements() (*RequirementSpec, error) {
 		slog.Error("Requirements parse failure", slog.Any("requirements", reqs))
 		return &result, errors.New("RequirementsSpec parse failed: entire requirements section is busted")
 	}
-	// pluck out Local
+
 	local, ok := reqsMap["local"].(bool)
 	if !ok {
 		local = false
 	}
 
-	// pluck out variables
 	var resultVars []VariableSpec
 	if variables, ok := reqsMap["variables"]; ok && variables != nil {
 		varSlice := variables.([]any)

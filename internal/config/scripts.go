@@ -1,13 +1,5 @@
 package config
 
-// Our job is to take a list of paths defined in the config files (global, template, definition) and
-// append those to the appropriate 'paths' entry to build an absolute path to the script.
-// we don't want to do the resolving here. That's the job of Paths so we want to remove the
-// resolve/expand path methods from this.
-//
-// Maybe the move is to have paths have a resolvetemplatepath(scriptname) method that will return an
-// absolute/expanded path to scriptname? also for resolveglobalpath
-
 import (
 	"errors"
 	"log/slog"
@@ -27,7 +19,7 @@ type ScriptSpec struct {
 	DefinitionAfter  string
 }
 
-func ParseScriptSpecs(paths *paths.Paths) (ScriptSpec, error) {
+func NewScriptSpec(paths *paths.Paths) (ScriptSpec, error) {
 	var result ScriptSpec
 	var ok bool
 
@@ -100,40 +92,28 @@ func ParseScriptSpecs(paths *paths.Paths) (ScriptSpec, error) {
 
 func (s *ScriptSpec) BeforeScripts() []string {
 	var result []string
-	if scriptExists(s.GlobalBefore) {
-		result = append(result, s.GlobalBefore)
-	}
-	if scriptExists(s.TemplateBefore) {
-		result = append(result, s.TemplateBefore)
-	}
-	if scriptExists(s.DefinitionBefore) {
-		result = append(result, s.DefinitionBefore)
-	}
+	result = appendIfExists(result, s.GlobalBefore)
+	result = appendIfExists(result, s.TemplateBefore)
+	result = appendIfExists(result, s.DefinitionBefore)
 	return result
 }
 
 func (s *ScriptSpec) AfterScripts() []string {
 	var result []string
-	if scriptExists(s.DefinitionAfter) {
-		result = append(result, s.DefinitionAfter)
-	}
-	if scriptExists(s.TemplateAfter) {
-		result = append(result, s.TemplateAfter)
-	}
-	if scriptExists(s.GlobalAfter) {
-		result = append(result, s.GlobalAfter)
-	}
+	result = appendIfExists(result, s.DefinitionAfter)
+	result = appendIfExists(result, s.TemplateAfter)
+	result = appendIfExists(result, s.GlobalAfter)
 	return result
 }
 
-func scriptExists(s string) bool {
-	if s == "" {
-		return false
+func appendIfExists(scripts []string, script string) []string {
+	if script == "" {
+		return scripts
 	}
-	_, err := os.Stat(s)
+	_, err := os.Stat(script)
 	if err != nil {
-		slog.Debug("Checking script exists failed", slog.Any("error", err), "script", s)
-		return false
+		slog.Debug("Script doesn't exist", slog.Any("error", err), slog.String("script", script))
+		return scripts
 	}
-	return true
+	return append(scripts, script)
 }

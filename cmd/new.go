@@ -78,27 +78,27 @@ func runNew(cmd *cobra.Command, args []string) {
 		slog.Error("Definition does not exist in template", slog.String("path", defPath), slog.String("definition-name", viper.GetString("definition-name")), slog.String("template name", viper.GetString("template-name")), slog.String("template config file", viper.GetString("template-config-file")))
 	}
 
-	reqs, _ := config.BuildRequirements()
+	reqs, _ := config.NewRequirements()
 	slog.Debug("Final Requirements", slog.Any("reqs", reqs))
 
 	vars, _ := config.BuildVariables(reqs.Variables)
 	slog.Debug("Final Variables", slog.Any("vars", vars))
 
-	scripts, err := config.ParseScriptSpecs(paths)
+	scripts, err := config.NewScriptSpec(paths)
 	if err != nil {
 		slog.Error("Couldn't build scripts")
 		os.Exit(1)
 	}
 	slog.Debug("Final scripts", slog.Any("scripts", scripts))
 
-	files, err := config.ParseFileSpecs(paths)
+	files, err := config.NewFileSpecs(paths)
 	if err != nil {
 		slog.Error("Failed to load files from template definition", slog.Any("error", err))
 		os.Exit(1)
 	}
 	slog.Debug("Final files", slog.Any("files", files))
 
-	luaenv := luabridge.NewRuntime(vars, paths, reqs, files, viper.GetBool("no-write"))
+	luaenv := luabridge.NewRuntime(vars, paths, reqs, &files, viper.GetBool("no-write"))
 	for _, script := range scripts.BeforeScripts() {
 		luaenv.Run(script)
 		if luaenv.Error != nil {
@@ -126,7 +126,7 @@ func runNew(cmd *cobra.Command, args []string) {
 	// (before and after parsing). That's not very ram efficient but it lets us do some nice
 	// debugging with --no-write by forcing parsing to happen without writing.  Computers have
 	// lots of ram and text files are small so I'm not sweating it.
-	for _, file := range *files {
+	for _, file := range files {
 		// this is building the destination name, not the content of that file
 		desttemp, err := template.New("filename").Parse(file.Target)
 		var deststr bytes.Buffer
@@ -156,7 +156,6 @@ func runNew(cmd *cobra.Command, args []string) {
 			conttemp.Execute(&contbuff, vars)
 			file.Rendered = contbuff.String()
 			slog.Info("result", slog.String("rendered", file.Rendered))
-			// write the file to the target location
 		} else {
 			slog.Info("Nothing to render, skipping read.", slog.String("source", file.Source), slog.String("target", deststr.String()))
 		}
