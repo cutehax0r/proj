@@ -37,7 +37,7 @@ func NewRuntime(variables map[string]any, paths *paths.Paths, requirements *conf
 
 func (r *Runtime) Run(script string) error {
 	slog.Debug("Executing script", "script", script)
-	// absolutize path to script - paths has "resolve" that might work
+	// we expect a full usable path to the script  paths.Resolve*() can help
 	err := r.state.DoFile(script)
 	if err != nil {
 		slog.Error("Lua Error", "script", script, "error", err)
@@ -52,13 +52,10 @@ func (r *Runtime) setupExecutionEnvironment() {
 	r.state = lua.NewState()
 	r.state.OpenLibs()
 
-	// Create the proj module and immediately load it into package.loaded
-	// This ensures GetVariables() can find it later
 	r.state.PreloadModule("proj", func(l *lua.LState) int {
 		mod := l.NewTable()
 		mod.RawSetString("noWrite", lua.LBool(r.NoWrite))
 
-		// setup paths (alternate approach - create a map and pass it to the toluavalue)
 		pathstable := r.Paths.ToMap()
 		mod.RawSetString("paths", r.toLuaValue(pathstable))
 
@@ -85,7 +82,6 @@ func (r *Runtime) setupExecutionEnvironment() {
 		reqtable.RawSetString("variables", reqvars)
 		mod.RawSetString("requirements", reqtable)
 
-		// Expose variables directly at proj.variables (not nested)
 		mod.RawSetString("variables", r.toLuaValue(r.Variables))
 
 		// functions read from ./functions.go
@@ -97,8 +93,6 @@ func (r *Runtime) setupExecutionEnvironment() {
 		return 1
 	})
 
-	// Load the proj module into package.loaded and set it as a global
-	// This allows scripts to access it without requiring explicit require() calls
 	if err := r.state.DoString(`
 		require('proj')
 		proj = package.loaded.proj
@@ -112,7 +106,6 @@ func (r *Runtime) CloseState() {
 }
 
 func (r *Runtime) toLuaValue(value any) lua.LValue {
-	// Keep existing primitive type handling
 	switch v := value.(type) {
 	case nil:
 		return lua.LNil
@@ -155,7 +148,7 @@ func (r *Runtime) toLuaValue(value any) lua.LValue {
 		return tbl
 	}
 
-	// then just all through to a default representation
+	// just fall through to a default representation
 	return lua.LString(fmt.Sprintf("%v", value))
 }
 
@@ -222,13 +215,9 @@ func (r *Runtime) fromLuaValue(value lua.LValue) any {
 	}
 }
 
-// GetVariables extracts the modified variables from the Lua state
-// and returns them as a Go map with deep copies of any nested structures
 func (r *Runtime) GetVariables() map[string]any {
 	result := make(map[string]any)
 
-	// Get the proj module from package.loaded (where require stores it)
-	// First get the package table
 	packageTable := r.state.GetGlobal("package")
 	if packageTable == lua.LNil {
 		slog.Warn("package table not found in Lua state")
@@ -241,7 +230,6 @@ func (r *Runtime) GetVariables() map[string]any {
 		return result
 	}
 
-	// Get package.loaded
 	loadedTable := pkgTable.RawGetString("loaded")
 	if loadedTable == lua.LNil {
 		slog.Warn("package.loaded not found")
@@ -254,7 +242,6 @@ func (r *Runtime) GetVariables() map[string]any {
 		return result
 	}
 
-	// Get the proj module from package.loaded
 	mod := loaded.RawGetString("proj")
 	if mod == lua.LNil {
 		slog.Warn("proj module not found in package.loaded")
@@ -267,7 +254,6 @@ func (r *Runtime) GetVariables() map[string]any {
 		return result
 	}
 
-	// Get the variables table (now directly at proj.variables)
 	varTable := modTable.RawGetString("variables")
 	if varTable == lua.LNil {
 		slog.Warn("variables not found in proj module")
@@ -280,7 +266,6 @@ func (r *Runtime) GetVariables() map[string]any {
 		return result
 	}
 
-	// Convert the Lua table back to a Go map
 	varTableObj.ForEach(func(key, val lua.LValue) {
 		var keyStr string
 		switch k := key.(type) {

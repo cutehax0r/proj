@@ -57,4 +57,3 @@ func buildMapFromSetVariables() map[string]any {
 	}
 	return vars
 }
-
