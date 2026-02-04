@@ -1,5 +1,13 @@
 package config
 
+// Our job is to take a list of paths defined in the config files (global, template, definition) and
+// append those to the appropriate 'paths' entry to build an absolute path to the script.
+// we don't want to do the resolving here. That's the job of Paths so we want to remove the
+// resolve/expand path methods from this.
+//
+// Maybe the move is to have paths have a resolvetemplatepath(scriptname) method that will return an
+// absolute/expanded path to scriptname? also for resolveglobalpath
+
 import (
 	"errors"
 	"log/slog"
@@ -131,6 +139,7 @@ func scriptExists(s string) bool {
 	return true
 }
 
+// delete this in favor of paths.Resolve()
 func resolve(components ...string) (string, error) {
 	path := filepath.Join(components...)
 

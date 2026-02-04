@@ -18,41 +18,45 @@ type Paths struct {
 	GlobalConfigRoot   string
 }
 
+func (p *Paths) Resolve(path string, before string) (any, any) {
+	panic("unimplemented")
+}
+
 func NewPaths(targetRoot string, targetPath string, templateRoot string, templatePath string, targetConfigPath string, globalConfigPath string) (*Paths, error) {
 	p := &Paths{}
 	var err error
 
-	if p.TargetRoot, err = resolve(targetRoot); err != nil {
+	if p.TargetRoot, err = Resolve(targetRoot); err != nil {
 		slog.Error("Resolve target root failed", slog.Any("error", err))
 		return nil, err
 	}
 
-	if p.TargetPath, err = resolve(targetPath); err != nil {
+	if p.TargetPath, err = Resolve(targetPath); err != nil {
 		slog.Error("Resolve target path failed", slog.Any("error", err))
 		return nil, err
 	}
 
-	if p.TargetConfigPath, err = resolve(targetConfigPath); err != nil {
+	if p.TargetConfigPath, err = Resolve(targetConfigPath); err != nil {
 		slog.Error("Resolve target configuration path failed", slog.Any("error", err))
 		return nil, err
 	}
 
-	if p.TemplateRoot, err = resolve(templateRoot); err != nil {
+	if p.TemplateRoot, err = Resolve(templateRoot); err != nil {
 		slog.Error("Resolve template root failed", slog.Any("error", err))
 		return nil, err
 	}
 
-	if p.TemplatePath, err = resolve(templatePath); err != nil {
+	if p.TemplatePath, err = Resolve(templatePath); err != nil {
 		slog.Error("Resolve template path failed", slog.Any("error", err))
 		return nil, err
 	}
 
-	if p.TemplateConfigPath, err = resolve(templatePath, TemplateConfigFile); err != nil {
+	if p.TemplateConfigPath, err = Resolve(templatePath, TemplateConfigFile); err != nil {
 		slog.Error("Resolve template configuration file failed", slog.Any("error", err))
 		return nil, err
 	}
 
-	if p.GlobalConfigPath, err = resolve(globalConfigPath); err != nil {
+	if p.GlobalConfigPath, err = Resolve(globalConfigPath); err != nil {
 		slog.Error("Resolve global configuration path failed", slog.Any("error", err))
 		return nil, err
 	}
@@ -119,15 +123,17 @@ func (p *Paths) ToMap() map[string]string {
 	}
 }
 
-func resolve(components ...string) (string, error) {
+func Resolve(components ...string) (string, error) {
 	path := filepath.Join(components...)
 
 	expanded, err := expandPath(path)
 	if err != nil {
+		slog.Error("Resolve failed to expand path", slog.String("Path", path), slog.Any("Error", err))
 		return "", err
 	}
 	absPath, err := filepath.Abs(expanded)
 	if err != nil {
+		slog.Error("Resolve failed to make path absolute", slog.String("Path", path), slog.Any("Error", err))
 		return "", err
 	}
 	return absPath, nil
@@ -138,6 +144,7 @@ func expandPath(path string) (string, error) {
 	if strings.HasPrefix(expanded, "~") {
 		home, err := os.UserHomeDir()
 		if err != nil {
+			slog.Error("Expand path couldn't get home directory", slog.String("Path", path), slog.Any("Error", err))
 			return "", err
 		}
 		if expanded == "~" {
