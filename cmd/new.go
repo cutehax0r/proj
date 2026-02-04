@@ -63,7 +63,7 @@ func runNew(cmd *cobra.Command, args []string) {
 	}
 	slog.Debug("Paths", slog.Any("paths", paths))
 
-	if err = config.InitTemplate(paths.TemplateConfigFile); err != nil {
+	if err = config.InitTemplate(paths.TemplateConfigPath); err != nil {
 		os.Exit(1)
 	}
 	logViperDebug("template config loaded", viper.AllSettings())

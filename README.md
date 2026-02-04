@@ -10,7 +10,6 @@ Running `new` implies the definition `new`
 
 # Wishlist
 
-* Break out variables from requirements into it's own thing
 * Paths should gain 'resolve' methods for template, target, and global config paths
 * Everything should switch from filepath.join to the new resolve methods
 * Refactor `NewPaths()` to use a method rather than the if chain
