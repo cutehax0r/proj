@@ -12,7 +12,6 @@ import (
 	"errors"
 	"log/slog"
 	"os"
-	"path/filepath"
 	"proj/internal/paths"
 	"strings"
 
@@ -42,7 +41,7 @@ func ParseScriptSpecs(paths *paths.Paths) (ScriptSpec, error) {
 			return result, errors.New("ScriptSpec parse failure: entire scripts section is busted in definition")
 		}
 		if before, ok := scriptMap["definition-before"].(string); ok {
-			fp, err := resolve(paths.TemplatePath, before)
+			fp, err := paths.ResolveTemplate(before)
 			if err != nil {
 				slog.Error("Bad path for definition-before", slog.String("definition-before", before), slog.Any("err", err))
 				return result, err
@@ -50,7 +49,7 @@ func ParseScriptSpecs(paths *paths.Paths) (ScriptSpec, error) {
 			result.DefinitionBefore = fp
 		}
 		if after, ok := scriptMap["definition-after"].(string); ok {
-			fp, err := resolve(paths.TemplatePath, after)
+			fp, err := paths.ResolveTemplate(after)
 			if err != nil {
 				slog.Error("Bad path for definition-after", slog.String("definition-after", after), slog.Any("err", err))
 				return result, err
@@ -63,7 +62,7 @@ func ParseScriptSpecs(paths *paths.Paths) (ScriptSpec, error) {
 
 	// template level
 	if result.TemplateBefore, ok = csm["template-before"]; ok {
-		fp, err := resolve(paths.TemplatePath, result.TemplateBefore)
+		fp, err := paths.ResolveTemplate(result.TemplateBefore)
 		if err != nil {
 			slog.Error("Bad path for template-before")
 			return result, err
@@ -71,7 +70,7 @@ func ParseScriptSpecs(paths *paths.Paths) (ScriptSpec, error) {
 		result.TemplateBefore = fp
 	}
 	if result.TemplateAfter, ok = csm["template-after"]; ok {
-		fp, err := resolve(paths.TemplatePath, result.TemplateAfter)
+		fp, err := paths.ResolveTemplate(result.TemplateAfter)
 		if err != nil {
 			slog.Error("Bad path for template-After")
 			return result, err
@@ -81,7 +80,7 @@ func ParseScriptSpecs(paths *paths.Paths) (ScriptSpec, error) {
 
 	// global level
 	if result.GlobalBefore, ok = csm["new-before"]; ok {
-		fp, err := resolve(paths.GlobalConfigRoot, result.GlobalBefore)
+		fp, err := paths.ResolveGlobal(result.GlobalBefore)
 		if err != nil {
 			slog.Error("Bad path for new-before")
 			return result, err
@@ -89,7 +88,7 @@ func ParseScriptSpecs(paths *paths.Paths) (ScriptSpec, error) {
 		result.GlobalBefore = fp
 	}
 	if result.GlobalAfter, ok = csm["new-after"]; ok {
-		fp, err := filepath.Abs(filepath.Join(paths.GlobalConfigRoot, result.GlobalAfter))
+		fp, err := paths.ResolveGlobal(result.GlobalAfter)
 		if err != nil {
 			slog.Error("Bad path for new-After")
 			return result, err
@@ -137,37 +136,4 @@ func scriptExists(s string) bool {
 		return false
 	}
 	return true
-}
-
-// delete this in favor of paths.Resolve()
-func resolve(components ...string) (string, error) {
-	path := filepath.Join(components...)
-
-	expanded, err := expandPath(path)
-	if err != nil {
-		slog.Error("Failed to expand", slog.String("Path", path), slog.Any("Error", err))
-	}
-	absPath, err := filepath.Abs(expanded)
-	if err != nil {
-		slog.Error("Failed to resolve", slog.String("Path", path), slog.String("Expanded", expanded), slog.Any("Error", err))
-	}
-	slog.Debug("Resolved", slog.Any("Components", components), slog.String("Expanded", expanded), slog.String("Absolute", absPath))
-	return absPath, err
-}
-
-func expandPath(path string) (string, error) {
-	expanded := os.ExpandEnv(path)
-	if strings.HasPrefix(expanded, "~") {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-		if expanded == "~" {
-			return home, nil
-		}
-		if strings.HasPrefix(expanded, "~/") {
-			expanded = filepath.Join(home, expanded[2:])
-		}
-	}
-	return expanded, nil
 }

@@ -46,12 +46,12 @@ func ParseFileSpecs(paths *paths.Paths) (*[]FileSpec, error) {
 			slog.Error("Invalid file declaration", slog.Int("Index", i), slog.Any("definition", fileDef))
 			return nil, errors.New("FileSpec parse failure: bad file declaration")
 		}
-		source, _ := resolve(paths.TemplatePath, spec["source"].(string))
-		target, _ := resolve(paths.TargetPath, spec["target"].(string))
+		source, _ := paths.ResolveTemplate(spec["source"].(string))
+		target, _ := paths.ResolveTarget(spec["target"].(string))
 
 		info, err := os.Stat(source)
 		if err != nil {
-			slog.Error("Failed to stat source file", slog.String("source", source), slog.Any("error", err))
+			slog.Error("Failed to stat source file", slog.String("source", source), slog.Any("spec", spec), slog.Any("error", err))
 			return nil, err
 		}
 		sourceMode := info.Mode()

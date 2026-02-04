@@ -18,6 +18,18 @@ type Paths struct {
 	GlobalConfigRoot   string
 }
 
+func (p *Paths) ResolveGlobal(path string) (string, error) {
+	return resolve(p.GlobalConfigRoot, path)
+}
+
+func (p *Paths) ResolveTemplate(path string) (string, error) {
+	return resolve(p.TemplatePath, path)
+}
+
+func (p *Paths) ResolveTarget(path string) (string, error) {
+	return resolve(p.TargetPath, path)
+}
+
 func NewPaths(targetRoot string, targetPath string, templateRoot string, templatePath string, targetConfigPath string, globalConfigPath string) (*Paths, error) {
 	p := &Paths{}
 	var err error
