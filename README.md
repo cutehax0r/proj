@@ -10,9 +10,6 @@ Running `new` implies the definition `new`
 
 # Wishlist
 
-* Paths should gain 'resolve' methods for template, target, and global config paths
-* Everything should switch from filepath.join to the new resolve methods
-* Refactor `NewPaths()` to use a method rather than the if chain
 * Config.go should have init methods for scripts, vars, etc. to simplify new
 
 *GET IT WORKING BEFORE FUSSING WITH THIS STUFF*
