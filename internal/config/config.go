@@ -13,7 +13,7 @@ func InitGlobal(file string) error {
 	} else {
 		configPaths := paths.GlobalConfigPaths()
 		slog.Debug("Adding global config paths", slog.Any("Paths", configPaths))
-		for _, path := range configPaths { 
+		for _, path := range configPaths {
 			viper.AddConfigPath(path)
 		}
 	}

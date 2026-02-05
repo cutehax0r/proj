@@ -51,4 +51,3 @@ func NewRequirements() (*RequirementSpec, error) {
 	slog.Debug("Parsed requirements", slog.Bool("local", result.Local), slog.Any("variables", result.Variables))
 	return &result, nil
 }
-

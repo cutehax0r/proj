@@ -17,7 +17,7 @@ func Init(logLevel int) {
 	level := slog.LevelDebug
 	if logLevel >= 0 && logLevel < len(levels) {
 		level = levels[logLevel]
-	} 
+	}
 
 	logOpts := &slogpretty.Options{
 		Level:      level,

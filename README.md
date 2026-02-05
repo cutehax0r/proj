@@ -11,6 +11,7 @@ Running `new` implies the definition `new`
 # Wishlist
 
 * Config.go should have init methods for scripts, vars, etc. to simplify new
+* New.go is one big function. Let's split it up into smaller bits
 
 *GET IT WORKING BEFORE FUSSING WITH THIS STUFF*
 * allow for `variables.template.definition` in global config so that (for example)
