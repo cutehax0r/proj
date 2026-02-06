@@ -10,10 +10,6 @@ Running `new` implies the definition `new`
 
 # Wishlist
 
-* Config.go should have init methods for scripts, vars, etc. to simplify new
-* New.go is one big function. Let's split it up into smaller bits
-
-*GET IT WORKING BEFORE FUSSING WITH THIS STUFF*
 * allow for `variables.template.definition` in global config so that (for example)
 `variables.python.version = 3` or `variables.ruby.typesystem = "sorbet"` can be set
 * allow variable declarations to include "persist: false" to avoid adding them to a .proj directory
