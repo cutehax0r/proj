@@ -13,6 +13,7 @@ import (
 	"text/template"
 
 	"github.com/spf13/viper"
+	"go.yaml.in/yaml/v3"
 )
 
 type Creator struct {
@@ -52,25 +53,39 @@ func (c *Creator) Create() error {
 	if err := c.writeConfig(); err != nil {
 		return err
 	}
+	c.luaenv.CloseState()
 
 	return nil
 }
 
 func (c *Creator) writeConfig() error {
-	// in the target directory, create ~/.proj/proj.yml
-	// in there we're going to support having a 'copy' of ~/.local/share/proj/foo/
-	// where you can define your own variables, scripts, and templates that are unique to
-	// a project.
-	// when you run 'add' you'll have access to the variables from when the project was created
-	// it will point what the 'parent' template config is so that any 'add' methods can be
-	// called from there.
-	// you can also modify the config and it will add/override anything in that parent config
-	// this allows you to have a project with a custom "add file" behaviour that won't impact
-	// every project.
-	// .proj/proj.yml should have
-	// -- parent template name (definition? + kind?)
-	// -- variables (including all the target name stuff)
-	// with placeholders for scripts, definitions
+	projDir := filepath.Join(c.paths.TargetPath, ".proj")
+	if err := os.MkdirAll(projDir, 0755); err != nil {
+		slog.Error("Failed to create .proj directory", slog.String("directory", projDir), slog.Any("error", err))
+		return err
+	}
+	slog.Debug("Created .proj directory", slog.String("directory", projDir))
+
+	targetConfig := &config.TargetConfig{
+		TemplateName: c.cfg.TemplateName,
+		Variables:    c.vars,
+		Scripts:      make(map[string]any),
+		Definitions:  make(map[string]any),
+	}
+
+	yamlData, err := yaml.Marshal(targetConfig)
+	if err != nil {
+		slog.Error("Failed to marshal target config to YAML", slog.Any("error", err))
+		return err
+	}
+
+	configPath := filepath.Join(projDir, "proj.yml")
+	if err := os.WriteFile(configPath, yamlData, 0644); err != nil {
+		slog.Error("Failed to write target config file", slog.String("path", configPath), slog.Any("error", err))
+		return err
+	}
+	slog.Debug("Wrote target config", slog.String("path", configPath))
+
 	return nil
 }
 
@@ -83,7 +98,7 @@ func (c *Creator) setupConfig() error {
 
 	if _, err := os.Stat(c.paths.TargetPath); err == nil {
 		slog.Error("Target path exists", slog.String("path", c.paths.TargetPath))
-		return err
+		return os.ErrExist
 	}
 
 	defPath := strings.Join([]string{"definitions", c.cfg.DefinitionName}, ".")
