@@ -1,20 +1,13 @@
 package cmd
 
 import (
-	"bytes"
-	"io"
 	"log/slog"
 	"os"
-	"path/filepath"
-	"proj/internal/config"
-	"proj/internal/luabridge"
+	"proj/internal/generator"
 	"proj/internal/paths"
-	"strings"
-	"text/template"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"go.yaml.in/yaml/v3"
 )
 
 var newCmd = &cobra.Command{
@@ -48,168 +41,22 @@ func init() {
 }
 
 func runNew(cmd *cobra.Command, args []string) {
-	slog.Debug("Execute New Command", slog.String("Definition", viper.GetString("definition-name")), slog.Group("Arguments", slog.String("Template Name", args[0]), slog.String("Target Name", args[1])))
+	slog.Debug("Execute New Command", slog.String("TemplateName", args[0]), slog.String("TargetName", args[1]))
 
-	// mangling viper at this point feels kinda wrong. Maybe we update the 'new paths from config' to just take some arguments?
-	viper.Set("template-name", args[0])
-	viper.Set("target-name", args[1])
-	viper.Set("target-config-file", "") // this should not exist yet if we're running new
-
-	paths, err := paths.NewPathsFromConfig(viper.AllSettings())
+	cfg, err := generator.NewConfig(args[0], args[1])
 	if err != nil {
-		os.Exit(1)
-	}
-	slog.Debug("Paths", slog.Any("paths", paths))
-
-	if err = config.InitTemplate(paths.TemplateConfigPath); err != nil {
-		os.Exit(1)
-	}
-	if _, err := os.Stat(paths.TargetPath); err == nil {
-		slog.Error("Target path exists", slog.String("path", paths.TargetPath))
+		slog.Error("Failed to setup configuration", slog.Any("error", err))
 		os.Exit(1)
 	}
 
-	defPath := strings.Join([]string{"definitions", viper.GetString("definition-name")}, ".")
-	if viper.IsSet(defPath) == false {
-		slog.Error("Definition does not exist in template", slog.String("path", defPath), slog.String("definition-name", viper.GetString("definition-name")), slog.String("template name", viper.GetString("template-name")), slog.String("template config file", viper.GetString("template-config-file")))
-	}
-
-	reqs, _ := config.NewRequirements()
-	slog.Debug("Final Requirements", slog.Any("reqs", reqs))
-
-	vars, _ := config.BuildVariables(reqs.Variables)
-	slog.Debug("Final Variables", slog.Any("vars", vars))
-
-	scripts, err := config.NewScriptSpec(paths)
+	creator, err := generator.NewCreator(cfg)
 	if err != nil {
-		slog.Error("Couldn't build scripts")
+		slog.Error("Failed to create generator", slog.Any("error", err))
 		os.Exit(1)
 	}
-	slog.Debug("Final scripts", slog.Any("scripts", scripts))
 
-	files, err := config.NewFileSpecs(paths)
-	if err != nil {
-		slog.Error("Failed to load files from template definition", slog.Any("error", err))
+	if err := creator.Create(); err != nil {
+		slog.Error("Project creation failed", slog.Any("error", err))
 		os.Exit(1)
-	}
-	slog.Debug("Final files", slog.Any("files", files))
-
-	luaenv := luabridge.NewRuntime(vars, paths, reqs, &files, viper.GetBool("no-write"))
-	for _, script := range scripts.BeforeScripts() {
-		luaenv.Run(script)
-		if luaenv.Error != nil {
-			slog.Error("Error in lua script. Aborting", slog.Any("error", luaenv.Error), slog.String("script", script))
-			os.Exit(1)
-		}
-	}
-
-	// Extract variables modified by lua scripts back into Go
-	vars = luaenv.GetVariables()
-	slog.Debug("Variables after before-scripts", slog.Any("vars", vars))
-
-	// ensure required variables are present
-	for _, varspec := range reqs.Variables {
-		if vars[varspec.Name] == nil {
-			slog.Error("Required variable is not set. Use --set-variable. Aborting.", slog.Any("Name", varspec.Name))
-			// this is where you put a 'while nil { prompt }' loop in v2.
-			slog.Info("All variables", slog.Any("vars", vars))
-			os.Exit(1)
-		}
-	}
-	slog.Debug("All the variables are ready so we can do the work")
-
-	// we're going to read all of the files that we're going to parse into memory. Two copies
-	// (before and after parsing). That's not very ram efficient but it lets us do some nice
-	// debugging with --no-write by forcing parsing to happen without writing.  Computers have
-	// lots of ram and text files are small so I'm not sweating it.
-	for _, file := range files {
-		// this is building the destination name, not the content of that file
-		desttemp, err := template.New("filename").Parse(file.Target)
-		var deststr bytes.Buffer
-		// consider adding 'funcs' here
-		if err != nil {
-			slog.Error("Couldn't template the target filename", slog.String("target", file.Target), slog.Any("err", err))
-		}
-		err = desttemp.Execute(&deststr, vars)
-		if err != nil {
-			slog.Error("Error templating target filename", slog.Any("error", err), slog.String("target", file.Target))
-		}
-		if file.Parse == true {
-			slog.Info("parsing content of file", slog.String("source", file.Source), slog.String("target", deststr.String()))
-			rawtemp, err := os.ReadFile(file.Source)
-			if err != nil {
-				slog.Error("Couldn't read the raw template data", slog.String("Source", file.Source), slog.Any("err", err))
-				os.Exit(1)
-			}
-			file.Raw = string(rawtemp)
-			slog.Debug("rendering template", slog.String("raw data", file.Raw))
-			conttemp, err := template.ParseFiles(file.Source)
-			if err != nil {
-				slog.Error("Error parsing template", slog.Any("err", err), slog.Any("file", file.Source), slog.Any("paths", paths))
-				os.Exit(1)
-			}
-			var contbuff bytes.Buffer
-			conttemp.Execute(&contbuff, vars)
-			file.Rendered = contbuff.String()
-			slog.Info("result", slog.String("rendered", file.Rendered))
-		} else {
-			slog.Info("Nothing to render, skipping read.", slog.String("source", file.Source), slog.String("target", deststr.String()))
-		}
-
-		if viper.GetBool("no-write") == true {
-			slog.Debug("No-write set: skipping copy", slog.String("source", file.Source), slog.String("target", deststr.String()))
-		} else {
-			slog.Debug("Copying", slog.Bool("parse", file.Parse), slog.String("source", file.Source), slog.String("target", deststr.String()))
-			if file.Parse {
-				targetDir := filepath.Dir(deststr.String())
-				if err := os.MkdirAll(targetDir, 0755); err != nil {
-					slog.Error("Failed to create target directory", slog.String("directory", targetDir), slog.Any("error", err))
-					os.Exit(1)
-				}
-				slog.Debug("Created target directory", slog.String("directory", targetDir))
-
-				if err := os.WriteFile(deststr.String(), []byte(file.Rendered), file.SourceMode); err != nil {
-					slog.Error("Failed to write rendered file", slog.String("target", deststr.String()), slog.Any("error", err))
-					os.Exit(1)
-				}
-				slog.Debug("Wrote rendered file", slog.String("target", deststr.String()))
-			} else {
-				targetDir := filepath.Dir(deststr.String())
-				if err := os.MkdirAll(targetDir, 0755); err != nil {
-					slog.Error("Failed to create target directory", slog.String("directory", targetDir), slog.Any("error", err))
-					os.Exit(1)
-				}
-				slog.Debug("Created target directory", slog.String("directory", targetDir))
-
-				sourceFile, err := os.Open(file.Source)
-				if err != nil {
-					slog.Error("Failed to open source file", slog.String("source", file.Source), slog.Any("error", err))
-					os.Exit(1)
-				}
-				defer sourceFile.Close()
-
-				targetFile, err := os.Create(deststr.String())
-				if err != nil {
-					slog.Error("Failed to create target file", slog.String("target", deststr.String()), slog.Any("error", err))
-					os.Exit(1)
-				}
-				defer targetFile.Close()
-
-				if _, err := io.Copy(targetFile, sourceFile); err != nil {
-					slog.Error("Failed to copy file", slog.String("source", file.Source), slog.String("target", deststr.String()), slog.Any("error", err))
-					os.Exit(1)
-				}
-				slog.Debug("Copied file", slog.String("source", file.Source), slog.String("target", deststr.String()))
-
-				if err := os.Chmod(deststr.String(), file.SourceMode); err != nil {
-					slog.Warn("Failed to set permissions on copied file", slog.String("target", deststr.String()), slog.Any("error", err))
-				}
-				slog.Debug("Set permissions on copied file", slog.String("target", deststr.String()), slog.Any("mode", file.SourceMode))
-			}
-		}
-	}
-
-	for _, script := range scripts.AfterScripts() {
-		luaenv.Run(script)
 	}
 }

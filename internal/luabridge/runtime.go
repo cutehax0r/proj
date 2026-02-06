@@ -21,7 +21,6 @@ type Runtime struct {
 	state *lua.LState
 }
 
-// will gain reqs and files
 func NewRuntime(variables map[string]any, paths *paths.Paths, requirements *config.RequirementSpec, files *[]config.FileSpec, nowrite bool) *Runtime {
 	slog.Debug("Lua Bridge setup", "variables", variables)
 	r := Runtime{
