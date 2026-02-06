@@ -55,8 +55,6 @@ func runNew(cmd *cobra.Command, args []string) {
 	viper.Set("target-name", args[1])
 	viper.Set("target-config-file", "") // this should not exist yet if we're running new
 
-	logViperDebug("Global config loaded", viper.AllSettings())
-
 	paths, err := paths.NewPathsFromConfig(viper.AllSettings())
 	if err != nil {
 		os.Exit(1)
@@ -66,8 +64,6 @@ func runNew(cmd *cobra.Command, args []string) {
 	if err = config.InitTemplate(paths.TemplateConfigPath); err != nil {
 		os.Exit(1)
 	}
-	logViperDebug("template config loaded", viper.AllSettings())
-
 	if _, err := os.Stat(paths.TargetPath); err == nil {
 		slog.Error("Target path exists", slog.String("path", paths.TargetPath))
 		os.Exit(1)
@@ -216,13 +212,4 @@ func runNew(cmd *cobra.Command, args []string) {
 	for _, script := range scripts.AfterScripts() {
 		luaenv.Run(script)
 	}
-}
-
-func logViperDebug(desc string, settings map[string]any) {
-	yamlBytes, err := yaml.Marshal(settings)
-	if err != nil {
-		slog.Error("Marshal merged failed", slog.Any("error", err))
-		return
-	}
-	slog.Debug(desc, "all settings", string(yamlBytes))
 }
