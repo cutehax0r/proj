@@ -32,41 +32,63 @@ func NewCreator(cfg *Config) (*Creator, error) {
 	}, nil
 }
 
-func (g *Creator) Create() error {
-	if err := g.setupConfig(); err != nil {
+func (c *Creator) Create() error {
+	if err := c.setupConfig(); err != nil {
 		return err
 	}
 
-	if err := g.runBeforeScripts(); err != nil {
+	if err := c.runBeforeScripts(); err != nil {
 		return err
 	}
 
-	if err := g.processFiles(); err != nil {
+	if err := c.processFiles(); err != nil {
 		return err
 	}
 
-	if err := g.runAfterScripts(); err != nil {
+	if err := c.runAfterScripts(); err != nil {
+		return err
+	}
+
+	if err := c.writeConfig(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (g *Creator) setupConfig() error {
-	if err := config.InitTemplate(g.paths.TemplateConfigPath); err != nil {
+func (c *Creator) writeConfig() error {
+	// in the target directory, create ~/.proj/proj.yml
+	// in there we're going to support having a 'copy' of ~/.local/share/proj/foo/
+	// where you can define your own variables, scripts, and templates that are unique to
+	// a project.
+	// when you run 'add' you'll have access to the variables from when the project was created
+	// it will point what the 'parent' template config is so that any 'add' methods can be
+	// called from there.
+	// you can also modify the config and it will add/override anything in that parent config
+	// this allows you to have a project with a custom "add file" behaviour that won't impact
+	// every project.
+	// .proj/proj.yml should have
+	// -- parent template name (definition? + kind?)
+	// -- variables (including all the target name stuff)
+	// with placeholders for scripts, definitions
+	return nil
+}
+
+func (c *Creator) setupConfig() error {
+	if err := config.InitTemplate(c.paths.TemplateConfigPath); err != nil {
 		slog.Error("Template configuration load failure", slog.Any("error", err))
 		return err
 	}
 	slog.Debug("template config loaded", "file", viper.ConfigFileUsed())
 
-	if _, err := os.Stat(g.paths.TargetPath); err == nil {
-		slog.Error("Target path exists", slog.String("path", g.paths.TargetPath))
+	if _, err := os.Stat(c.paths.TargetPath); err == nil {
+		slog.Error("Target path exists", slog.String("path", c.paths.TargetPath))
 		return err
 	}
 
-	defPath := strings.Join([]string{"definitions", g.cfg.DefinitionName}, ".")
+	defPath := strings.Join([]string{"definitions", c.cfg.DefinitionName}, ".")
 	if !viper.IsSet(defPath) {
-		slog.Error("Definition does not exist in template", slog.String("path", defPath), slog.String("definition-name", g.cfg.DefinitionName), slog.String("template name", g.cfg.TemplateName), slog.String("template config file", viper.GetString("template-config-file")))
+		slog.Error("Definition does not exist in template", slog.String("path", defPath), slog.String("definition-name", c.cfg.DefinitionName), slog.String("template name", c.cfg.TemplateName), slog.String("template config file", viper.GetString("template-config-file")))
 		return os.ErrNotExist
 	}
 
@@ -75,7 +97,7 @@ func (g *Creator) setupConfig() error {
 		slog.Error("Failed to load requirements", slog.Any("error", err))
 		return err
 	}
-	g.reqs = reqs
+	c.reqs = reqs
 	slog.Debug("Final Requirements", slog.Any("reqs", reqs))
 
 	vars, err := config.BuildVariables(reqs.Variables)
@@ -83,45 +105,45 @@ func (g *Creator) setupConfig() error {
 		slog.Error("Failed to build variables", slog.Any("error", err))
 		return err
 	}
-	g.vars = vars
+	c.vars = vars
 	slog.Debug("Final Variables", slog.Any("vars", vars))
 
-	scripts, err := config.NewScriptSpec(g.paths)
+	scripts, err := config.NewScriptSpec(c.paths)
 	if err != nil {
 		slog.Error("Couldn't build scripts", slog.Any("error", err))
 		return err
 	}
-	g.scripts = scripts
+	c.scripts = scripts
 	slog.Debug("Final scripts", slog.Any("scripts", scripts))
 
-	files, err := config.NewFileSpecs(g.paths)
+	files, err := config.NewFileSpecs(c.paths)
 	if err != nil {
 		slog.Error("Failed to load files from template definition", slog.Any("error", err))
 		return err
 	}
-	g.files = files
+	c.files = files
 	slog.Debug("Final files", slog.Any("files", files))
 
-	g.luaenv = luabridge.NewRuntime(g.vars, g.paths, g.reqs, &g.files, g.cfg.NoWrite)
+	c.luaenv = luabridge.NewRuntime(c.vars, c.paths, c.reqs, &c.files, c.cfg.NoWrite)
 
 	return nil
 }
 
-func (g *Creator) runBeforeScripts() error {
-	for _, script := range g.scripts.BeforeScripts() {
-		if err := g.luaenv.Run(script); err != nil {
+func (c *Creator) runBeforeScripts() error {
+	for _, script := range c.scripts.BeforeScripts() {
+		if err := c.luaenv.Run(script); err != nil {
 			slog.Error("Error in lua script. Aborting", slog.Any("error", err), slog.String("script", script))
 			return err
 		}
 	}
 
-	g.vars = g.luaenv.GetVariables()
-	slog.Debug("Variables after before-scripts", slog.Any("vars", g.vars))
+	c.vars = c.luaenv.GetVariables()
+	slog.Debug("Variables after before-scripts", slog.Any("vars", c.vars))
 
-	for _, varspec := range g.reqs.Variables {
-		if g.vars[varspec.Name] == nil {
+	for _, varspec := range c.reqs.Variables {
+		if c.vars[varspec.Name] == nil {
 			slog.Error("Required variable is not set. Use --set-variable. Aborting.", slog.Any("Name", varspec.Name))
-			slog.Info("All variables", slog.Any("vars", g.vars))
+			slog.Info("All variables", slog.Any("vars", c.vars))
 			return os.ErrInvalid
 		}
 	}
@@ -130,9 +152,9 @@ func (g *Creator) runBeforeScripts() error {
 	return nil
 }
 
-func (g *Creator) runAfterScripts() error {
-	for _, script := range g.scripts.AfterScripts() {
-		if err := g.luaenv.Run(script); err != nil {
+func (c *Creator) runAfterScripts() error {
+	for _, script := range c.scripts.AfterScripts() {
+		if err := c.luaenv.Run(script); err != nil {
 			slog.Error("Error in lua script. Aborting", slog.Any("error", err), slog.String("script", script))
 			return err
 		}
@@ -140,14 +162,14 @@ func (g *Creator) runAfterScripts() error {
 	return nil
 }
 
-func (g *Creator) processFiles() error {
+func (c *Creator) processFiles() error {
 	// We're going to read all of the files that we're going to parse into memory. Two copies
 	// (before and after parsing). That's not very ram efficient but it lets us do some nice
 	// debugging with --no-write by forcing parsing to happen without writing. Computers have
 	// lots of ram and text files are small so we're not sweating it.
-	for i, file := range g.files {
+	for i, file := range c.files {
 		// Render the destination filename
-		destPath, err := g.renderTargetPath(file.Target)
+		destPath, err := c.renderTargetPath(file.Target)
 		if err != nil {
 			slog.Error("Error templating target filename", slog.Any("error", err), slog.String("target", file.Target))
 			return err
@@ -155,11 +177,11 @@ func (g *Creator) processFiles() error {
 
 		// Render file content if needed
 		if file.Parse {
-			if err := g.renderAndWriteFile(i, destPath); err != nil {
+			if err := c.renderAndWriteFile(i, destPath); err != nil {
 				return err
 			}
 		} else {
-			if err := g.copyFile(i, destPath); err != nil {
+			if err := c.copyFile(i, destPath); err != nil {
 				return err
 			}
 		}
@@ -167,7 +189,7 @@ func (g *Creator) processFiles() error {
 	return nil
 }
 
-func (g *Creator) renderTargetPath(targetTemplate string) (string, error) {
+func (c *Creator) renderTargetPath(targetTemplate string) (string, error) {
 	desttemp, err := template.New("filename").Parse(targetTemplate)
 	if err != nil {
 		slog.Error("Couldn't template the target filename", slog.String("target", targetTemplate), slog.Any("err", err))
@@ -175,7 +197,7 @@ func (g *Creator) renderTargetPath(targetTemplate string) (string, error) {
 	}
 
 	var deststr bytes.Buffer
-	err = desttemp.Execute(&deststr, g.vars)
+	err = desttemp.Execute(&deststr, c.vars)
 	if err != nil {
 		slog.Error("Error templating target filename", slog.Any("error", err), slog.String("target", targetTemplate))
 		return "", err
@@ -184,8 +206,8 @@ func (g *Creator) renderTargetPath(targetTemplate string) (string, error) {
 	return deststr.String(), nil
 }
 
-func (g *Creator) renderAndWriteFile(fileIdx int, destPath string) error {
-	file := g.files[fileIdx]
+func (c *Creator) renderAndWriteFile(fileIdx int, destPath string) error {
+	file := c.files[fileIdx]
 
 	slog.Info("parsing content of file", slog.String("source", file.Source), slog.String("target", destPath))
 
@@ -199,19 +221,19 @@ func (g *Creator) renderAndWriteFile(fileIdx int, destPath string) error {
 
 	conttemp, err := template.ParseFiles(file.Source)
 	if err != nil {
-		slog.Error("Error parsing template", slog.Any("err", err), slog.Any("file", file.Source), slog.Any("paths", g.paths))
+		slog.Error("Error parsing template", slog.Any("err", err), slog.Any("file", file.Source), slog.Any("paths", c.paths))
 		return err
 	}
 
 	var contbuff bytes.Buffer
-	if err := conttemp.Execute(&contbuff, g.vars); err != nil {
+	if err := conttemp.Execute(&contbuff, c.vars); err != nil {
 		slog.Error("Error executing template", slog.Any("error", err))
 		return err
 	}
 	file.Rendered = contbuff.String()
 	slog.Info("result", slog.String("rendered", file.Rendered))
 
-	if g.cfg.NoWrite {
+	if c.cfg.NoWrite {
 		slog.Debug("No-write set: skipping write", slog.String("source", file.Source), slog.String("target", destPath))
 		return nil
 	}
@@ -232,12 +254,12 @@ func (g *Creator) renderAndWriteFile(fileIdx int, destPath string) error {
 	return nil
 }
 
-func (g *Creator) copyFile(fileIdx int, destPath string) error {
-	file := g.files[fileIdx]
+func (c *Creator) copyFile(fileIdx int, destPath string) error {
+	file := c.files[fileIdx]
 
 	slog.Info("Nothing to render, skipping parse.", slog.String("source", file.Source), slog.String("target", destPath))
 
-	if g.cfg.NoWrite {
+	if c.cfg.NoWrite {
 		slog.Debug("No-write set: skipping copy", slog.String("source", file.Source), slog.String("target", destPath))
 		return nil
 	}
