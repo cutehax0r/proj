@@ -202,6 +202,14 @@ will not change the writing behavior
 
   * `variables` a map containing the name and default value of each required variable.
 
+A number of functions are also provided to help make scripts easier to write.
+
+  * `logDebug`. Log "debug" information. Only visible at log-level 3.
+  * `logInfo`. log "optional" information. Visible at log level 2 or 3.
+  * `logWarn`. log "warnings" information, errors that can be recovered or that will not hault
+  processing. Visible at log level 1-3.
+  * `logError`. log "errors" that should halt further processing. visible at all log levels
+
 
 # Wishlist
 
