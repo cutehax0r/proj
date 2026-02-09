@@ -67,6 +67,11 @@ func (a *Adder) setupConfig() error {
 	}
 	slog.Debug("template config loaded", "file", viper.ConfigFileUsed())
 
+	// Set viper keys that config functions will read from
+	viper.Set("definition-name", a.cfg.DefinitionName)
+	viper.Set("target-name", a.cfg.TargetName)
+	viper.Set("template-name", a.cfg.TemplateName)
+
 	// Read and merge project config from target
 	projectRoot := viper.GetString("target-root")
 	projYmlPath := filepath.Join(projectRoot, paths.TargetConfigFileDir, paths.TargetConfigFile)
