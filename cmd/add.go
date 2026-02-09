@@ -15,30 +15,36 @@ var addCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Short: "Add file(s) called NAME based on the KIND definition from the template used to create this project",
 	Long:  `Add file(s) called NAME based on the KIND definition from the template used to create this project`,
-	Run:   runAdd,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		return viper.BindPFlags(cmd.Flags())
+	},
+	Run: runAdd,
 }
 
 func init() {
 	rootCmd.AddCommand(addCmd)
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		cwd = ""
+	}
+
+	addCmd.Flags().StringP("target-path", "r", cwd, "Directory containing .proj/proj.yml")
 	addCmd.Flags().StringP("template-root", "s", paths.TemplateRootDir(), "Path containing project templates")
-	viper.BindPFlag("template-root", addCmd.Flags().Lookup("template-root"))
-
 	addCmd.Flags().StringP("template-path", "t", "", "Path to read files from")
-	viper.BindPFlag("template-path", addCmd.Flags().Lookup("template-path"))
-
 	addCmd.Flags().StringArrayP("set-variable", "v", []string{}, "Set a variable using key=value")
-	viper.BindPFlag("set-variables", addCmd.Flags().Lookup("set-variable"))
 
+	viper.BindPFlags(addCmd.Flags())
 }
 
 func runAdd(cmd *cobra.Command, args []string) {
 	slog.Debug("Execute Add Command", slog.String("DefinitionName", args[0]), slog.String("TargetName", args[1]))
+	slog.Info("All settings", slog.Any("viper", viper.AllSettings()))
 
-	// maybe we should allow setting target-path so that you can 'apply' an add to an existing
-	// project from outside the current working directory. Find project root would start with
-	// PWD but if specified it would use target-path
-	projectRoot, err := paths.FindProjectRoot()
+	targetPath := viper.GetString("target-path")
+	slog.Debug("Target path", slog.String("path", targetPath))
+
+	projectRoot, err := paths.FindProjectRoot(targetPath)
 	if err != nil {
 		slog.Error("Failed to find project root", slog.Any("error", err))
 		os.Exit(1)

@@ -15,29 +15,23 @@ var newCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Short: "Create a project called NAME based on the KIND template",
 	Long:  `Create a new project based on a project template in the current directory.`,
-	Run:   runNew,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		return viper.BindPFlags(cmd.Flags())
+	},
+	Run: runNew,
 }
 
 func init() {
 	rootCmd.AddCommand(newCmd)
 
 	newCmd.Flags().StringP("target-root", "r", ".", "Path to create the project in (pwd)")
-	viper.BindPFlag("target-root", newCmd.Flags().Lookup("target-root"))
-
 	newCmd.Flags().StringP("target-path", "p", "", "Path to write files at (pwd/foobar)")
-	viper.BindPFlag("target-path", newCmd.Flags().Lookup("target-path"))
-
 	newCmd.Flags().StringP("template-root", "s", paths.TemplateRootDir(), "Path containing project templates")
-	viper.BindPFlag("template-root", newCmd.Flags().Lookup("template-root"))
-
 	newCmd.Flags().StringP("template-path", "t", "", "Path to read files from")
-	viper.BindPFlag("template-path", newCmd.Flags().Lookup("template-path"))
-
 	newCmd.Flags().StringArrayP("set-variable", "v", []string{}, "Set a variable using key=value")
-	viper.BindPFlag("set-variables", newCmd.Flags().Lookup("set-variable"))
-
 	newCmd.Flags().StringP("definition-name", "d", "new", "Definition in template to use")
-	viper.BindPFlag("definition-name", newCmd.Flags().Lookup("definition-name"))
+
+	viper.BindPFlags(newCmd.Flags())
 }
 
 func runNew(cmd *cobra.Command, args []string) {

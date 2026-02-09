@@ -106,15 +106,25 @@ func (p *Paths) ResolveTarget(path string) (string, error) {
 	return resolve(p.TargetPath, path)
 }
 
+func FindProjectRoot(startPath ...string) (string, error) {
+	var searchPath string
+	var err error
 
-func FindProjectRoot() (string, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		slog.Error("Failed to get current working directory", slog.Any("error", err))
-		return "", err
+	if len(startPath) > 0 && startPath[0] != "" {
+		searchPath, err = resolve(startPath[0])
+		if err != nil {
+			slog.Error("Failed to resolve target root", slog.Any("error", err))
+			return "", err
+		}
+	} else {
+		searchPath, err = os.Getwd()
+		if err != nil {
+			slog.Error("Failed to get current working directory", slog.Any("error", err))
+			return "", err
+		}
 	}
 
-	return findProjectRootFrom(cwd)
+	return findProjectRootFrom(searchPath)
 }
 
 func (p *Paths) LogValue() slog.Value {
@@ -142,7 +152,6 @@ func (p *Paths) ToMap() map[string]string {
 		"globalConfigPath":   p.GlobalConfigPath,
 	}
 }
-
 
 func findProjectRootFrom(startPath string) (string, error) {
 	current := startPath

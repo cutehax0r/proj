@@ -299,7 +299,6 @@ A number of functions are also provided to help make scripts easier to write.
 * allow required variables to declare kind: (string, number, boolean) as type
 * allow required variables to declare "options"
 * write a `prompt` functions that can be called from lua
-* write a `shell exec` function exposed to lua that can run commands and recieve std err/in
 * add "descriptions" to most things
 * allow requirements to define mandatory software, checked with `which foo`
 * add `setup` command that writes a default config to and an example template
@@ -312,6 +311,7 @@ A number of functions are also provided to help make scripts easier to write.
 * add --version that dumps a version
 * makefile that does go build for arm/x86/apple.
 * makefile that can build bundles (brew, arch, deb, rpm, nix)
+* tests
 * shell completion should be better. use ValidArgsFunc() on cobra.Command to read template root. 
 * add support for --input or something that reads in data from a file (or maybe STDin and exposes it
   to lua-land and perhaps as a variable. That would allow you to automate filling content of certain
@@ -321,7 +321,7 @@ support](https://apidock.com/rails/ActiveSupport/Inflector/camelize)
 * maybe --set-variables FOO=BAR should try to be case-insentive when matching variables?
 * maybe we should have a --force-set that forces variables to a value (so it gets applied after all the
 scripts run)
-* maybe we should ahve a --force-write that ignores the normal 'file already exists' checks
+* maybe we should have a --force-write that ignores the normal 'file already exists' checks
 * allow file definitions to specify destination permissions
 * All this fussing with variables.  It might make more sense to route everything to JSON and pass
 that to the toluavalue function.  Tag your structs with `json:"foo"` pass an instance of the struct
