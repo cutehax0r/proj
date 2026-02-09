@@ -4,9 +4,88 @@ A tool for setting up new projects or adding files to existing projects
 ## Usage
 
 Commands:
-  * proj new <template> <name> [OPTIONS]
+  * proj <command> <template> <name> [OPTIONS]
 
 Running `new` implies the definition `new`
+
+### Command Line Arguments
+
+  * `-l INT`, `--log-level INT`: How much to log. 0 = less, 3 = more
+
+  * `-w BOOL`, `--no-write BOOL`: Wether to 'dry run' (true) or write changes to disk (false)
+
+  * `-g STRING`, `--global-config-file STRING`: Specify an alternative config file
+
+
+### Commands
+
+
+#### New
+
+Create a new project using a template
+
+##### Usage
+
+General format: `proj new <template> <name> [OPTIONS]`.
+
+**Example:** Create a new project. This uses the `new` definition in the `html` template. The
+variable `title` will be set to "My Home Page". The project will be created in the current working
+directory at `./my_homepage`.
+
+```sh
+proj new html my_homepage -v "title=my home page"
+```
+
+##### Arguments
+
+  * `-r STRING`, `--target-root STRING`: directory that will contain the new project folder
+
+  * `-p STRING`, `--target-path STRING`: full path to the new project directory. Root to where files
+    will be copied. Setting `--target-path` will cause `--target-root` to have no effect.
+
+  * `-s STRING`, `--template-root STRING`: directory to search for project templates
+
+  * `-t STRING`, `--template-path STRING`: full path for template that will be used to create new
+    project. Setting `--template-path` will cause `--template-root` to have no effect.
+
+  * `-v STRING`, `--set-varaible STRING`: define a variable `-v FOO=bar`.
+
+  * `-d STRING`, `--definition-name STRING`: specific definition within the template to use
+
+#### Add
+
+Add a files to an existing project. May only be used with an existing project. You must either be
+inside of a project directory or specify the `target-path`.
+
+##### Usage
+
+General format: `proj add <definition> <name> [OPTIONS]`
+
+These examples assume an HTML template has been installed with reasonable definitions.
+
+**Example:** Add an page to an existing project. Uses the `page` definition in the `html` template.
+The varaible `title` will be set to `Contact Information` and `email` will be `root@example.com`.
+The file would be written at `./contact.html`.
+
+```sh
+proj add page contact -v "email=root@example.com" -v "title=Contact Information"
+```
+
+**Example:** Add an a CSS file to an existing project. Uses the `stylesheet` definition in the
+`html` template. The stylesheet would be at `./css/print.css`
+
+```sh
+proj add stylesheet print
+```
+
+##### Arguments
+
+  * `-s STRING`, `--template-root STRING`: directory to search for project templates
+
+  * `-t STRING`, `--template-path STRING`: full path for template that will be used to create new
+    project. Setting `--template-path` will cause `--template-root` to have no effect.
+
+  * `-v STRING`, `--set-varaible STRING`: define a variable `-v FOO=bar`.
 
 ## Configuration
 
@@ -216,9 +295,10 @@ A number of functions are also provided to help make scripts easier to write.
 * allow for `variables.template.definition` in global config so that (for example)
 `variables.python.version = 3` or `variables.ruby.typesystem = "sorbet"` can be set
 * allow variable declarations to include "persist: false" to avoid adding them to a .proj directory
+* allow a 'not required' variable declaration format. for documentation of what's allowed
 * allow required variables to declare kind: (string, number, boolean) as type
 * allow required variables to declare "options"
-* write a `prompt` function that can be called from lua
+* write a `prompt` functions that can be called from lua
 * write a `shell exec` function exposed to lua that can run commands and recieve std err/in
 * add "descriptions" to most things
 * allow requirements to define mandatory software, checked with `which foo`
@@ -236,18 +316,13 @@ A number of functions are also provided to help make scripts easier to write.
 * add support for --input or something that reads in data from a file (or maybe STDin and exposes it
   to lua-land and perhaps as a variable. That would allow you to automate filling content of certain
   files.
-
-* document the 'overloading' that happens.
-  * no-write implies log info or log debug
-  * if you set template-path, then template root is 'ignored'
-  * if you set target-path, then target root is ignored
-
-* Bolt on context when returning errors  func foo() (int, error) { x, err := givesErr(); err != nil
-  { return fmt.Errorf("addcontext %w", err) } }
+* add string helper functions `camelcase`, `classify`, etc. like [active
+support](https://apidock.com/rails/ActiveSupport/Inflector/camelize)
 * maybe --set-variables FOO=BAR should try to be case-insentive when matching variables?
 * maybe we should have a --force-set that forces variables to a value (so it gets applied after all the
 scripts run)
-
+* maybe we should ahve a --force-write that ignores the normal 'file already exists' checks
+* allow file definitions to specify destination permissions
 * All this fussing with variables.  It might make more sense to route everything to JSON and pass
 that to the toluavalue function.  Tag your structs with `json:"foo"` pass an instance of the struct
 to json.Marshal(somestruct) to get a map[string]any. then pass that over to .toluavalue Investigate
