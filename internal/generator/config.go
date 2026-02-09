@@ -32,7 +32,6 @@ func NewConfig(templateName, targetName string) (*Config, error) {
 		GlobalConfigFile: viper.GetString("global-config-file"),
 	}
 
-	// Compute paths once
 	if err := cfg.setupPaths(); err != nil {
 		return nil, err
 	}
@@ -41,7 +40,6 @@ func NewConfig(templateName, targetName string) (*Config, error) {
 }
 
 func (cfg *Config) setupPaths() error {
-	// Set values in viper for path resolution
 	viper.Set("template-name", cfg.TemplateName)
 	viper.Set("target-name", cfg.TargetName)
 	viper.Set("target-config-file", "") // this should not exist yet if we're running new
@@ -55,25 +53,25 @@ func (cfg *Config) setupPaths() error {
 	return nil
 }
 
-// AddConfig creates a Config for the add command by loading the existing project's
-// proj.yml and using it to determine the template name and other settings.
-func AddConfig(projectRoot, kind, name string) (*Config, error) {
-	// Load the existing proj.yml
+func AddConfig(kind, name string) (*Config, error) {
+	// Find project root from current directory
+	targetPath := viper.GetString("target-path")
+	projectRoot, err := paths.FindProjectRoot(targetPath)
+	if err != nil {
+		return nil, err
+	}
+
 	projYmlPath := filepath.Join(projectRoot, paths.TargetConfigFileDir, paths.TargetConfigFile)
 	projData, err := os.ReadFile(projYmlPath)
 	if err != nil {
-		slog.Error("Failed to read proj.yml", slog.String("path", projYmlPath), slog.Any("error", err))
 		return nil, err
 	}
 
-	// Unmarshal into TargetConfig to extract template name
 	targetCfg := &config.TargetConfig{}
 	if err := yaml.Unmarshal(projData, targetCfg); err != nil {
-		slog.Error("Failed to unmarshal proj.yml", slog.String("path", projYmlPath), slog.Any("error", err))
 		return nil, err
 	}
 
-	// Create Config with the template name from proj.yml
 	cfg := &Config{
 		TemplateName:     targetCfg.TemplateName,
 		TargetName:       name,
@@ -83,7 +81,6 @@ func AddConfig(projectRoot, kind, name string) (*Config, error) {
 		GlobalConfigFile: viper.GetString("global-config-file"),
 	}
 
-	// Set up paths with the project root as target-root
 	viper.Set("target-root", projectRoot)
 	viper.Set("template-name", cfg.TemplateName)
 	viper.Set("target-name", cfg.TargetName)
