@@ -46,7 +46,7 @@ func BuildVariables(reqvars []VariableSpec) (map[string]any, error) {
 func buildMapFromSetVariables() map[string]any {
 	vars := make(map[string]any)
 	slog.Debug("vars", "len", len(vars))
-	for i, rawset := range viper.GetStringSlice("set-variables") {
+	for i, rawset := range viper.GetStringSlice("set-variable") {
 		key, value, found := strings.Cut(rawset, "=")
 		if !found {
 			slog.Warn("Invalid argument for set-variable. skipping", slog.Int("Index", i), slog.String("raw", rawset))

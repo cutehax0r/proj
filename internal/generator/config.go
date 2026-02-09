@@ -27,7 +27,7 @@ func NewConfig(templateName, targetName string) (*Config, error) {
 		TemplateName:     templateName,
 		TargetName:       targetName,
 		DefinitionName:   viper.GetString("definition-name"),
-		SetVariables:     viper.GetStringSlice("set-variables"),
+		SetVariables:     viper.GetStringSlice("set-variable"),
 		NoWrite:          viper.GetBool("no-write"),
 		GlobalConfigFile: viper.GetString("global-config-file"),
 	}
@@ -76,7 +76,7 @@ func AddConfig(kind, name string) (*Config, error) {
 		TemplateName:     targetCfg.TemplateName,
 		TargetName:       name,
 		DefinitionName:   kind,
-		SetVariables:     viper.GetStringSlice("set-variables"),
+		SetVariables:     viper.GetStringSlice("set-variable"),
 		NoWrite:          viper.GetBool("no-write"),
 		GlobalConfigFile: viper.GetString("global-config-file"),
 	}
