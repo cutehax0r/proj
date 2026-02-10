@@ -106,6 +106,12 @@ func (p *Paths) ResolveTarget(path string) (string, error) {
 	return resolve(p.TargetPath, path)
 }
 
+// ResolveFrom resolves a path relative to any given directory
+// This is used for resolving definition sources which may come from different locations
+func (p *Paths) ResolveFrom(baseDir, path string) (string, error) {
+	return resolve(baseDir, path)
+}
+
 func FindProjectRoot(startPath ...string) (string, error) {
 	var searchPath string
 	var err error

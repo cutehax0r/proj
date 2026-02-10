@@ -82,6 +82,7 @@ func AddConfig(kind, name string) (*Config, error) {
 	}
 
 	viper.Set("target-root", projectRoot)
+	viper.Set("target-path", projectRoot) // For 'add', files should be written relative to projectRoot
 	viper.Set("template-name", cfg.TemplateName)
 	viper.Set("target-name", cfg.TargetName)
 	viper.Set("target-config-file", projYmlPath)

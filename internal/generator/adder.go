@@ -104,6 +104,8 @@ func (a *Adder) setupConfig() error {
 		for key, val := range projectCfg.Definitions {
 			viper.Set(fmt.Sprintf("definitions.%s", key), val)
 		}
+		// Track that these definitions come from the project's .proj directory
+		config.SetProjectDefinitionSources(projectRoot, projectCfg)
 	}
 
 	slog.Debug("Project config merged", slog.Any("variables", projectCfg.Variables), slog.Any("definitions", projectCfg.Definitions))
