@@ -29,7 +29,7 @@ func init() {
 		cwd = ""
 	}
 
-	addCmd.Flags().StringP("target-path", "r", cwd, "Directory containing .proj/proj.yml")
+	addCmd.Flags().StringP("target-path", "p", cwd, "Directory containing .proj/proj.yml")
 	addCmd.Flags().StringP("template-root", "s", paths.TemplateRootDir(), "Path containing project templates")
 	addCmd.Flags().StringP("template-path", "t", "", "Path to read files from")
 	addCmd.Flags().StringArrayP("set-variable", "v", []string{}, "Set a variable using key=value")

@@ -16,7 +16,6 @@ Running `new` implies the definition `new`
 
   * `-g STRING`, `--global-config-file STRING`: Specify an alternative config file
 
-
 ### Commands
 
 
