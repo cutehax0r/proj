@@ -50,6 +50,10 @@ func (cfg *Config) setupPaths() error {
 		return err
 	}
 	cfg.Paths = p
+
+	// Set the template path in viper so it can be used during file spec resolution
+	viper.Set("template-path", p.TemplatePath)
+
 	return nil
 }
 

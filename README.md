@@ -1,22 +1,3 @@
-# TODO
-
-## add is busted
-
-if you're in /root/foo/bar and /root is where .proj/proj.yml is then if you run `add foo bar` and
-foo defines `target` as 'x/y.jpg', the file gets written to `/root/foo/bar/x/y.jpg` but it should be
-written to `/root/x/y.jpg`.
-
-If you define a definition in /root/.proj/proj.yml it doesn't seem to get resolved properly. Gotta
-go tidy up the load and override definition code.  We also need to make sure that if you're running
-a definition in /root/.proj/proj.yml then the sources should be relative to /root/.proj. if the
-definition is coming from `~/.local/share/proj/foo` then it should be relative to there.
-
-Open question. should we fall back for files?  E.g. if I want to customize the test file but not the
-'regular' file should I have to make a copy of both?  Maybe files should pick up a 'fallback' option
-or something?
-
-
-
 # Proj
 A tool for setting up new projects or adding files to existing projects
 
