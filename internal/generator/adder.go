@@ -145,7 +145,7 @@ func (a *Adder) setupConfig() error {
 	slog.Debug("Final Variables", slog.Any("vars", vars))
 
 	// Load scripts
-	scripts, err := config.NewScriptSpec(a.paths)
+	scripts, err := config.NewScriptSpecWithFS(a.cfg.Fs, a.paths)
 	if err != nil {
 		slog.Error("Couldn't build scripts", slog.Any("error", err))
 		return err
@@ -154,7 +154,7 @@ func (a *Adder) setupConfig() error {
 	slog.Debug("Final scripts", slog.Any("scripts", scripts))
 
 	// Load files
-	files, err := config.NewFileSpecs(a.paths)
+	files, err := config.NewFileSpecsWithFS(a.cfg.Fs, a.paths)
 	if err != nil {
 		slog.Error("Failed to load files from template definition", slog.Any("error", err))
 		return err
@@ -169,7 +169,7 @@ func (a *Adder) setupConfig() error {
 }
 
 func (a *Adder) runBeforeScripts() error {
-	for _, script := range a.scripts.BeforeScripts() {
+	for _, script := range a.scripts.BeforeScriptsWithFS(a.cfg.Fs) {
 		if err := a.luaenv.Run(script); err != nil {
 			slog.Error("Error in lua script. Aborting", slog.Any("error", err), slog.String("script", script))
 			return err
@@ -351,7 +351,7 @@ func (a *Adder) copyFile(fileIdx int, destPath string) error {
 }
 
 func (a *Adder) runAfterScripts() error {
-	for _, script := range a.scripts.AfterScripts() {
+	for _, script := range a.scripts.AfterScriptsWithFS(a.cfg.Fs) {
 		if err := a.luaenv.Run(script); err != nil {
 			slog.Error("Error in lua script. Aborting", slog.Any("error", err), slog.String("script", script))
 			return err

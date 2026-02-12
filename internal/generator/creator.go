@@ -124,7 +124,7 @@ func (c *Creator) setupConfig() error {
 	c.vars = vars
 	slog.Debug("Final Variables", slog.Any("vars", vars))
 
-	scripts, err := config.NewScriptSpec(c.paths)
+	scripts, err := config.NewScriptSpecWithFS(c.cfg.Fs, c.paths)
 	if err != nil {
 		slog.Error("Couldn't build scripts", slog.Any("error", err))
 		return err
@@ -132,7 +132,7 @@ func (c *Creator) setupConfig() error {
 	c.scripts = scripts
 	slog.Debug("Final scripts", slog.Any("scripts", scripts))
 
-	files, err := config.NewFileSpecs(c.paths)
+	files, err := config.NewFileSpecsWithFS(c.cfg.Fs, c.paths)
 	if err != nil {
 		slog.Error("Failed to load files from template definition", slog.Any("error", err))
 		return err
@@ -146,7 +146,7 @@ func (c *Creator) setupConfig() error {
 }
 
 func (c *Creator) runBeforeScripts() error {
-	for _, script := range c.scripts.BeforeScripts() {
+	for _, script := range c.scripts.BeforeScriptsWithFS(c.cfg.Fs) {
 		if err := c.luaenv.Run(script); err != nil {
 			slog.Error("Error in lua script. Aborting", slog.Any("error", err), slog.String("script", script))
 			return err
@@ -169,7 +169,7 @@ func (c *Creator) runBeforeScripts() error {
 }
 
 func (c *Creator) runAfterScripts() error {
-	for _, script := range c.scripts.AfterScripts() {
+	for _, script := range c.scripts.AfterScriptsWithFS(c.cfg.Fs) {
 		if err := c.luaenv.Run(script); err != nil {
 			slog.Error("Error in lua script. Aborting", slog.Any("error", err), slog.String("script", script))
 			return err

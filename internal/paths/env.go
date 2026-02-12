@@ -21,6 +21,8 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+
+	"github.com/spf13/afero"
 )
 
 const GlobalConfigDir = "proj"
@@ -70,10 +72,14 @@ func TemplateRootPaths() (paths []string) {
 
 // what do we do if none of these paths exist?
 func TemplateRootDir() string {
+	return TemplateRootDirWithFS(afero.NewOsFs())
+}
+
+func TemplateRootDirWithFS(fs afero.Fs) string {
 	paths := TemplateRootPaths()
 	slog.Debug("Finding template root path from", slog.Any("paths", paths))
 	for _, p := range paths {
-		if _, err := os.Stat(p); err == nil {
+		if _, err := fs.Stat(p); err == nil {
 			return p
 		}
 	}

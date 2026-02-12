@@ -4,10 +4,10 @@ import (
 	"errors"
 	"io/fs"
 	"log/slog"
-	"os"
 	"proj/internal/paths"
 	"strings"
 
+	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 )
 
@@ -29,7 +29,11 @@ func (f *FileSpec) ToMap() map[string]any {
 	}
 }
 
-func NewFileSpecs(paths *paths.Paths) ([]FileSpec, error) {
+func NewFileSpecs(p *paths.Paths) ([]FileSpec, error) {
+	return NewFileSpecsWithFS(afero.NewOsFs(), p)
+}
+
+func NewFileSpecsWithFS(fs afero.Fs, paths *paths.Paths) ([]FileSpec, error) {
 	result := make([]FileSpec, 0)
 
 	datapath := strings.Join([]string{"definitions", viper.GetString("definition-name"), "files"}, ".")
@@ -62,12 +66,12 @@ func NewFileSpecs(paths *paths.Paths) ([]FileSpec, error) {
 		}
 
 		// If source file doesn't exist and we have a different template source dir, try fallback
-		info, err := os.Stat(source)
+		info, err := fs.Stat(source)
 		if err != nil && sourceDir != templateSourceDir {
 			slog.Debug("Source file not found in primary location, checking fallback", slog.String("source", source), slog.String("fallback-dir", templateSourceDir))
 			fallbackSource, fallbackErr := paths.ResolveFrom(templateSourceDir, spec["source"].(string))
 			if fallbackErr == nil {
-				if fallbackInfo, fallbackStatErr := os.Stat(fallbackSource); fallbackStatErr == nil {
+				if fallbackInfo, fallbackStatErr := fs.Stat(fallbackSource); fallbackStatErr == nil {
 					slog.Debug("Found source file in fallback location", slog.String("fallback-source", fallbackSource))
 					source = fallbackSource
 					info = fallbackInfo
