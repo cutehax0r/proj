@@ -8,81 +8,63 @@ import (
 	"testing"
 )
 
-func TestRootCommandWithoutArguments(t *testing.T) {
-	originalArgs := os.Args
-	originalStdout := os.Stdout
-
-	defer func() {
-		os.Args = originalArgs
-		os.Stdout = originalStdout
-	}()
-
+func captureCommandOutput(args []string) string {
 	reader, writer, err := os.Pipe()
 	if err != nil {
-		t.Fatalf("Failed to create pipe: %v", err)
+		return ""
 	}
 
-	os.Args = []string{"proj"}
-
+	originalStdout := os.Stdout
 	os.Stdout = writer
 
-	done := make(chan struct{})
-	var output string
-
+	done := make(chan string)
 	go func() {
-		defer close(done)
 		buf := &bytes.Buffer{}
-		_, err := io.Copy(buf, reader)
-		if err != nil {
-			return
-		}
-		output = buf.String()
+		io.Copy(buf, reader)
+		done <- buf.String()
 	}()
 
 	rootCmd.SetOutput(writer)
-	rootCmd.SetArgs([]string{})
-	err = rootCmd.Execute()
+	rootCmd.SetArgs(args)
+	rootCmd.Execute()
 	writer.Close()
+	os.Stdout = originalStdout
 
-	<-done
+	return <-done
+}
 
-	tests := []struct {
-		name    string
-		pattern string
-	}{
-		{
-			name:    "contains Usage",
-			pattern: "Usage",
-		},
-		{
-			name:    "contains Available Commands",
-			pattern: "Available Commands",
-		},
-		{
-			name:    "contains Flags",
-			pattern: "Flags",
-		},
-		{
-			name:    "contains new command",
-			pattern: "new",
-		},
-		{
-			name:    "contains add command",
-			pattern: "add",
-		},
-		{
-			name:    "contains help flag",
-			pattern: "help",
-		},
-		{
-			name:    "contains no-write flag",
-			pattern: "no-write",
-		},
+func TestRootCommandWithoutArguments(t *testing.T) {
+	output := captureCommandOutput([]string{})
+
+	patterns := []string{"Usage", "Available Commands", "Flags", "new", "add", "help", "no-write"}
+
+	for _, pattern := range patterns {
+		if !strings.Contains(output, pattern) {
+			t.Errorf("Expected help text to contain %q", pattern)
+		}
 	}
+}
 
-	for _, tt := range tests {
-		if !strings.Contains(output, tt.pattern) {
-			t.Errorf("Expected help text to contain %q, but it didn't. Output:\n%s", tt.pattern, output)
+func TestNewCommandWithoutArguments(t *testing.T) {
+	output := captureCommandOutput([]string{"new"})
+
+	patterns := []string{"Usage", "Flags", "help", "set-variable", "template-root"}
+
+	for _, pattern := range patterns {
+		if !strings.Contains(output, pattern) {
+			t.Errorf("Expected new command help to contain %q", pattern)
+		}
+	}
+}
+
+func TestAddCommandWithoutArguments(t *testing.T) {
+	output := captureCommandOutput([]string{"add"})
+
+	patterns := []string{"Usage", "Flags", "help", "set-variable", "template-root"}
+
+	for _, pattern := range patterns {
+		if !strings.Contains(output, pattern) {
+			t.Errorf("Expected add command help to contain %q", pattern)
 		}
 	}
 }
