@@ -1,22 +1,31 @@
-.PHONY: help build build-macos-arm64 build-macos-amd64 build-windows-arm64 build-windows-amd64 build-linux-arm64 build-linux-amd64 build-all clean test
+.PHONY: help build build-macos-arm64 build-macos-amd64 build-windows-arm64 build-windows-amd64 build-linux-arm64 build-linux-amd64 build-all clean test acceptance
 
 # Default target
-DEFAULT_TARGET := build
+.DEFAULT_GOAL := build
+
+# Detect local platform
+LOCAL_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/darwin/;s/linux/linux/')
+LOCAL_ARCH := $(shell uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
 
 # Variables
 BINARY_NAME := proj
 GO := go
-GOOS ?= darwin
-GOARCH ?= arm64
+GOOS ?= $(LOCAL_OS)
+GOARCH ?= $(LOCAL_ARCH)
 OUTPUT_DIR := ./bin
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+
+# Platform-specific extensions
+ifeq ($(GOOS),windows)
+BINARY_EXT := .exe
+endif
 
 # Help target
 help:
 	@echo "Makefile targets for $(BINARY_NAME):"
 	@echo ""
-	@echo "Build targets (default: macOS/arm64):"
-	@echo "  make build                    Build for macOS/arm64 (default)"
+	@echo "Build targets:"
+	@echo "  make build                    Build for local platform ($(LOCAL_OS)/$(LOCAL_ARCH))"
 	@echo "  make build-macos-arm64        Build for macOS/arm64"
 	@echo "  make build-macos-amd64        Build for macOS/amd64 (Intel)"
 	@echo "  make build-windows-arm64      Build for Windows/arm64"
@@ -26,7 +35,8 @@ help:
 	@echo "  make build-all                Build for all platforms"
 	@echo ""
 	@echo "Development targets:"
-	@echo "  make test                     Run tests"
+	@echo "  make test                     Run unit tests"
+	@echo "  make acceptance               Run acceptance tests (builds + tests)"
 	@echo "  make clean                    Remove build artifacts"
 	@echo "  make help                     Display this help message"
 	@echo ""
@@ -39,8 +49,14 @@ help:
 	@echo "  make build-all                Build all platform variants"
 	@echo "  GOOS=linux GOARCH=arm64 make  Custom build"
 
-# Main build target (macOS/arm64 by default)
-build: build-macos-arm64
+# Main build target (builds for local platform + creates copy as 'proj')
+build:
+	@echo "Building $(BINARY_NAME) for $(GOOS)/$(GOARCH)..."
+	@mkdir -p $(OUTPUT_DIR)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO) build -o $(OUTPUT_DIR)/$(BINARY_NAME)-$(GOOS)-$(GOARCH)$(BINARY_EXT) .
+	@cp $(OUTPUT_DIR)/$(BINARY_NAME)-$(GOOS)-$(GOARCH)$(BINARY_EXT) $(OUTPUT_DIR)/$(BINARY_NAME)
+	@echo "✓ Built: $(OUTPUT_DIR)/$(BINARY_NAME)-$(GOOS)-$(GOARCH)$(BINARY_EXT)"
+	@echo "✓ Copied to: $(OUTPUT_DIR)/$(BINARY_NAME)"
 
 # Platform-specific build targets
 build-macos-arm64:
@@ -90,6 +106,11 @@ build-all: build-macos-arm64 build-macos-amd64 build-windows-arm64 build-windows
 test:
 	@echo "Running tests..."
 	$(GO) test -v ./...
+
+# Acceptance test target
+acceptance: build
+	@echo "Running acceptance tests..."
+	$(GO) test -v -tags=acceptance ./tests/acceptance/...
 
 # Clean target
 clean:
