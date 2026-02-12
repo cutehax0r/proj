@@ -286,8 +286,63 @@ A number of functions are also provided to help make scripts easier to write.
   * `logInfo`. log "optional" information. Visible at log level 2 or 3.
   * `logWarn`. log "warnings" information, errors that can be recovered or that will not hault
   processing. Visible at log level 1-3.
-  * `logError`. log "errors" that should halt further processing. visible at all log levels
+   * `logError`. log "errors" that should halt further processing. visible at all log levels
 
+# Test Plan (Integration Tests)
+
+## Setup
+- Test templates in `testdata/templates/` (e.g., `html` template with parse/non-parse files)
+- Test global config in `testdata/config/` 
+- Helper functions for test setup/assertions
+- Each test runs independently using in-memory filesystem (afero)
+- Test scripts use `logInfo` calls but don't modify state
+
+## `proj new` Integration Tests
+
+### Core Functionality
+- [ ] Default behavior: uses XDG_DATA_HOME template, outputs to ./\<name\>
+- [ ] --template-root: finds template in custom directory
+- [ ] --template-path: uses exact path to template (ignores XDG_DATA_HOME)
+- [ ] --target-root: outputs project to custom root directory
+- [ ] --target-path: outputs project to exact path (overrides name derivation)
+- [ ] -w/--no-write: dry-run mode prints plan, makes no filesystem changes
+
+### Variables & Configuration
+- [ ] Global config file variables are available in template rendering
+- [ ] -v flag overrides global config variable values
+- [ ] -g flag loads custom global config file (not XDG_CONFIG_HOME)
+- [ ] Variables correctly rendered in parsed files
+- [ ] Variables persisted to .proj/proj.yml after creation
+
+### Definition Tests  
+- [ ] Default definition name is "new"
+- [ ] --definition-name overrides default (uses non-local definitions)
+- [ ] Template can have multiple definitions, only selected one executes
+
+### Script Execution
+- [ ] Before-scripts execute in order: global → template → definition
+- [ ] Variables set in before-scripts are available to template rendering
+- [ ] After-scripts execute in order: definition → template → global
+- [ ] Scripts are optional at all levels (global, template, definition)
+- [ ] Script output appears in verbose logging
+
+### File Output
+- [ ] .proj/proj.yml created with correct structure
+- [ ] .proj/proj.yml contains template name
+- [ ] .proj/proj.yml contains all variables used
+- [ ] Parsed files rendered with correct variable substitution
+- [ ] Non-parsed files copied exactly (binary-safe)
+- [ ] File permissions from source preserved in output
+- [ ] Parse and non-parse files can coexist in same template
+
+### Error Handling (No filesystem changes on failure)
+- [ ] Fails if target path already exists
+- [ ] Fails if template not found
+- [ ] Fails if required variable not set
+- [ ] All error cases leave filesystem untouched
+
+## `proj add` Integration Tests
+- [ ] Planned for future iteration
 
 # Wishlist
 
