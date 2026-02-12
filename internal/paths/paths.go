@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/afero"
 )
 
 type Paths struct {
@@ -113,6 +115,10 @@ func (p *Paths) ResolveFrom(baseDir, path string) (string, error) {
 }
 
 func FindProjectRoot(startPath ...string) (string, error) {
+	return FindProjectRootWithFS(afero.NewOsFs(), startPath...)
+}
+
+func FindProjectRootWithFS(fs afero.Fs, startPath ...string) (string, error) {
 	var searchPath string
 	var err error
 
@@ -130,7 +136,7 @@ func FindProjectRoot(startPath ...string) (string, error) {
 		}
 	}
 
-	return findProjectRootFrom(searchPath)
+	return findProjectRootFrom(fs, searchPath)
 }
 
 func (p *Paths) LogValue() slog.Value {
@@ -159,7 +165,7 @@ func (p *Paths) ToMap() map[string]string {
 	}
 }
 
-func findProjectRootFrom(startPath string) (string, error) {
+func findProjectRootFrom(fs afero.Fs, startPath string) (string, error) {
 	current := startPath
 
 	// I think we need this for windows support with weird \foo\bar\baz paths that can be root
@@ -177,7 +183,7 @@ func findProjectRootFrom(startPath string) (string, error) {
 
 		// fond project root because .proj/proj.yml exists in current directory tree
 		projPath := filepath.Join(current, TargetConfigFileDir, TargetConfigFile)
-		if _, err := os.Stat(projPath); err == nil {
+		if _, err := fs.Stat(projPath); err == nil {
 			return current, nil
 		}
 

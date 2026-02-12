@@ -2,10 +2,10 @@ package generator
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
 	"path/filepath"
 	"proj/internal/config"
 	"proj/internal/luabridge"
@@ -13,6 +13,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 	"go.yaml.in/yaml/v3"
 )
@@ -75,7 +76,8 @@ func (a *Adder) setupConfig() error {
 	// Read and merge project config from target
 	projectRoot := viper.GetString("target-root")
 	projYmlPath := filepath.Join(projectRoot, paths.TargetConfigFileDir, paths.TargetConfigFile)
-	projData, err := os.ReadFile(projYmlPath)
+	fs := afero.NewOsFs()
+	projData, err := afero.ReadFile(fs, projYmlPath)
 	if err != nil {
 		slog.Error("Failed to read project config", slog.String("path", projYmlPath), slog.Any("error", err))
 		return err
@@ -111,7 +113,7 @@ func (a *Adder) setupConfig() error {
 	slog.Debug("Project config merged", slog.Any("variables", projectCfg.Variables), slog.Any("definitions", projectCfg.Definitions))
 
 	// Validate target path EXISTS
-	if _, err := os.Stat(a.paths.TargetPath); err != nil {
+	if _, err := fs.Stat(a.paths.TargetPath); err != nil {
 		slog.Error("Target path does not exist", slog.String("path", a.paths.TargetPath))
 		return err
 	}
@@ -121,7 +123,7 @@ func (a *Adder) setupConfig() error {
 	defPath := strings.Join([]string{"definitions", a.cfg.DefinitionName}, ".")
 	if !viper.IsSet(defPath) {
 		slog.Error("Definition does not exist", slog.String("path", defPath), slog.String("definition-name", a.cfg.DefinitionName), slog.String("template name", a.cfg.TemplateName))
-		return os.ErrNotExist
+		return afero.ErrFileNotFound
 	}
 
 	// Load requirements
@@ -181,7 +183,7 @@ func (a *Adder) runBeforeScripts() error {
 		if a.vars[varspec.Name] == nil {
 			slog.Error("Required variable is not set. Use --set-variable. Aborting.", slog.Any("Name", varspec.Name))
 			slog.Info("All variables", slog.Any("vars", a.vars))
-			return os.ErrInvalid
+			return errors.New("required variable not set")
 		}
 	}
 	slog.Debug("All the variables are ready so we can do the work")
@@ -201,7 +203,7 @@ func (a *Adder) validateFiles() error {
 		}
 
 		// Check if file already exists
-		if _, err := os.Stat(destPath); err == nil {
+		if _, err := a.cfg.Fs.Stat(destPath); err == nil {
 			conflicts = append(conflicts, destPath)
 			slog.Debug("Target file already exists", slog.String("target", destPath))
 		}
@@ -260,7 +262,7 @@ func (a *Adder) renderAndWriteFile(fileIdx int, destPath string) error {
 
 	slog.Info("parsing content of file", slog.String("source", file.Source), slog.String("target", destPath))
 
-	rawtemp, err := os.ReadFile(file.Source)
+	rawtemp, err := afero.ReadFile(a.cfg.Fs, file.Source)
 	if err != nil {
 		slog.Error("Couldn't read the raw template data", slog.String("Source", file.Source), slog.Any("err", err))
 		return err
@@ -268,7 +270,7 @@ func (a *Adder) renderAndWriteFile(fileIdx int, destPath string) error {
 	file.Raw = string(rawtemp)
 	slog.Debug("rendering template", slog.String("raw data", file.Raw))
 
-	conttemp, err := template.ParseFiles(file.Source)
+	conttemp, err := template.New("template").Parse(file.Raw)
 	if err != nil {
 		slog.Error("Error parsing template", slog.Any("err", err), slog.Any("file", file.Source), slog.Any("paths", a.paths))
 		return err
@@ -288,13 +290,13 @@ func (a *Adder) renderAndWriteFile(fileIdx int, destPath string) error {
 	}
 
 	targetDir := filepath.Dir(destPath)
-	if err := os.MkdirAll(targetDir, 0755); err != nil {
+	if err := a.cfg.Fs.MkdirAll(targetDir, 0755); err != nil {
 		slog.Error("Failed to create target directory", slog.String("directory", targetDir), slog.Any("error", err))
 		return err
 	}
 	slog.Debug("Created target directory", slog.String("directory", targetDir))
 
-	if err := os.WriteFile(destPath, []byte(file.Rendered), file.SourceMode); err != nil {
+	if err := afero.WriteFile(a.cfg.Fs, destPath, []byte(file.Rendered), file.SourceMode); err != nil {
 		slog.Error("Failed to write rendered file", slog.String("target", destPath), slog.Any("error", err))
 		return err
 	}
@@ -314,20 +316,20 @@ func (a *Adder) copyFile(fileIdx int, destPath string) error {
 	}
 
 	targetDir := filepath.Dir(destPath)
-	if err := os.MkdirAll(targetDir, 0755); err != nil {
+	if err := a.cfg.Fs.MkdirAll(targetDir, 0755); err != nil {
 		slog.Error("Failed to create target directory", slog.String("directory", targetDir), slog.Any("error", err))
 		return err
 	}
 	slog.Debug("Created target directory", slog.String("directory", targetDir))
 
-	sourceFile, err := os.Open(file.Source)
+	sourceFile, err := a.cfg.Fs.Open(file.Source)
 	if err != nil {
 		slog.Error("Failed to open source file", slog.String("source", file.Source), slog.Any("error", err))
 		return err
 	}
 	defer sourceFile.Close()
 
-	targetFile, err := os.Create(destPath)
+	targetFile, err := a.cfg.Fs.Create(destPath)
 	if err != nil {
 		slog.Error("Failed to create target file", slog.String("target", destPath), slog.Any("error", err))
 		return err
@@ -340,7 +342,7 @@ func (a *Adder) copyFile(fileIdx int, destPath string) error {
 	}
 	slog.Debug("Copied file", slog.String("source", file.Source), slog.String("target", destPath))
 
-	if err := os.Chmod(destPath, file.SourceMode); err != nil {
+	if err := a.cfg.Fs.Chmod(destPath, file.SourceMode); err != nil {
 		slog.Warn("Failed to set permissions on copied file", slog.String("target", destPath), slog.Any("error", err))
 	}
 	slog.Debug("Set permissions on copied file", slog.String("target", destPath), slog.Any("mode", file.SourceMode))
