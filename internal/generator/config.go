@@ -34,6 +34,8 @@ func NewConfig(templateName, targetName string) (*Config, error) {
 		Fs:               afero.NewOsFs(),
 	}
 
+	slog.Debug("Configuration loaded", slog.Bool("no-write", cfg.NoWrite))
+
 	if err := cfg.setupPaths(); err != nil {
 		return nil, err
 	}
@@ -88,6 +90,8 @@ func AddConfig(kind, name string) (*Config, error) {
 		GlobalConfigFile: viper.GetString("global-config-file"),
 		Fs:               afero.NewOsFs(),
 	}
+
+	slog.Debug("Configuration loaded", slog.Bool("no-write", cfg.NoWrite))
 
 	viper.Set("target-root", projectRoot)
 	viper.Set("target-path", projectRoot) // For 'add', files should be written relative to projectRoot
