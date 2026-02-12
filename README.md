@@ -306,6 +306,7 @@ A number of functions are also provided to help make scripts easier to write.
 - [ ] --target-root: outputs project to custom root directory
 - [ ] --target-path: outputs project to exact path (overrides name derivation)
 - [ ] -w/--no-write: dry-run mode prints plan, makes no filesystem changes
+- [ ] -l/--log-level: prints different layers of logs
 
 ### Variables & Configuration
 - [ ] Global config file variables are available in template rendering
