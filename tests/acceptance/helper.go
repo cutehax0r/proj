@@ -75,7 +75,7 @@ func (ctx *TestContext) setEnvVars() {
 	}
 
 	os.Setenv("XDG_CONFIG_HOME", filepath.Join(projRoot, "testdata", "config"))
-	os.Setenv("XDG_DATA_HOME", filepath.Join(projRoot, "testdata", "templates"))
+	os.Setenv("XDG_DATA_HOME", filepath.Join(projRoot, "testdata", "share"))
 }
 
 func (ctx *TestContext) Run(args ...string) *TestContext {
