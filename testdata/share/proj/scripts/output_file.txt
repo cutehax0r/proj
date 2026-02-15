@@ -1,0 +1,16 @@
+Script Execution Summary
+========================
+
+Project: {{.targetName}}
+
+Execution Stages:
+- Global Stage: {{.global_stage}}
+- Template Stage: {{.template_stage}}
+- Definition Stage: {{.definition_stage}}
+
+Computed Values:
+- Timestamp: {{.global_timestamp}}
+- Computed Path: {{.computed_path}}
+- Full Message: {{.full_message}}
+
+This file was generated using variables set by Lua scripts.

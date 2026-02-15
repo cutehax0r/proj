@@ -1,0 +1,6 @@
+---
+log-level: 3
+template-root: $PROJ_ROOT/testdata/share/proj
+scripts:
+  new-before: scripts/global_before.lua
+  new-after: scripts/global_after.lua

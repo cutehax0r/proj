@@ -1,0 +1,4 @@
+Message: {{.full_message}}
+
+Template Prefix: {{.template_prefix}}
+Definition Message: {{.definition_message}}

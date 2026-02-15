@@ -1,0 +1,26 @@
+---
+# Scripts Test Template
+# This template demonstrates script execution at all levels
+scripts:
+  template-before: scripts/template_before.lua
+  template-after: scripts/template_after.lua
+definitions:
+  new:
+    scripts:
+      definition-before: scripts/definition_before.lua
+      definition-after: scripts/definition_after.lua
+    requirements:
+      local: false
+    files:
+      # File using computed path variable
+      - source: output_file.txt
+        target: "{{.computed_path}}/summary.txt"
+        parse: true
+      # File using full message variable
+      - source: message_file.txt
+        target: message.txt
+        parse: true
+      # Simple file to demonstrate basic copying
+      - source: readme.md
+        target: readme.md
+        parse: false

@@ -199,3 +199,20 @@ func VerifyFileMode(t *testing.T, projectDir, relPath string, expectedMode os.Fi
 		t.Errorf("File %s mode mismatch: expected %04o, got %04o", relPath, expectedMode, actualMode)
 	}
 }
+
+func VerifyFileExists(t *testing.T, path string) {
+	t.Helper()
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		t.Errorf("Expected file to exist at %s, but it does not", path)
+	}
+}
+
+func ReadFileString(t *testing.T, path string) string {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("Failed to read file %s: %v", path, err)
+	}
+	return string(data)
+}
