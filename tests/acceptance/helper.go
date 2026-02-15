@@ -2,6 +2,8 @@ package acceptance
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,30 +22,39 @@ type TestContext struct {
 }
 
 func Setup(t *testing.T) *TestContext {
+	return SetupWithConfig(t, "default")
+}
+
+func SetupWithConfig(t *testing.T, configName string) *TestContext {
 	t.Helper()
 
 	ctx := &TestContext{T: t}
 	ctx.findBinary()
 	ctx.setupTempDir()
-	ctx.setEnvVars()
+	ctx.setEnvVars(configName)
 
 	return ctx
 }
 
+func SetupProject(t *testing.T, templateName, projectName string) (*TestContext, string) {
+	t.Helper()
+
+	ctx := SetupWithConfig(t, templateName)
+	ctx.Run("new", templateName, projectName).ExpectExitCode(0)
+
+	projectDir := filepath.Join(ctx.TempDir, projectName)
+	return ctx, projectDir
+}
+
 func (ctx *TestContext) findBinary() {
 	ctx.T.Helper()
-
-	projRoot, err := filepath.Abs("../..")
-	if err != nil {
-		ctx.T.Fatalf("Failed to get project root: %v", err)
-	}
 
 	binaryName := "proj"
 	if runtime.GOOS == "windows" {
 		binaryName = "proj.exe"
 	}
 
-	ctx.BinaryPath = filepath.Join(projRoot, "bin", binaryName)
+	ctx.BinaryPath = filepath.Join(ProjRoot(), "bin", binaryName)
 
 	if _, err := os.Stat(ctx.BinaryPath); os.IsNotExist(err) {
 		ctx.T.Fatalf("Binary not found at %s. Run 'make build-local' first.", ctx.BinaryPath)
@@ -64,16 +75,12 @@ func (ctx *TestContext) setupTempDir() {
 	})
 }
 
-func (ctx *TestContext) setEnvVars() {
+func (ctx *TestContext) setEnvVars(configName string) {
 	ctx.T.Helper()
 
-	projRoot, err := filepath.Abs("../..")
-	if err != nil {
-		ctx.T.Fatalf("Failed to get project root: %v", err)
-	}
-
-	os.Setenv("XDG_CONFIG_HOME", filepath.Join(projRoot, "testdata", "config"))
-	os.Setenv("XDG_DATA_HOME", filepath.Join(projRoot, "testdata", "share"))
+	os.Setenv("PROJ_ROOT", ProjRoot())
+	os.Setenv("XDG_CONFIG_HOME", filepath.Join(ProjRoot(), "testdata", "config", configName))
+	os.Setenv("XDG_DATA_HOME", filepath.Join(ProjRoot(), "testdata", "share"))
 }
 
 func (ctx *TestContext) Run(args ...string) *TestContext {
@@ -126,4 +133,69 @@ func (ctx *TestContext) ExpectExitCode(code int) *TestContext {
 		ctx.T.Errorf("Expected exit code %d, but got %d", code, ctx.ExitCode)
 	}
 	return ctx
+}
+
+func ProjRoot() string {
+	projRoot, err := filepath.Abs("../..")
+	if err != nil {
+		panic("Failed to get project root: " + err.Error())
+	}
+	return projRoot
+}
+
+func FileSHA1(path string) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		panic("Failed to read file: " + err.Error())
+	}
+	return fmt.Sprintf("%x", sha1.Sum(data))
+}
+
+func VerifyFileHash(t *testing.T, projectDir, relPath, sourcePath string) {
+	t.Helper()
+	targetPath := filepath.Join(projectDir, relPath)
+
+	if _, err := os.Stat(targetPath); os.IsNotExist(err) {
+		t.Errorf("Expected file %s to exist, but it does not", relPath)
+		return
+	}
+
+	expectedHash := FileSHA1(sourcePath)
+	actualHash := FileSHA1(targetPath)
+
+	if expectedHash != actualHash {
+		t.Errorf("File %s content mismatch: expected hash %s, got %s", relPath, expectedHash, actualHash)
+	}
+}
+
+func VerifyFileHashEquals(t *testing.T, projectDir, relPath string, expectedHash string) {
+	t.Helper()
+	targetPath := filepath.Join(projectDir, relPath)
+
+	if _, err := os.Stat(targetPath); os.IsNotExist(err) {
+		t.Errorf("Expected file %s to exist, but it does not", relPath)
+		return
+	}
+
+	actualHash := FileSHA1(targetPath)
+
+	if expectedHash != actualHash {
+		t.Errorf("File %s content mismatch: expected hash %s, got %s", relPath, expectedHash, actualHash)
+	}
+}
+
+func VerifyFileMode(t *testing.T, projectDir, relPath string, expectedMode os.FileMode) {
+	t.Helper()
+	targetPath := filepath.Join(projectDir, relPath)
+
+	info, err := os.Stat(targetPath)
+	if err != nil {
+		t.Errorf("Failed to stat file %s: %v", relPath, err)
+		return
+	}
+
+	actualMode := info.Mode() & os.ModePerm
+	if actualMode != expectedMode {
+		t.Errorf("File %s mode mismatch: expected %04o, got %04o", relPath, expectedMode, actualMode)
+	}
 }

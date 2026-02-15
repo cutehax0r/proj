@@ -60,14 +60,13 @@ func TestRootCommand_UsesDefaultConfig(t *testing.T) {
 
 	ctx.Run("-l", "3").
 		ExpectError("global configuration read").
-		ExpectError("testdata/config/proj/proj.yml")
+		ExpectError("testdata/config/default/proj/proj.yml")
 }
 
 func TestRootCommand_UsesConfigFileFlag(t *testing.T) {
 	ctx := Setup(t)
 
-	projRoot, _ := filepath.Abs("../..")
-	configPath := filepath.Join(projRoot, "testdata/config/test-default.yml")
+	configPath := filepath.Join(ProjRoot(), "testdata/config/default/proj/proj.yml")
 
 	ctx.Run("-g", configPath, "-l", "3").
 		ExpectError("global configuration read").
@@ -85,8 +84,7 @@ func TestRootCommand_ErrorsOnMissingConfigFile(t *testing.T) {
 func TestRootCommand_ErrorsOnInvalidConfigFile(t *testing.T) {
 	ctx := Setup(t)
 
-	projRoot, _ := filepath.Abs("../..")
-	invalidConfigPath := filepath.Join(projRoot, "testdata/config/invalid.yml")
+	invalidConfigPath := filepath.Join(ProjRoot(), "testdata/config/invalid/proj/proj.yml")
 
 	ctx.Run("-g", invalidConfigPath, "-l", "3").
 		ExpectError("Global configuration load failure").

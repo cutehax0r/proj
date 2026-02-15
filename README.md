@@ -382,3 +382,5 @@ scripts run)
 that to the toluavalue function.  Tag your structs with `json:"foo"` pass an instance of the struct
 to json.Marshal(somestruct) to get a map[string]any. then pass that over to .toluavalue Investigate
 later. For now it works and that's good enough.  Just write some more ToMap() functions
+* when copying files with parent directories, we should have a way to specify permissions. For now
+those will have to be done with shell scripts.
