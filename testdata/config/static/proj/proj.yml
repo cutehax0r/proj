@@ -1,0 +1,3 @@
+---
+log-level: 3
+template-root: $PROJ_ROOT/testdata/share/proj
