@@ -26,7 +26,7 @@ func Init(logLevel int) {
 		Multiline:  true,
 		TimeFormat: "15:04:05",
 	}
-	logHandler := slogpretty.New(os.Stdout, logOpts)
+	logHandler := slogpretty.New(os.Stderr, logOpts)
 	slog.SetDefault(slog.New(logHandler))
 	slog.Debug("Setup logging", slog.Int("Log Level", logLevel))
 }

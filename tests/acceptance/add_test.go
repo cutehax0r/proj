@@ -40,7 +40,7 @@ func TestAddCommand_FailsWhenNotInProjDirectory(t *testing.T) {
 	ctx := Setup(t)
 
 	ctx.Run("add", "foo", "bar").
-		ExpectOutput("Failed to setup configuration").
-		ExpectOutput("not in a proj directory").
+		ExpectError("Failed to setup configuration").
+		ExpectError("not in a proj directory").
 		ExpectExitCode(1)
 }

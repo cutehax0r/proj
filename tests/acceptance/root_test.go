@@ -1,8 +1,3 @@
-//go:build acceptance
-
-// NOTE: These tests use short flag forms (-h, -l, -g, -w) for brevity.
-// Long forms (--help, --log-level, --global-config-file, --no-write) are also available.
-
 package acceptance
 
 import (
@@ -35,9 +30,9 @@ func TestRootCommand_LogLevelDebug(t *testing.T) {
 	ctx := Setup(t)
 
 	ctx.Run("-l", "3").
-		ExpectOutput("Setup logging").
-		ExpectOutput("Log Level").
-		ExpectOutput("DEBUG")
+		ExpectError("Setup logging").
+		ExpectError("Log Level").
+		ExpectError("DEBUG")
 }
 
 func TestRootCommand_LogLevelDefault(t *testing.T) {
@@ -55,17 +50,17 @@ func TestRootCommand_NoWriteFlag(t *testing.T) {
 	ctx := Setup(t)
 
 	ctx.Run("new", "-w", "-l", "3", "foo", "bar").
-		ExpectOutput("Configuration loaded").
-		ExpectOutput("no-write").
-		ExpectOutput("true")
+		ExpectError("Configuration loaded").
+		ExpectError("no-write").
+		ExpectError("true")
 }
 
 func TestRootCommand_UsesDefaultConfig(t *testing.T) {
 	ctx := Setup(t)
 
 	ctx.Run("-l", "3").
-		ExpectOutput("global configuration read").
-		ExpectOutput("testdata/config/proj/proj.yml")
+		ExpectError("global configuration read").
+		ExpectError("testdata/config/proj/proj.yml")
 }
 
 func TestRootCommand_UsesConfigFileFlag(t *testing.T) {
@@ -75,16 +70,16 @@ func TestRootCommand_UsesConfigFileFlag(t *testing.T) {
 	configPath := filepath.Join(projRoot, "testdata/config/test-default.yml")
 
 	ctx.Run("-g", configPath, "-l", "3").
-		ExpectOutput("global configuration read").
-		ExpectOutput(configPath)
+		ExpectError("global configuration read").
+		ExpectError(configPath)
 }
 
 func TestRootCommand_ErrorsOnMissingConfigFile(t *testing.T) {
 	ctx := Setup(t)
 
 	ctx.Run("-g", "/nonexistent/config.yml", "-l", "3").
-		ExpectOutput("Global configuration load failure").
-		ExpectOutput("no such file or directory")
+		ExpectError("Global configuration load failure").
+		ExpectError("no such file or directory")
 }
 
 func TestRootCommand_ErrorsOnInvalidConfigFile(t *testing.T) {
@@ -94,6 +89,6 @@ func TestRootCommand_ErrorsOnInvalidConfigFile(t *testing.T) {
 	invalidConfigPath := filepath.Join(projRoot, "testdata/config/invalid.yml")
 
 	ctx.Run("-g", invalidConfigPath, "-l", "3").
-		ExpectOutput("Global configuration load failure").
-		ExpectOutput("While parsing config")
+		ExpectError("Global configuration load failure").
+		ExpectError("While parsing config")
 }

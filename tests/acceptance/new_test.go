@@ -1,5 +1,3 @@
-//go:build acceptance
-
 package acceptance
 
 import (
@@ -41,6 +39,6 @@ func TestNewCommand_FailsWhenTemplateNotFound(t *testing.T) {
 	ctx := Setup(t)
 
 	ctx.Run("new", "foo", "bar").
-		ExpectOutput("Template configuration load failure").
+		ExpectError("Template configuration load failure").
 		ExpectExitCode(1)
 }
