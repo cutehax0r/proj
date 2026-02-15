@@ -37,8 +37,21 @@ func init() {
 }
 
 func persistentPreRun(cmd *cobra.Command, args []string) {
-	logger.Init(viper.GetInt("log-level"))
+	logLevel := 0
+	if cmd.Flags().Changed("log-level") {
+		logLevel = viper.GetInt("log-level")
+	}
+
+	logger.Init(logLevel)
+
 	config.InitGlobal(globalConfigFile)
+
+	if !cmd.Flags().Changed("log-level") && viper.IsSet("log-level") {
+		configLogLevel := viper.GetInt("log-level")
+		if configLogLevel != logLevel {
+			logger.Init(configLogLevel)
+		}
+	}
 }
 
 func runRoot(cmd *cobra.Command, args []string) {
