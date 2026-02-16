@@ -149,3 +149,40 @@ func TestScripts_CopiesNonTemplateFiles(t *testing.T) {
 	templateReadmePath := filepath.Join(ProjRoot(), "testdata/share/proj/scripts/readme.md")
 	VerifyFileHash(t, projectDir, "readme.md", templateReadmePath)
 }
+
+func TestScripts_ProjModuleHasCorrectStructure(t *testing.T) {
+	ctx := SetupWithConfig(t, "scripts")
+	ctx.Run("new", "scripts", "scripttest").ExpectExitCode(0)
+
+	combinedOutput := ctx.Stdout + ctx.Stderr
+
+	if !strings.Contains(combinedOutput, "PROJ_NOWRITE: false") {
+		t.Errorf("Expected proj.noWrite to be false (boolean), got output:\n%s", combinedOutput)
+	}
+
+	if !strings.Contains(combinedOutput, "PROJ_ISLOCAL: false") {
+		t.Errorf("Expected proj.requirements.isLocal to be false for 'new' command with local: false, got output:\n%s", combinedOutput)
+	}
+
+	if !strings.Contains(combinedOutput, "PROJ_PATHS_TEMPLATEPATH:") {
+		t.Error("Expected proj.paths.templatePath to be set")
+	}
+	if !strings.Contains(combinedOutput, "PROJ_PATHS_TARGETPATH:") {
+		t.Error("Expected proj.paths.targetPath to be set")
+	}
+	if !strings.Contains(combinedOutput, "PROJ_PATHS_TEMPLATECONFIGPATH:") {
+		t.Error("Expected proj.paths.templateConfigPath to be set")
+	}
+
+	if !strings.Contains(combinedOutput, "PROJ_FILES_COUNT:") {
+		t.Error("Expected proj.files to be accessible")
+	}
+
+	if !strings.Contains(combinedOutput, "PROJ_VARIABLES_ACCESSIBLE: true") {
+		t.Error("Expected proj.variables to be accessible")
+	}
+
+	if !strings.Contains(combinedOutput, "PROJ_LOG_FUNCTIONS: available") {
+		t.Error("Expected proj logging functions to be available")
+	}
+}

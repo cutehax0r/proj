@@ -39,4 +39,41 @@ else
     proj.logInfo("Global timestamp is set: " .. proj.variables.global_timestamp)
 end
 
+-- Verify proj module structure
+proj.logInfo("=== PROJ MODULE STRUCTURE CHECK ===")
+proj.logInfo("PROJ_NOWRITE: " .. tostring(proj.noWrite))
+proj.logInfo("PROJ_ISLOCAL: " .. tostring(proj.requirements.isLocal))
+
+-- Check paths table
+if proj.paths then
+    proj.logInfo("PROJ_PATHS_TEMPLATEPATH: " .. tostring(proj.paths.templatePath))
+    proj.logInfo("PROJ_PATHS_TARGETPATH: " .. tostring(proj.paths.targetPath))
+    proj.logInfo("PROJ_PATHS_TEMPLATECONFIGPATH: " .. tostring(proj.paths.templateConfigPath))
+else
+    proj.logError("PROJ_PATHS: nil")
+end
+
+-- Check files table
+if proj.files then
+    local count = 0
+    for _ in pairs(proj.files) do count = count + 1 end
+    proj.logInfo("PROJ_FILES_COUNT: " .. count)
+else
+    proj.logInfo("PROJ_FILES_COUNT: 0")
+end
+
+-- Check variables accessibility
+if proj.variables then
+    proj.logInfo("PROJ_VARIABLES_ACCESSIBLE: true")
+else
+    proj.logInfo("PROJ_VARIABLES_ACCESSIBLE: false")
+end
+
+-- Check logging functions
+if proj.logDebug and proj.logInfo and proj.logWarn and proj.logError then
+    proj.logInfo("PROJ_LOG_FUNCTIONS: available")
+else
+    proj.logInfo("PROJ_LOG_FUNCTIONS: missing")
+end
+
 proj.logInfo("=== DEFINITION BEFORE SCRIPT END ===")
