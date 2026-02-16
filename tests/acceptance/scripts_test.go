@@ -12,7 +12,6 @@ func TestScripts_ExecutesAllScriptsInOrder(t *testing.T) {
 	ctx := SetupWithConfig(t, "scripts")
 	ctx.Run("new", "scripts", "scripttest").ExpectExitCode(0)
 
-	// Verify all scripts executed by checking log output
 	expectedOrder := []string{
 		"GLOBAL BEFORE SCRIPT START",
 		"GLOBAL BEFORE SCRIPT END",

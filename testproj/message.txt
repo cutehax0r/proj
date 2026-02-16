@@ -1,4 +1,0 @@
-Message: <no value>
-
-Template Prefix: tpl_
-Definition Message: definition processing

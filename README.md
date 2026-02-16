@@ -291,11 +291,11 @@ A number of functions are also provided to help make scripts easier to write.
 # Test Plan (Integration Tests)
 
 ## Setup
-- Test templates in `testdata/templates/` (e.g., `html` template with parse/non-parse files)
-- Test global config in `testdata/config/` 
-- Helper functions for test setup/assertions
-- Each test runs independently using in-memory filesystem (afero)
-- Test scripts use `logInfo` calls but don't modify state
+- [x] Test templates in `testdata/share/proj/` (html, scripts, static templates with parse/non-parse files)
+- [x] Test global config in `testdata/config/` 
+- [x] Helper functions for test setup/assertions in `tests/acceptance/helper.go`
+- [x] Each test runs independently using temp directories
+- [x] Test scripts use `logInfo` calls and modify state (variables, files)
 
 ## `proj new` Integration Tests
 
@@ -305,42 +305,42 @@ A number of functions are also provided to help make scripts easier to write.
 - [ ] --template-path: uses exact path to template (ignores XDG_DATA_HOME)
 - [ ] --target-root: outputs project to custom root directory
 - [ ] --target-path: outputs project to exact path (overrides name derivation)
-- [ ] -w/--no-write: dry-run mode prints plan, makes no filesystem changes
-- [ ] -l/--log-level: prints different layers of logs
+- [x] -w/--no-write: dry-run mode prints plan, makes no filesystem changes
+- [x] -l/--log-level: prints different layers of logs
 
 ### Variables & Configuration
 - [ ] Global config file variables are available in template rendering
 - [ ] -v flag overrides global config variable values
-- [ ] -g flag loads custom global config file (not XDG_CONFIG_HOME)
-- [ ] Variables correctly rendered in parsed files
+- [x] -g flag loads custom global config file (not XDG_CONFIG_HOME)
+- [x] Variables correctly rendered in parsed files
 - [ ] Variables persisted to .proj/proj.yml after creation
 
 ### Definition Tests  
-- [ ] Default definition name is "new"
+- [x] Default definition name is "new"
 - [ ] --definition-name overrides default (uses non-local definitions)
 - [ ] Template can have multiple definitions, only selected one executes
 
 ### Script Execution
-- [ ] Before-scripts execute in order: global → template → definition
-- [ ] Variables set in before-scripts are available to template rendering
-- [ ] After-scripts execute in order: definition → template → global
-- [ ] Scripts are optional at all levels (global, template, definition)
-- [ ] Script output appears in verbose logging
+- [x] Before-scripts execute in order: global → template → definition
+- [x] Variables set in before-scripts are available to template rendering
+- [x] After-scripts execute in order: definition → template → global
+- [x] Scripts are optional at all levels (global, template, definition)
+- [x] Script output appears in verbose logging
 
 ### File Output
 - [ ] .proj/proj.yml created with correct structure
-- [ ] .proj/proj.yml contains template name
-- [ ] .proj/proj.yml contains all variables used
-- [ ] Parsed files rendered with correct variable substitution
-- [ ] Non-parsed files copied exactly (binary-safe)
-- [ ] File permissions from source preserved in output
-- [ ] Parse and non-parse files can coexist in same template
+- [x] .proj/proj.yml contains template name
+- [x] .proj/proj.yml contains all variables used
+- [x] Parsed files rendered with correct variable substitution
+- [x] Non-parsed files copied exactly (binary-safe)
+- [x] File permissions from source preserved in output
+- [x] Parse and non-parse files can coexist in same template
 
 ### Error Handling (No filesystem changes on failure)
 - [ ] Fails if target path already exists
-- [ ] Fails if template not found
-- [ ] Fails if required variable not set
-- [ ] All error cases leave filesystem untouched
+- [x] Fails if template not found
+- [x] Fails if required variable not set
+- [x] All error cases leave filesystem untouched
 
 ## `proj add` Integration Tests
 - [ ] Planned for future iteration

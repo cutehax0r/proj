@@ -71,6 +71,10 @@ func (ctx *TestContext) setupTempDir() {
 	ctx.TempDir = tempDir
 
 	ctx.T.Cleanup(func() {
+		if os.Getenv("NO_CLEANUP") == "1" {
+			fmt.Printf("NO_CLEANUP is set - test temp dir preserved: %s\n", tempDir)
+			return
+		}
 		os.RemoveAll(tempDir)
 	})
 }

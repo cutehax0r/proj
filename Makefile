@@ -37,7 +37,8 @@ help:
 	@echo "Development targets:"
 	@echo "  make test                     Run unit tests"
 	@echo "  make acceptance               Run acceptance tests (builds + tests)"
-	@echo "  make clean                    Remove build artifacts"
+	@echo "  make acceptance-no-cleanup    Run acceptance tests and preserve temp directories"
+	@echo "  make clean                    Remove build artifacts and acceptance temp directories"
 	@echo "  make help                     Display this help message"
 	@echo ""
 	@echo "Environment variables:"
@@ -112,9 +113,17 @@ acceptance: build
 	@echo "Running acceptance tests..."
 	$(GO) test -v -tags=acceptance ./tests/acceptance/...
 
+# Acceptance test target without cleanup (useful for debugging)
+acceptance-no-cleanup: build
+	@echo "Running acceptance tests without cleanup..."
+	NO_CLEANUP=1 $(GO) test -v -tags=acceptance ./tests/acceptance/...
+
 # Clean target
 clean:
 	@echo "Cleaning build artifacts..."
 	@rm -rf $(OUTPUT_DIR)
+	@echo "Cleaning acceptance test temp directories..."
+	@find /tmp -name "proj-acceptance-*" -type d -exec rm -rf {} + 2>/dev/null || true
+	@find /var/folders -name "proj-acceptance-*" -type d -exec rm -rf {} + 2>/dev/null || true
 	@$(GO) clean
 	@echo "✓ Clean complete"
