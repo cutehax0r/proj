@@ -290,13 +290,6 @@ A number of functions are also provided to help make scripts easier to write.
 
 # Test Plan (Integration Tests)
 
-## `proj new` Integration Tests
-
-
-### Definition Tests  
-- [ ] --definition-name overrides default (uses non-local definitions)
-- [ ] Template can have multiple definitions, only selected one executes
-
 ### File Output
 - [ ] .proj/proj.yml created with correct structure
 - [ ] Variables persisted to .proj/proj.yml after creation

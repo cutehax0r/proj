@@ -3,6 +3,7 @@ package acceptance
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -58,6 +59,30 @@ func TestNewCommand_FailsWhenTargetPathExists(t *testing.T) {
 	ctx.Run("new", "static", "foo").
 		ExpectExitCode(1).
 		ExpectError("Target path exists")
+}
+
+func TestNewCommand_DefinitionNameFlag(t *testing.T) {
+	ctx := Setup(t)
+
+	ctx.Run("new", "static", "myproject", "-d", "new_alt").
+		ExpectExitCode(0)
+
+	projectDir := filepath.Join(ctx.TempDir, "myproject")
+	readmePath := filepath.Join(projectDir, "readme.md")
+	VerifyFileExists(t, readmePath)
+
+	content := ReadFileString(t, readmePath)
+	if !strings.Contains(content, "ALTERNATE README") {
+		t.Errorf("Expected readme to contain 'ALTERNATE README' from new_alt definition, got:\n%s", content)
+	}
+}
+
+func TestNewCommand_InvalidDefinitionName(t *testing.T) {
+	ctx := Setup(t)
+
+	ctx.Run("new", "static", "myproject", "-d", "nonexistent").
+		ExpectExitCode(1).
+		ExpectError("Definition does not exist")
 }
 
 func TestNewCommand_TargetRootFlag(t *testing.T) {

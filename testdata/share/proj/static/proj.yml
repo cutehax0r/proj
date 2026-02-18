@@ -28,3 +28,19 @@ definitions:
       - source: src/example6.sh
         target: example6.sh
         parse: false
+  new_alt:
+    scripts: {}
+    requirements:
+      local: false
+    files:
+      - source: alt_readme.md
+        target: readme.md
+        parse: false
+  text:
+    scripts: {}
+    requirements:
+      local: true
+    files:
+      - source: plain_text.txt
+        target: output.txt
+        parse: false
