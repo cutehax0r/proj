@@ -1,0 +1,17 @@
+---
+# Variables Test Template
+# Tests command-line variable parsing and required variable handling
+definitions:
+  new:
+    requirements:
+      variables:
+        - name: author
+        - name: project_title
+        - name: description
+          default: "No description provided"
+    files:
+      - source: readme_template.md
+        target: readme.md
+        parse: true
+    scripts:
+      definition-before: scripts/verify_vars.lua

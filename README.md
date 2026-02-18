@@ -292,17 +292,6 @@ A number of functions are also provided to help make scripts easier to write.
 
 ## `proj new` Integration Tests
 
-### Core Functionality
-- [ ] Default behavior: uses XDG_DATA_HOME template, outputs to ./\<name\>
-- [ ] --template-root: finds template in custom directory
-- [ ] --template-path: uses exact path to template (ignores XDG_DATA_HOME)
-- [ ] --target-root: outputs project to custom root directory
-- [ ] --target-path: outputs project to exact path (overrides name derivation)
-
-### Variables & Configuration
-- [ ] Global config file variables are available in template rendering
-- [ ] -v flag overrides global config variable values
-- [ ] Variables persisted to .proj/proj.yml after creation
 
 ### Definition Tests  
 - [ ] --definition-name overrides default (uses non-local definitions)
@@ -310,6 +299,7 @@ A number of functions are also provided to help make scripts easier to write.
 
 ### File Output
 - [ ] .proj/proj.yml created with correct structure
+- [ ] Variables persisted to .proj/proj.yml after creation
 
 ### Error Handling (No filesystem changes on failure)
 - [ ] Fails if target path already exists
