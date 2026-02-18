@@ -25,6 +25,17 @@ func Setup(t *testing.T) *TestContext {
 	return SetupWithConfig(t, "default")
 }
 
+func SetupWithoutDataHome(t *testing.T) *TestContext {
+	t.Helper()
+
+	ctx := &TestContext{T: t}
+	ctx.findBinary()
+	ctx.setupTempDir()
+	ctx.setEnvVarsWithoutDataHome()
+
+	return ctx
+}
+
 func SetupWithConfig(t *testing.T, configName string) *TestContext {
 	t.Helper()
 
@@ -85,6 +96,14 @@ func (ctx *TestContext) setEnvVars(configName string) {
 	os.Setenv("PROJ_ROOT", ProjRoot())
 	os.Setenv("XDG_CONFIG_HOME", filepath.Join(ProjRoot(), "testdata", "config", configName))
 	os.Setenv("XDG_DATA_HOME", filepath.Join(ProjRoot(), "testdata", "share"))
+}
+
+func (ctx *TestContext) setEnvVarsWithoutDataHome() {
+	ctx.T.Helper()
+
+	os.Setenv("PROJ_ROOT", ProjRoot())
+	os.Setenv("XDG_CONFIG_HOME", filepath.Join(ProjRoot(), "testdata", "config", "default"))
+	os.Unsetenv("XDG_DATA_HOME")
 }
 
 func (ctx *TestContext) Run(args ...string) *TestContext {
