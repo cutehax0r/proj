@@ -301,9 +301,6 @@ A number of functions are also provided to help make scripts easier to write.
 - [ ] .proj/proj.yml created with correct structure
 - [ ] Variables persisted to .proj/proj.yml after creation
 
-### Error Handling (No filesystem changes on failure)
-- [ ] Fails if target path already exists
-
 # Wishlist
 
 * allow for `variables.template.definition` in global config so that (for example)

@@ -45,6 +45,21 @@ func TestNewCommand_FailsWhenTemplateNotFound(t *testing.T) {
 		ExpectExitCode(1)
 }
 
+func TestNewCommand_FailsWhenTargetPathExists(t *testing.T) {
+	ctx := Setup(t)
+
+	// Create a directory that would be the target path
+	existingDir := filepath.Join(ctx.TempDir, "foo")
+	err := os.MkdirAll(existingDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create existing directory: %v", err)
+	}
+
+	ctx.Run("new", "static", "foo").
+		ExpectExitCode(1).
+		ExpectError("Target path exists")
+}
+
 func TestNewCommand_TargetRootFlag(t *testing.T) {
 	ctx := Setup(t)
 
