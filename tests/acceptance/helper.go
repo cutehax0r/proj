@@ -239,3 +239,55 @@ func ReadFileString(t *testing.T, path string) string {
 	}
 	return string(data)
 }
+
+func SetupProjectFromTemplate(t *testing.T, templateName string) (*TestContext, string) {
+	t.Helper()
+
+	ctx := Setup(t)
+
+	srcDir := filepath.Join(ProjRoot(), "testdata", "projects", templateName)
+	projectDir := filepath.Join(ctx.TempDir, templateName)
+
+	copyDir(t, srcDir, projectDir)
+
+	ctx.TempDir = projectDir
+
+	return ctx, projectDir
+}
+
+func copyDir(t *testing.T, src, dst string) {
+	t.Helper()
+
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		t.Fatalf("Failed to read source directory %s: %v", src, err)
+	}
+
+	for _, entry := range entries {
+		srcPath := filepath.Join(src, entry.Name())
+		dstPath := filepath.Join(dst, entry.Name())
+
+		info, err := entry.Info()
+		if err != nil {
+			t.Fatalf("Failed to get file info for %s: %v", srcPath, err)
+		}
+
+		if entry.IsDir() {
+			if err := os.MkdirAll(dstPath, info.Mode()); err != nil {
+				t.Fatalf("Failed to create directory %s: %v", dstPath, err)
+			}
+			copyDir(t, srcPath, dstPath)
+		} else {
+			if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
+				t.Fatalf("Failed to create parent directory for %s: %v", dstPath, err)
+			}
+			data, err := os.ReadFile(srcPath)
+			if err != nil {
+				t.Fatalf("Failed to read file %s: %v", srcPath, err)
+			}
+			if err := os.WriteFile(dstPath, data, info.Mode()); err != nil {
+				t.Fatalf("Failed to write file %s: %v", dstPath, err)
+			}
+		}
+	}
+}

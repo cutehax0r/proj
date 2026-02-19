@@ -1,6 +1,8 @@
 package acceptance
 
 import (
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -41,4 +43,22 @@ func TestAddCommand_FailsWhenNotInProjDirectory(t *testing.T) {
 		ExpectError("Failed to setup configuration").
 		ExpectError("not in a proj directory").
 		ExpectExitCode(1)
+}
+
+func TestAddCommand_AddHtmlPage(t *testing.T) {
+	ctx, projectDir := SetupProjectFromTemplate(t, "testsite")
+
+	ctx.Run("add", "html", "contact", "-v", "title=Contact Us").
+		ExpectExitCode(0)
+
+	htmlPath := filepath.Join(projectDir, "src", "contact.html")
+	VerifyFileExists(t, htmlPath)
+
+	content := ReadFileString(t, htmlPath)
+	if !strings.Contains(content, "<title>Contact Us</title>") {
+		t.Errorf("Expected contact.html to contain title 'Contact Us', got:\n%s", content)
+	}
+	if !strings.Contains(content, "<h1>Contact Us</h1>") {
+		t.Errorf("Expected contact.html to contain h1 'Contact Us', got:\n%s", content)
+	}
 }
