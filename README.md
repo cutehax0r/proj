@@ -288,12 +288,6 @@ A number of functions are also provided to help make scripts easier to write.
   processing. Visible at log level 1-3.
    * `logError`. log "errors" that should halt further processing. visible at all log levels
 
-# Test Plan (Integration Tests)
-
-### File Output
-- [ ] .proj/proj.yml created with correct structure
-- [ ] Variables persisted to .proj/proj.yml after creation
-
 # Wishlist
 
 * allow for `variables.template.definition` in global config so that (for example)

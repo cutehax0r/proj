@@ -1,0 +1,15 @@
+---
+definitions:
+  new:
+    requirements:
+      variables:
+        - name: required_var
+        - name: optional_var
+          default: "default_value"
+    scripts:
+      definition-before: scripts/before.lua
+      definition-after: scripts/after.lua
+    files:
+      - source: readme.md
+        target: readme.md
+        parse: false

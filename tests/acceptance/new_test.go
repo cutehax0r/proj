@@ -85,6 +85,68 @@ func TestNewCommand_InvalidDefinitionName(t *testing.T) {
 		ExpectError("Definition does not exist")
 }
 
+func TestNewCommand_VariablePropagation(t *testing.T) {
+	ctx := SetupWithConfig(t, "vartest")
+
+	ctx.Run("new", "vartest", "myproject", "-v", "required_var=cli_required", "-v", "cli_var=from_cli", "-v", "override_test=cli_wins").
+		ExpectExitCode(0)
+
+	projConfigPath := filepath.Join(ctx.TempDir, "myproject", ".proj", "proj.yml")
+	VerifyFileExists(t, projConfigPath)
+
+	content := ReadFileString(t, projConfigPath)
+
+	if !strings.Contains(content, "template_name:") {
+		t.Errorf("Expected proj.yml to contain template_name, got:\n%s", content)
+	}
+
+	if !strings.Contains(content, "global_var:") || !strings.Contains(content, "from_global_config") {
+		t.Errorf("Expected proj.yml to contain global_var from global config, got:\n%s", content)
+	}
+	if !strings.Contains(content, "another_global:") || !strings.Contains(content, "global_123") {
+		t.Errorf("Expected proj.yml to contain another_global from global config, got:\n%s", content)
+	}
+
+	if !strings.Contains(content, "required_var:") || !strings.Contains(content, "cli_required_modified_by_before") {
+		t.Errorf("Expected proj.yml to contain required_var modified by before script, got:\n%s", content)
+	}
+	if !strings.Contains(content, "cli_var:") || !strings.Contains(content, "from_cli") {
+		t.Errorf("Expected proj.yml to contain cli_var from CLI, got:\n%s", content)
+	}
+
+	if !strings.Contains(content, "override_test:") || !strings.Contains(content, "cli_wins") {
+		t.Errorf("Expected proj.yml to contain override_test with CLI value, got:\n%s", content)
+	}
+
+	if !strings.Contains(content, "optional_var:") || !strings.Contains(content, "after_overrides_default") {
+		t.Errorf("Expected proj.yml to contain optional_var overridden by after script, got:\n%s", content)
+	}
+
+	if !strings.Contains(content, "script_before:") || !strings.Contains(content, "set_in_before") {
+		t.Errorf("Expected proj.yml to contain script_before from before script, got:\n%s", content)
+	}
+	if !strings.Contains(content, "script_after:") || !strings.Contains(content, "set_in_after") {
+		t.Errorf("Expected proj.yml to contain script_after from after script, got:\n%s", content)
+	}
+
+	if !strings.Contains(content, "targetName:") || !strings.Contains(content, "myproject") {
+		t.Errorf("Expected proj.yml to contain targetName, got:\n%s", content)
+	}
+	if !strings.Contains(content, "templateName:") || !strings.Contains(content, "vartest") {
+		t.Errorf("Expected proj.yml to contain templateName, got:\n%s", content)
+	}
+	if !strings.Contains(content, "definitionName:") || !strings.Contains(content, "new") {
+		t.Errorf("Expected proj.yml to contain definitionName, got:\n%s", content)
+	}
+
+	if !strings.Contains(content, "scripts:") {
+		t.Errorf("Expected proj.yml to contain empty scripts section, got:\n%s", content)
+	}
+	if !strings.Contains(content, "definitions:") {
+		t.Errorf("Expected proj.yml to contain empty definitions section, got:\n%s", content)
+	}
+}
+
 func TestNewCommand_TargetRootFlag(t *testing.T) {
 	ctx := Setup(t)
 

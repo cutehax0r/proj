@@ -1,0 +1,8 @@
+---
+log-level: 3
+template-root: $PROJ_ROOT/testdata/share/proj
+variables:
+  global:
+    global_var: "from_global_config"
+    override_test: "global_value"
+    another_global: "global_123"
