@@ -1,6 +1,7 @@
 package acceptance
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -145,18 +146,46 @@ func TestAddCommand_ProjectFilesTakePrecedence(t *testing.T) {
 func TestAddCommand_FailsWhenFileWouldBeOverwritten(t *testing.T) {
 	ctx, projectDir := SetupProjectFromTemplate(t, "testsite")
 
-	// Get the hash of the existing index.html before attempting the add
 	indexPath := filepath.Join(projectDir, "src", "index.html")
 	originalHash := FileSHA1(indexPath)
 
-	// Attempt to add html with name "index" which should conflict with existing src/index.html
 	ctx.Run("add", "html", "index", "-v", "title=Home").
 		ExpectExitCode(1).
 		ExpectError("already exists")
 
-	// Verify the file was not modified
 	finalHash := FileSHA1(indexPath)
 	if originalHash != finalHash {
 		t.Errorf("Expected index.html to remain unchanged, but its content was modified")
+	}
+}
+
+func TestAddCommand_WorksFromNestedDirectory(t *testing.T) {
+	ctx, projectDir := SetupProjectFromTemplate(t, "testsite")
+
+	// Create a nested directory within the project
+	nestedDir := filepath.Join(projectDir, "src", "foo", "bar")
+	err := os.MkdirAll(nestedDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create nested directory: %v", err)
+	}
+	originalDir := ctx.TempDir
+	ctx.TempDir = nestedDir
+
+	ctx.Run("add", "html", "about", "-v", "title=About Us").
+		ExpectExitCode(0)
+
+	ctx.TempDir = originalDir
+
+	// Verify the file was created relative to project root, not nested directory
+	// Should be at src/about.html, not src/foo/bar/about.html
+	aboutPath := filepath.Join(projectDir, "src", "about.html")
+	VerifyFileExists(t, aboutPath)
+
+	content := ReadFileString(t, aboutPath)
+	if !strings.Contains(content, "<title>About Us</title>") {
+		t.Errorf("Expected about.html to contain title 'About Us', got:\n%s", content)
+	}
+	if !strings.Contains(content, "<h1>About Us</h1>") {
+		t.Errorf("Expected about.html to contain h1 'About Us', got:\n%s", content)
 	}
 }

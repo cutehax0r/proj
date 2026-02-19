@@ -292,7 +292,6 @@ A number of functions are also provided to help make scripts easier to write.
 
 4. variable declaration flows from: global, to template, to .proj.yml to -v command line arg (later
    = higher priority)
-6. proj add only works if you're in a folder that has a .proj in it's 'parent' directory tree
 8. if you run with --target-path, it better exist or running should fail.
 9. if you run with --target-path, proj add foo should work as if you were inside of target-path even
    if the command was run from outside of it.
