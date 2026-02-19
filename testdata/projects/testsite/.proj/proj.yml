@@ -22,4 +22,22 @@ variables:
     targetName: testsite
     templateName: website
 scripts: {}
-definitions: {}
+definitions:
+  js:
+    requirements:
+      local: true
+      variables:
+        - name: alertMessage
+    files:
+      - source: .proj/src/script-alert.js
+        target: src/js/{{.targetName}}.js
+        parse: true
+  form:
+    requirements:
+      local: true
+      variables:
+        - name: formTarget
+    files:
+      - source: .proj/src/form.html
+        target: src/{{.targetName}}-form.html
+        parse: true

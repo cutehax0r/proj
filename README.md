@@ -290,7 +290,6 @@ A number of functions are also provided to help make scripts easier to write.
 
 # Test Plan (add)
 
-1. `proj add foo bar` only works if foo is defined && foo is local: true
 2. definitions come from .proj/proj.yml and templates/(whatever template was defined in .proj/proj.yml)
 3. if .proj/proj.yml and template/whatever both define foo then the proj.proj.yml wins
 4. variable declaration flows from: global, to template, to .proj.yml to -v command line arg (later

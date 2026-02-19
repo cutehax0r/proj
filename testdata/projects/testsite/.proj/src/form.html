@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form - {{.targetName}}</title>
+    <link rel="icon" type="image/svg+xml" href="src/img/favicon.svg">
+</head>
+<body>
+    <header>
+        <h1>{{.targetName}} Form</h1>
+    </header>
+    <main>
+        <form method="post" action="{{.formTarget}}">
+            <div>
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div>
+                <button type="submit">Submit</button>
+            </div>
+        </form>
+    </main>
+</body>
+</html>
