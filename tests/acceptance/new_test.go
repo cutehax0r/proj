@@ -49,7 +49,6 @@ func TestNewCommand_FailsWhenTemplateNotFound(t *testing.T) {
 func TestNewCommand_FailsWhenTargetPathExists(t *testing.T) {
 	ctx := Setup(t)
 
-	// Create a directory that would be the target path
 	existingDir := filepath.Join(ctx.TempDir, "foo")
 	err := os.MkdirAll(existingDir, 0755)
 	if err != nil {
@@ -83,6 +82,14 @@ func TestNewCommand_InvalidDefinitionName(t *testing.T) {
 	ctx.Run("new", "static", "myproject", "-d", "nonexistent").
 		ExpectExitCode(1).
 		ExpectError("Definition does not exist")
+}
+
+func TestNewCommand_FailsWhenDefinitionIsLocal(t *testing.T) {
+	ctx := Setup(t)
+
+	ctx.Run("new", "website", "myproject", "-d", "html").
+		ExpectExitCode(1).
+		ExpectError("cannot use local-only definition to create new project")
 }
 
 func TestNewCommand_VariablePropagation(t *testing.T) {

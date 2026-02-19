@@ -119,6 +119,11 @@ func (c *Creator) setupConfig() error {
 	c.reqs = reqs
 	slog.Debug("Final Requirements", slog.Any("reqs", reqs))
 
+	if reqs.Local {
+		slog.Error("cannot use local-only definition to create new project", slog.String("definition-name", c.cfg.DefinitionName))
+		return errors.New("cannot use local-only definition to create new project")
+	}
+
 	vars, err := config.BuildVariables(reqs.Variables)
 	if err != nil {
 		slog.Error("Failed to build variables", slog.Any("error", err))
