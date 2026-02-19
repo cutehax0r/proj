@@ -51,6 +51,9 @@ func (c *Creator) Create() error {
 		return err
 	}
 
+	c.vars = c.luaenv.GetVariables()
+	slog.Debug("Variables after after-scripts", slog.Any("vars", c.vars))
+
 	if err := c.writeConfig(); err != nil {
 		return err
 	}
