@@ -62,3 +62,11 @@ func TestAddCommand_AddHtmlPage(t *testing.T) {
 		t.Errorf("Expected contact.html to contain h1 'Contact Us', got:\n%s", content)
 	}
 }
+
+func TestAddCommand_FailsWhenDefinitionNotLocal(t *testing.T) {
+	ctx, _ := SetupProjectFromTemplate(t, "testsite")
+
+	ctx.Run("add", "new", "somepage", "-v", "sitename=Test Page").
+		ExpectExitCode(1).
+		ExpectError("cannot use non-local definition to add to existing project")
+}

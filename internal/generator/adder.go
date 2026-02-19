@@ -127,6 +127,11 @@ func (a *Adder) setupConfig() error {
 	a.reqs = reqs
 	slog.Debug("Final Requirements", slog.Any("reqs", reqs))
 
+	if !reqs.Local {
+		slog.Error("Cannot use non-local definition to add to existing project", slog.String("definition-name", a.cfg.DefinitionName))
+		return errors.New("cannot use non-local definition to add to existing project")
+	}
+
 	vars, err := config.BuildVariables(reqs.Variables)
 	if err != nil {
 		slog.Error("Failed to build variables", slog.Any("error", err))
