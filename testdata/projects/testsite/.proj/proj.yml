@@ -41,3 +41,11 @@ definitions:
       - source: src/form.html
         target: src/{{.targetName}}-form.html
         parse: true
+  stylesheet:
+    requirements:
+      local: true
+    files:
+      - source: src/style.css
+        target: src/css/{{.targetName}}.css
+        parse: true
+

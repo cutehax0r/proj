@@ -290,13 +290,9 @@ A number of functions are also provided to help make scripts easier to write.
 
 # Test Plan (add)
 
-2. definitions come from .proj/proj.yml and templates/(whatever template was defined in .proj/proj.yml)
-3. if .proj/proj.yml and template/whatever both define foo then the proj.proj.yml wins
 4. variable declaration flows from: global, to template, to .proj.yml to -v command line arg (later
    = higher priority)
-5. add copies files, just line new does
 6. proj add only works if you're in a folder that has a .proj in it's 'parent' directory tree
-7. `proj add foo bar` should check to see if any files would be overriten and refuse to replace them
 8. if you run with --target-path, it better exist or running should fail.
 9. if you run with --target-path, proj add foo should work as if you were inside of target-path even
    if the command was run from outside of it.

@@ -102,12 +102,61 @@ func TestAddCommand_OverridesTemplateDefinition(t *testing.T) {
 	VerifyFileExists(t, jsPath)
 
 	content := ReadFileString(t, jsPath)
-	// This should use the project-local definition which has the alert() call
 	if !strings.Contains(content, "alert('Hello from notifications!')") {
 		t.Errorf("Expected notifications.js to contain alert() with message from project definition, got:\n%s", content)
 	}
-	// Verify it's using the project override, not the template default
 	if !strings.Contains(content, "Display alert message") {
 		t.Errorf("Expected notifications.js to contain 'Display alert message' comment from project override, got:\n%s", content)
+	}
+}
+
+func TestAddCommand_FallbackToTemplateFiles(t *testing.T) {
+	ctx, projectDir := SetupProjectFromTemplate(t, "testsite")
+
+	ctx.Run("add", "stylesheet", "print").
+		ExpectExitCode(0)
+
+	cssPath := filepath.Join(projectDir, "src", "css", "print.css")
+	VerifyFileExists(t, cssPath)
+
+	content := ReadFileString(t, cssPath)
+	// This should use the template's src/style.css since .proj/src/style.css doesn't exist
+	// Verify it's using the template version (should contain typical CSS content)
+	if !strings.Contains(content, "css") && !strings.Contains(content, "color") && !strings.Contains(content, "font") {
+		t.Errorf("Expected print.css to contain template CSS content, got:\n%s", content)
+	}
+}
+
+func TestAddCommand_ProjectFilesTakePrecedence(t *testing.T) {
+	ctx, projectDir := SetupProjectFromTemplate(t, "testsite")
+
+	ctx.Run("add", "js", "custom", "-v", "alertMessage=Test Alert").
+		ExpectExitCode(0)
+
+	jsPath := filepath.Join(projectDir, "src", "js", "custom.js")
+	VerifyFileExists(t, jsPath)
+
+	content := ReadFileString(t, jsPath)
+	if !strings.Contains(content, "alert('Test Alert')") {
+		t.Errorf("Expected custom.js to use project definition with alert(), got:\n%s", content)
+	}
+}
+
+func TestAddCommand_FailsWhenFileWouldBeOverwritten(t *testing.T) {
+	ctx, projectDir := SetupProjectFromTemplate(t, "testsite")
+
+	// Get the hash of the existing index.html before attempting the add
+	indexPath := filepath.Join(projectDir, "src", "index.html")
+	originalHash := FileSHA1(indexPath)
+
+	// Attempt to add html with name "index" which should conflict with existing src/index.html
+	ctx.Run("add", "html", "index", "-v", "title=Home").
+		ExpectExitCode(1).
+		ExpectError("already exists")
+
+	// Verify the file was not modified
+	finalHash := FileSHA1(indexPath)
+	if originalHash != finalHash {
+		t.Errorf("Expected index.html to remain unchanged, but its content was modified")
 	}
 }
