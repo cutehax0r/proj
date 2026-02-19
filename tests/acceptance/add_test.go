@@ -70,3 +70,24 @@ func TestAddCommand_FailsWhenDefinitionNotLocal(t *testing.T) {
 		ExpectExitCode(1).
 		ExpectError("cannot use non-local definition to add to existing project")
 }
+
+func TestAddCommand_AddFormWithProjectDefinition(t *testing.T) {
+	ctx, projectDir := SetupProjectFromTemplate(t, "testsite")
+
+	ctx.Run("add", "form", "contact", "-v", "formTarget=/api/submit").
+		ExpectExitCode(0)
+
+	formPath := filepath.Join(projectDir, "src", "contact-form.html")
+	VerifyFileExists(t, formPath)
+
+	content := ReadFileString(t, formPath)
+	if !strings.Contains(content, `action="/api/submit"`) {
+		t.Errorf("Expected contact-form.html to contain action='/api/submit', got:\n%s", content)
+	}
+	if !strings.Contains(content, "<h1>contact Form</h1>") {
+		t.Errorf("Expected contact-form.html to contain 'contact Form' header, got:\n%s", content)
+	}
+	if !strings.Contains(content, `method="post"`) {
+		t.Errorf("Expected contact-form.html to contain method='post', got:\n%s", content)
+	}
+}
