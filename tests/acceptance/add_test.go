@@ -91,3 +91,23 @@ func TestAddCommand_AddFormWithProjectDefinition(t *testing.T) {
 		t.Errorf("Expected contact-form.html to contain method='post', got:\n%s", content)
 	}
 }
+
+func TestAddCommand_OverridesTemplateDefinition(t *testing.T) {
+	ctx, projectDir := SetupProjectFromTemplate(t, "testsite")
+
+	ctx.Run("add", "js", "notifications", "-v", "alertMessage=Hello from notifications!").
+		ExpectExitCode(0)
+
+	jsPath := filepath.Join(projectDir, "src", "js", "notifications.js")
+	VerifyFileExists(t, jsPath)
+
+	content := ReadFileString(t, jsPath)
+	// This should use the project-local definition which has the alert() call
+	if !strings.Contains(content, "alert('Hello from notifications!')") {
+		t.Errorf("Expected notifications.js to contain alert() with message from project definition, got:\n%s", content)
+	}
+	// Verify it's using the project override, not the template default
+	if !strings.Contains(content, "Display alert message") {
+		t.Errorf("Expected notifications.js to contain 'Display alert message' comment from project override, got:\n%s", content)
+	}
+}
