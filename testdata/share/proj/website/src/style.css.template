@@ -1,0 +1,6 @@
+/* {{.targetName}}.css */
+/* Styles for {{.targetName}} */
+
+@media screen {
+    /* Add your styles here */
+}

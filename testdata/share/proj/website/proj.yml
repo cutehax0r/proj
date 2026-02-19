@@ -1,0 +1,42 @@
+---
+# Website Template for Testing Add Command
+# This template is used to test the 'proj add' functionality
+definitions:
+  new:
+    requirements:
+      local: false
+      variables:
+        - name: sitename
+    files:
+      - source: src/index.html.template
+        target: index.html
+        parse: true
+      - source: src/favicon.svg
+        target: src/img/favicon.svg
+        parse: false
+  
+  html:
+    requirements:
+      local: true
+      variables:
+        - name: title
+    files:
+      - source: src/page.html.template
+        target: src/{{.targetName}}.html
+        parse: true
+  
+  css:
+    requirements:
+      local: true
+    files:
+      - source: src/style.css.template
+        target: src/css/{{.targetName}}.css
+        parse: true
+  
+  js:
+    requirements:
+      local: true
+    files:
+      - source: src/script.js.template
+        target: src/js/{{.targetName}}.js
+        parse: true
