@@ -8,11 +8,14 @@ definitions:
       variables:
         - name: sitename
     files:
-      - source: src/index.html.template
-        target: index.html
+      - source: src/index.html
+        target: src/index.html
         parse: true
       - source: src/favicon.svg
         target: src/img/favicon.svg
+        parse: false
+      - source: src/readme.md
+        target: readme.md
         parse: false
   
   html:
@@ -21,7 +24,7 @@ definitions:
       variables:
         - name: title
     files:
-      - source: src/page.html.template
+      - source: src/page.html
         target: src/{{.targetName}}.html
         parse: true
   
@@ -29,7 +32,7 @@ definitions:
     requirements:
       local: true
     files:
-      - source: src/style.css.template
+      - source: src/style.css
         target: src/css/{{.targetName}}.css
         parse: true
   
@@ -37,6 +40,6 @@ definitions:
     requirements:
       local: true
     files:
-      - source: src/script.js.template
+      - source: src/script.js
         target: src/js/{{.targetName}}.js
         parse: true
