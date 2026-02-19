@@ -29,7 +29,7 @@ definitions:
       variables:
         - name: alertMessage
     files:
-      - source: .proj/src/script-alert.js
+      - source: src/script-alert.js
         target: src/js/{{.targetName}}.js
         parse: true
   form:
@@ -38,6 +38,6 @@ definitions:
       variables:
         - name: formTarget
     files:
-      - source: .proj/src/form.html
+      - source: src/form.html
         target: src/{{.targetName}}-form.html
         parse: true
