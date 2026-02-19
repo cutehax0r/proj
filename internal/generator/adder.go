@@ -61,19 +61,16 @@ func (a *Adder) Add() error {
 }
 
 func (a *Adder) setupConfig() error {
-	// Load template config
 	if err := config.InitTemplate(a.paths.TemplateConfigPath); err != nil {
 		slog.Error("Template configuration load failure", slog.Any("error", err))
 		return err
 	}
 	slog.Debug("template config loaded", "file", viper.ConfigFileUsed())
 
-	// Set viper keys that config functions will read from
 	viper.Set("definition-name", a.cfg.DefinitionName)
 	viper.Set("target-name", a.cfg.TargetName)
 	viper.Set("template-name", a.cfg.TemplateName)
 
-	// Read and merge project config from target
 	projectRoot := viper.GetString("target-root")
 	projYmlPath := filepath.Join(projectRoot, paths.TargetConfigFileDir, paths.TargetConfigFile)
 	fs := afero.NewOsFs()
@@ -89,7 +86,6 @@ func (a *Adder) setupConfig() error {
 		return err
 	}
 
-	// Merge project config into viper (project > template > global)
 	if projectCfg.Variables != nil {
 		for key, val := range projectCfg.Variables {
 			viper.Set(fmt.Sprintf("variables.%s", key), val)
@@ -106,27 +102,23 @@ func (a *Adder) setupConfig() error {
 		for key, val := range projectCfg.Definitions {
 			viper.Set(fmt.Sprintf("definitions.%s", key), val)
 		}
-		// Track that these definitions come from the project's .proj directory
 		config.SetProjectDefinitionSources(projectRoot, projectCfg)
 	}
 
 	slog.Debug("Project config merged", slog.Any("variables", projectCfg.Variables), slog.Any("definitions", projectCfg.Definitions))
 
-	// Validate target path EXISTS
 	if _, err := fs.Stat(a.paths.TargetPath); err != nil {
 		slog.Error("Target path does not exist", slog.String("path", a.paths.TargetPath))
 		return err
 	}
 	slog.Debug("Target path exists", slog.String("path", a.paths.TargetPath))
 
-	// Validate definition exists
 	defPath := strings.Join([]string{"definitions", a.cfg.DefinitionName}, ".")
 	if !viper.IsSet(defPath) {
 		slog.Error("Definition does not exist", slog.String("path", defPath), slog.String("definition-name", a.cfg.DefinitionName), slog.String("template name", a.cfg.TemplateName))
 		return afero.ErrFileNotFound
 	}
 
-	// Load requirements
 	reqs, err := config.NewRequirements()
 	if err != nil {
 		slog.Error("Failed to load requirements", slog.Any("error", err))
@@ -135,7 +127,6 @@ func (a *Adder) setupConfig() error {
 	a.reqs = reqs
 	slog.Debug("Final Requirements", slog.Any("reqs", reqs))
 
-	// Build variables
 	vars, err := config.BuildVariables(reqs.Variables)
 	if err != nil {
 		slog.Error("Failed to build variables", slog.Any("error", err))
@@ -144,7 +135,6 @@ func (a *Adder) setupConfig() error {
 	a.vars = vars
 	slog.Debug("Final Variables", slog.Any("vars", vars))
 
-	// Load scripts
 	scripts, err := config.NewScriptSpecWithFS(a.cfg.Fs, a.paths)
 	if err != nil {
 		slog.Error("Couldn't build scripts", slog.Any("error", err))
@@ -153,7 +143,6 @@ func (a *Adder) setupConfig() error {
 	a.scripts = scripts
 	slog.Debug("Final scripts", slog.Any("scripts", scripts))
 
-	// Load files
 	files, err := config.NewFileSpecsWithFS(a.cfg.Fs, a.paths)
 	if err != nil {
 		slog.Error("Failed to load files from template definition", slog.Any("error", err))
@@ -162,7 +151,6 @@ func (a *Adder) setupConfig() error {
 	a.files = files
 	slog.Debug("Final files", slog.Any("files", files))
 
-	// Setup lua environment
 	a.luaenv = luabridge.NewRuntime(a.vars, a.paths, a.reqs, &a.files, a.cfg.NoWrite)
 
 	return nil
