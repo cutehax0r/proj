@@ -305,7 +305,6 @@ A number of functions are also provided to help make scripts easier to write.
 
 ## Short term goals
 
-* Let's get automatic tests on merges to main with 'make test' and 'make acceptance'
 * Let's get building 'distributions':
   * Macos Arm - Binary, homebrew, dmg
   * Macos x86 - binary, homebrew, dmg
