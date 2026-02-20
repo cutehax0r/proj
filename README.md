@@ -295,8 +295,6 @@ A number of functions are also provided to help make scripts easier to write.
 8. if you run with --target-path, it better exist or running should fail.
 9. if you run with --target-path, proj add foo should work as if you were inside of target-path even
    if the command was run from outside of it.
-10. it doesn't matter what subdirectory you're in. target-path is set to be the folder that contains
-    .proj/proj.yml (or --target-path if it's set)
 
 # Wishlist
 

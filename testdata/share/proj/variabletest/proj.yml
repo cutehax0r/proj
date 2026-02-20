@@ -1,0 +1,26 @@
+---
+description: "Template for testing variable resolution in proj add"
+definitions:
+  new:
+    requirements:
+      local: false
+      variables:
+        - name: appName
+        - name: environment
+        - name: version
+    files:
+      - source: src/config.txt
+        target: config-{{.appName}}.txt
+        parse: true
+  
+  config:
+    requirements:
+      local: true
+      variables:
+        - name: appName
+        - name: environment
+        - name: version
+    files:
+      - source: src/config.txt
+        target: config-{{.appName}}.txt
+        parse: true

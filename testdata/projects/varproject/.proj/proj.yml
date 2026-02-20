@@ -1,0 +1,21 @@
+template_name: variabletest
+variables:
+    appName: TestApp
+    definitionName: new
+    environment: staging
+    targetName: varproject
+    templateName: variabletest
+    version: 1.0.0
+scripts: {}
+definitions:
+  config:
+    requirements:
+      local: true
+      variables:
+        - name: appName
+        - name: environment
+        - name: version
+    files:
+      - source: src/config.txt
+        target: config-{{.targetName}}.txt
+        parse: true

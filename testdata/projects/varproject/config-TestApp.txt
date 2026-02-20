@@ -1,0 +1,4 @@
+# Configuration for TestApp
+version=1.0.0
+environment=staging
+appName=TestApp

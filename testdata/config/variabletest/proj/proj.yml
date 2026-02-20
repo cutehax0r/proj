@@ -1,0 +1,9 @@
+---
+# Global configuration for variabletest template testing
+template-root: null
+log-level: 0
+variables:
+  version: "1.0.0"
+  environment: "production"
+  appName: "DefaultApp"
+  baseUrl: "https://default.example.com"

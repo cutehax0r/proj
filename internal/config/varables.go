@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log/slog"
 	"maps"
 	"strings"
@@ -25,8 +26,11 @@ func BuildVariables(reqvars []VariableSpec) (map[string]any, error) {
 	reqd := make(map[string]any)
 	for _, v := range reqvars {
 		var finalval any
+		// Priority: CLI set-variable > viper variables key > global variables > default
 		if _, ok := setvars[v.Name]; ok {
 			finalval = setvars[v.Name]
+		} else if viper.IsSet(fmt.Sprintf("variables.%s", v.Name)) {
+			finalval = viper.Get(fmt.Sprintf("variables.%s", v.Name))
 		} else if _, ok := globalvars[v.Name]; ok {
 			finalval = globalvars[v.Name]
 		} else {
