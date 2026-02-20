@@ -188,9 +188,9 @@ release:
 		echo "  3. Commit change with message: tagging new release"; \
 		echo "  4. Push branch to GitHub"; \
 		echo "  5. Create PR with title: RELEASE: $$VERSION"; \
-		echo "  6. Enable auto-merge (squash)"; \
-		echo "  7. Wait for CI checks (2 minute timeout)"; \
-		echo "  8. Auto-merge when checks pass"; \
+		echo "  6. Wait for CI checks (2 minute timeout)"; \
+		echo "  7. Merge PR (squash)"; \
+		echo "  8. Wait for merge to complete"; \
 		echo "  9. Tag created via GitHub Actions"; \
 		echo "  10. Delete local branch release/$$VERSION"; \
 		echo ""; \
@@ -225,20 +225,20 @@ release:
 		echo "✓ Created PR #$$PR_NUMBER"; \
 		echo "  Link: $$PR_URL"; \
 		echo ""; \
-		echo "Step 6/10: Enabling auto-merge..."; \
-		gh pr merge --auto --squash "$$PR_NUMBER" >/dev/null 2>&1 || { echo "ERROR: Failed to enable auto-merge"; exit 1; }; \
-		echo "✓ Auto-merge enabled (squash)"; \
-		echo ""; \
-		echo "Step 7/10: Waiting for CI checks (2 min timeout)..."; \
+		echo "Step 6/10: Waiting for CI checks (2 min timeout)..."; \
 		timeout 120 gh pr checks --watch "$$PR_NUMBER" >/dev/null 2>&1; \
 		if [ $$? -eq 124 ]; then echo "ERROR: Checks did not complete within 2 minutes"; echo "Check status: $$PR_URL"; exit 1; elif [ $$? -ne 0 ]; then echo "ERROR: CI checks failed"; echo "Check results: $$PR_URL"; exit 1; fi; \
 		echo "✓ All checks passed!"; \
 		echo ""; \
-		echo "Step 8/10: Waiting for auto-merge..."; \
+		echo "Step 7/10: Merging pull request..."; \
+		gh pr merge --squash "$$PR_NUMBER" >/dev/null 2>&1 || { echo "ERROR: Failed to merge PR"; exit 1; }; \
+		echo "✓ PR merged (squash)"; \
+		echo ""; \
+		echo "Step 8/10: Waiting for merge to complete..."; \
 		MERGE_COUNT=0; \
 		while [ $$MERGE_COUNT -lt 30 ]; do \
 			STATE=$$(gh pr view "$$PR_NUMBER" --json state -q .state 2>/dev/null); \
-			if [ "$$STATE" = "MERGED" ]; then echo "✓ PR auto-merged"; break; fi; \
+			if [ "$$STATE" = "MERGED" ]; then echo "✓ Merge completed"; break; fi; \
 			sleep 1; MERGE_COUNT=$$((MERGE_COUNT + 1)); \
 		done; \
 		echo ""; \
