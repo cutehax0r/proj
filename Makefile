@@ -268,6 +268,7 @@ release:
 		echo ""; \
 		echo "GitHub Actions will now build and create artifacts."; \
 		echo "Monitor at: https://github.com/cutehax0r/proj/actions/workflows/release.yml"; \
+		echo "Or run: gh run list --workflow release.yml -L 5"; \
 	fi'
 	@true
 
