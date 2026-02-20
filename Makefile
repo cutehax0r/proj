@@ -267,7 +267,7 @@ release:
 		echo "✓ Release $$VERSION created successfully!"; \
 		echo ""; \
 		echo "GitHub Actions will now build and create artifacts."; \
-		echo "Monitor at: https://github.com/cutehax0r/proj/actions/workflows/Release"; \
+		echo "Monitor at: https://github.com/cutehax0r/proj/actions/workflows/release.yml"; \
 	fi'
 	@true
 
