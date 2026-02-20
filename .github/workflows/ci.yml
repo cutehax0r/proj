@@ -29,6 +29,16 @@ jobs:
             os: Linux
             arch: x86-64
             go-arch: amd64
+          # Windows - x86-64
+          - runner: windows-latest
+            os: Windows
+            arch: x86-64
+            go-arch: amd64
+          # Windows - ARM64
+          - runner: windows-11-arm
+            os: Windows
+            arch: arm64
+            go-arch: arm64
 
     steps:
       - name: Checkout code
@@ -39,6 +49,11 @@ jobs:
         with:
           go-version: stable
           cache: true
+
+      - name: Install make (Windows only)
+        if: runner.os == 'Windows'
+        run: choco install make -y
+        shell: powershell
 
       - name: Download dependencies
         run: go mod download
