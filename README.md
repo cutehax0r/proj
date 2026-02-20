@@ -305,14 +305,6 @@ A number of functions are also provided to help make scripts easier to write.
 
 ## Short term goals
 
-* Let's get building 'distributions':
-  * Macos Arm - Binary, homebrew, dmg
-  * Macos x86 - binary, homebrew, dmg
-  * Linux arm - deb, rpm, tgz
-  * Linux x86 - deb, rpm, tgz
-  * Windows arm - zip
-  * Windows x86 - zip
-  * docker(?)
 * Documentation in the man pages
 
 ## Long term goals
@@ -358,3 +350,4 @@ to json.Marshal(somestruct) to get a map[string]any. then pass that over to .tol
 later. For now it works and that's good enough.  Just write some more ToMap() functions
 * when copying files with parent directories, we should have a way to specify permissions. For now
 those will have to be done with shell scripts.
+* github windows builds working
