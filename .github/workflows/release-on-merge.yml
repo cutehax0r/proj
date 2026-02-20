@@ -43,8 +43,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          PAYLOAD=$(jq -n --arg version "$VERSION" '{version: $version}')
+          PAYLOAD=$(jq -c -n --arg version "$VERSION" '{version: $version}')
           gh api repos/cutehax0r/proj/dispatches \
             -X POST \
             -f event_type="release-tag-created" \
-            -f client_payload="$PAYLOAD"
+            -F client_payload="$PAYLOAD"
