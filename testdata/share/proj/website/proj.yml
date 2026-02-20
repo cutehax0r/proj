@@ -25,7 +25,7 @@ definitions:
         - name: title
     files:
       - source: src/page.html
-        target: src/{{.targetName}}.html
+        target: src/{{.targetname}}.html
         parse: true
   
   css:
@@ -33,7 +33,7 @@ definitions:
       local: true
     files:
       - source: src/style.css
-        target: src/css/{{.targetName}}.css
+        target: src/css/{{.targetname}}.css
         parse: true
   
   js:
@@ -41,5 +41,5 @@ definitions:
       local: true
     files:
       - source: src/script.js
-        target: src/js/{{.targetName}}.js
+        target: src/js/{{.targetname}}.js
         parse: true

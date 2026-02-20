@@ -16,7 +16,7 @@ proj.variables.definition_stage = "executing"
 proj.variables.definition_message = "definition processing"
 
 -- Compute a path using variables and target name (this runs before files are created)
-local target = proj.variables.targetName or "unknown"
+local target = proj.variables.targetname or "unknown"
 proj.variables.computed_path = "output/" .. target .. "/results"
 
 proj.logInfo("Computed path: " .. proj.variables.computed_path)

@@ -1,7 +1,7 @@
 Script Execution Summary
 ========================
 
-Project: {{.targetName}}
+Project: {{.targetname}}
 
 Execution Stages:
 - Global Stage: {{.global_stage}}

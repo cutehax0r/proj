@@ -3,7 +3,7 @@
 template-root: null
 log-level: 0
 variables:
-  version: "1.0.0"
-  environment: "production"
-  appName: "DefaultApp"
-  baseUrl: "https://default.example.com"
+   version: "1.0.0"
+   environment: "production"
+   appname: "DefaultApp"
+   baseurl: "https://default.example.com"

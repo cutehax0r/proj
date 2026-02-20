@@ -136,14 +136,14 @@ func TestNewCommand_VariablePropagation(t *testing.T) {
 		t.Errorf("Expected proj.yml to contain script_after from after script, got:\n%s", content)
 	}
 
-	if !strings.Contains(content, "targetName:") || !strings.Contains(content, "myproject") {
-		t.Errorf("Expected proj.yml to contain targetName, got:\n%s", content)
+	if !strings.Contains(content, "targetname:") || !strings.Contains(content, "myproject") {
+		t.Errorf("Expected proj.yml to contain targetname, got:\n%s", content)
 	}
-	if !strings.Contains(content, "templateName:") || !strings.Contains(content, "vartest") {
-		t.Errorf("Expected proj.yml to contain templateName, got:\n%s", content)
+	if !strings.Contains(content, "templatename:") || !strings.Contains(content, "vartest") {
+		t.Errorf("Expected proj.yml to contain templatename, got:\n%s", content)
 	}
-	if !strings.Contains(content, "definitionName:") || !strings.Contains(content, "new") {
-		t.Errorf("Expected proj.yml to contain definitionName, got:\n%s", content)
+	if !strings.Contains(content, "definitionname:") || !strings.Contains(content, "new") {
+		t.Errorf("Expected proj.yml to contain definitionname, got:\n%s", content)
 	}
 
 	if !strings.Contains(content, "scripts:") {

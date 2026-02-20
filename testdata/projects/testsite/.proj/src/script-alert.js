@@ -1,11 +1,11 @@
-// {{.targetName}}.js
-// JavaScript for {{.targetName}} with alert message
+// {{.targetname}}.js
+// JavaScript for {{.targetname}} with alert message
 
 (function() {
     'use strict';
     
     // Display alert message
-    alert('{{.alertMessage}}');
+    alert('{{.alertmessage}}');
     
-    console.log('{{.targetName}} script loaded');
+    console.log('{{.targetname}} script loaded');
 })();

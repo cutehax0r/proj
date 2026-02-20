@@ -14,35 +14,63 @@ type VariableSpec struct {
 	Default any
 }
 
+// normalizeVariableName converts a variable name to lowercase.
+// All variable names are normalized to lowercase for consistency.
+// For example: "UserName" becomes "username", "user_name" stays "user_name"
+func normalizeVariableName(name string) string {
+	return strings.ToLower(name)
+}
+
+// warnIfMixedCase logs a warning if the variable name contains mixed case.
+// This helps users understand that their variable names will be normalized to lowercase.
+func warnIfMixedCase(originalName, normalizedName string) {
+	if originalName != normalizedName {
+		slog.Warn("Variable name contains mixed case and has been normalized to lowercase",
+			slog.String("original", originalName),
+			slog.String("normalized", normalizedName))
+	}
+}
+
 func BuildVariables(reqvars []VariableSpec) (map[string]any, error) {
 	result := make(map[string]any)
 
 	globalvars := viper.GetStringMap("variables.global")
-	maps.Copy(result, globalvars)
+	// Normalize global variable names
+	normalizedGlobalVars := make(map[string]any)
+	for k, v := range globalvars {
+		normalized := normalizeVariableName(k)
+		warnIfMixedCase(k, normalized)
+		normalizedGlobalVars[normalized] = v
+	}
+	maps.Copy(result, normalizedGlobalVars)
 
 	setvars := buildMapFromSetVariables()
 	maps.Copy(result, setvars)
 
 	reqd := make(map[string]any)
 	for _, v := range reqvars {
+		normalizedName := normalizeVariableName(v.Name)
+		warnIfMixedCase(v.Name, normalizedName)
+
 		var finalval any
 		// Priority: CLI set-variable > viper variables key > global variables > default
-		if _, ok := setvars[v.Name]; ok {
-			finalval = setvars[v.Name]
-		} else if viper.IsSet(fmt.Sprintf("variables.%s", v.Name)) {
-			finalval = viper.Get(fmt.Sprintf("variables.%s", v.Name))
-		} else if _, ok := globalvars[v.Name]; ok {
-			finalval = globalvars[v.Name]
+		if _, ok := setvars[normalizedName]; ok {
+			finalval = setvars[normalizedName]
+		} else if viper.IsSet(fmt.Sprintf("variables.%s", normalizedName)) {
+			finalval = viper.Get(fmt.Sprintf("variables.%s", normalizedName))
+		} else if _, ok := normalizedGlobalVars[normalizedName]; ok {
+			finalval = normalizedGlobalVars[normalizedName]
 		} else {
 			finalval = v.Default
 		}
-		reqd[v.Name] = finalval
+		reqd[normalizedName] = finalval
 	}
 	maps.Copy(result, reqd)
 
-	result["targetName"] = viper.GetString("target-name")
-	result["templateName"] = viper.GetString("template-name")
-	result["definitionName"] = viper.GetString("definition-name")
+	// System variables are always lowercase
+	result["targetname"] = viper.GetString("target-name")
+	result["templatename"] = viper.GetString("template-name")
+	result["definitionname"] = viper.GetString("definition-name")
 
 	return result, nil
 }
@@ -56,8 +84,10 @@ func buildMapFromSetVariables() map[string]any {
 			slog.Warn("Invalid argument for set-variable. skipping", slog.Int("Index", i), slog.String("raw", rawset))
 			continue
 		}
-		slog.Debug("Parsing set-variable", slog.String("raw", rawset), slog.String("key", key), slog.String("value", value))
-		vars[key] = value // maybe consider casting? json parsing?
+		normalizedKey := normalizeVariableName(key)
+		warnIfMixedCase(key, normalizedKey)
+		slog.Debug("Parsing set-variable", slog.String("raw", rawset), slog.String("key", key), slog.String("normalizedKey", normalizedKey), slog.String("value", value))
+		vars[normalizedKey] = value // maybe consider casting? json parsing?
 	}
 	return vars
 }

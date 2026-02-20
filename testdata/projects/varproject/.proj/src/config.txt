@@ -1,4 +1,4 @@
-# Configuration for {{.appName}}
+# Configuration for {{.appname}}
 version={{.version}}
 environment={{.environment}}
-appName={{.appName}}
+appname={{.appname}}

@@ -20,7 +20,7 @@ definitions:
         target: src/foo/bar/example3.md
         parse: false
       - source: src/example4.md
-        target: src/example-4-{{.targetName}}.md
+        target: src/example-4-{{.targetname}}.md
         parse: false
       - source: src/example5.md
         target: src/example5.md

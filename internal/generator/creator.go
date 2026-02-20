@@ -165,7 +165,8 @@ func (c *Creator) runBeforeScripts() error {
 	slog.Debug("Variables after before-scripts", slog.Any("vars", c.vars))
 
 	for _, varspec := range c.reqs.Variables {
-		if c.vars[varspec.Name] == nil {
+		normalizedName := strings.ToLower(varspec.Name)
+		if c.vars[normalizedName] == nil {
 			slog.Error("Required variable is not set. Use --set-variable. Aborting.", slog.Any("Name", varspec.Name))
 			slog.Info("All variables", slog.Any("vars", c.vars))
 			return errors.New("required variable not set")

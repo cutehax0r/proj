@@ -5,22 +5,22 @@ definitions:
     requirements:
       local: false
       variables:
-        - name: appName
-        - name: environment
-        - name: version
+         - name: appname
+         - name: environment
+         - name: version
     files:
       - source: src/config.txt
-        target: config-{{.appName}}.txt
+        target: config-{{.appname}}.txt
         parse: true
   
   config:
     requirements:
       local: true
       variables:
-        - name: appName
-        - name: environment
-        - name: version
+         - name: appname
+         - name: environment
+         - name: version
     files:
       - source: src/config.txt
-        target: config-{{.appName}}.txt
+        target: config-{{.appname}}.txt
         parse: true

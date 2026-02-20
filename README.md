@@ -247,7 +247,21 @@ variable definition.
 If any required variable is not set then processing will halt with an error message. Processing will
 continue if a variable is undefined but not listed as required.
 
-Once variables are declared they may be modified by any of the defined 'before scripts'. 
+Once variables are declared they may be modified by any of the defined 'before scripts'.
+
+### Variable Naming Conventions
+
+All variable names are automatically normalized to lowercase. This means:
+  * `UserName`, `userName`, and `username` all refer to the same variable
+  * In templates and Lua scripts, use lowercase names: `{{.username}}` instead of `{{.UserName}}`
+  * When defining variables in configuration files or via CLI, you can use any casing, but it will be converted to lowercase
+
+**Note:** A warning will be logged if a variable name contains mixed case (e.g., `UserName`) to help identify potential issues.
+
+The system automatically provides the following lowercase variables in all definitions:
+  * `targetname` - The name of the project/file being created
+  * `templatename` - The name of the template being used
+  * `definitionname` - The name of the definition being executed
 
 ## Templates
 Any file marked as `parse: true` will be ran through the standard go

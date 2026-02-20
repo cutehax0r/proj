@@ -9,8 +9,8 @@ import (
 func TestAddCommand_VariableResolution_CLIOverride(t *testing.T) {
 	ctx, projectDir := SetupProjectFromTemplate(t, "varproject")
 
-	// Global config has: version=1.0.0, environment=production, appName=DefaultApp
-	// Project .proj/proj.yml has: version=1.0.0, environment=staging, appName=TestApp
+	// Global config has: version=1.0.0, environment=production, appname=DefaultApp
+	// Project .proj/proj.yml has: version=1.0.0, environment=staging, appname=TestApp
 	// CLI sets: version=2.0.0
 	ctx.Run("add", "config", "cli-override", "-v", "version=2.0.0").
 		ExpectExitCode(0)
@@ -28,8 +28,8 @@ func TestAddCommand_VariableResolution_CLIOverride(t *testing.T) {
 		t.Errorf("Expected config to contain environment=staging from project .proj/proj.yml, got:\n%s", content)
 	}
 
-	if !strings.Contains(content, "appName=TestApp") {
-		t.Errorf("Expected config to contain appName=TestApp from project .proj/proj.yml, got:\n%s", content)
+	if !strings.Contains(content, "appname=TestApp") {
+		t.Errorf("Expected config to contain appname=TestApp from project .proj/proj.yml, got:\n%s", content)
 	}
 }
 
@@ -53,8 +53,8 @@ func TestAddCommand_VariableResolution_WithoutCLIOverride(t *testing.T) {
 		t.Errorf("Expected config to contain environment=staging from project .proj/proj.yml, got:\n%s", content)
 	}
 
-	if !strings.Contains(content, "appName=TestApp") {
-		t.Errorf("Expected config to contain appName=TestApp from project .proj/proj.yml, got:\n%s", content)
+	if !strings.Contains(content, "appname=TestApp") {
+		t.Errorf("Expected config to contain appname=TestApp from project .proj/proj.yml, got:\n%s", content)
 	}
 }
 
@@ -82,11 +82,11 @@ func TestAddCommand_VariableResolution_ProjectOverridesTemplate(t *testing.T) {
 		t.Errorf("Expected config to contain environment=staging from project, got:\n%s", content)
 	}
 
-	if !strings.Contains(content, "appName=TestApp") {
-		t.Errorf("Expected config to contain appName=TestApp from project, got:\n%s", content)
+	if !strings.Contains(content, "appname=TestApp") {
+		t.Errorf("Expected config to contain appname=TestApp from project, got:\n%s", content)
 	}
 
-	if strings.Contains(content, "appName=DefaultApp") {
-		t.Errorf("Expected NOT to find appName=DefaultApp from global config, got:\n%s", content)
+	if strings.Contains(content, "appname=DefaultApp") {
+		t.Errorf("Expected NOT to find appname=DefaultApp from global config, got:\n%s", content)
 	}
 }

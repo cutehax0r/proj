@@ -1,9 +1,9 @@
-// {{.targetName}}.js
-// JavaScript for {{.targetName}}
+// {{.targetname}}.js
+// JavaScript for {{.targetname}}
 
 (function() {
     'use strict';
     
     // Add your JavaScript here
-    console.log('{{.targetName}} script loaded');
+    console.log('{{.targetname}} script loaded');
 })();

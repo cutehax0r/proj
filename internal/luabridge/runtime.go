@@ -6,6 +6,7 @@ import (
 	"proj/internal/config"
 	"proj/internal/paths"
 	"reflect"
+	"strings"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -130,7 +131,13 @@ func (r *Runtime) toLuaValue(value any) lua.LValue {
 			var luaKey string
 			switch k := mapKey.(type) {
 			case string:
-				luaKey = k
+				// Normalize variable names to lowercase
+				luaKey = strings.ToLower(k)
+				if k != luaKey {
+					slog.Warn("Variable name contains mixed case and has been normalized to lowercase",
+						slog.String("original", k),
+						slog.String("normalized", luaKey))
+				}
 			default:
 				luaKey = fmt.Sprintf("%v", k)
 			}
@@ -275,7 +282,14 @@ func (r *Runtime) GetVariables() map[string]any {
 		default:
 			keyStr = fmt.Sprintf("%v", k)
 		}
-		result[keyStr] = r.fromLuaValue(val)
+		// Normalize variable names to lowercase for consistency
+		normalizedKey := strings.ToLower(keyStr)
+		if keyStr != normalizedKey {
+			slog.Warn("Variable name contains mixed case and has been normalized to lowercase",
+				slog.String("original", keyStr),
+				slog.String("normalized", normalizedKey))
+		}
+		result[normalizedKey] = r.fromLuaValue(val)
 	})
 
 	slog.Debug("Extracted variables from Lua", slog.Any("variables", result))

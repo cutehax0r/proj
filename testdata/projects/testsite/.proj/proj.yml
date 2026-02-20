@@ -1,51 +1,50 @@
 template_name: website
 variables:
-    aboolean: true
-    amap:
-        bar: 2
-        foo: 1
-        nested:
-            anotherarray:
-                - 4
-                - 5
-            "no": false
-            "yes": true
-    anarray:
-        - 1
-        - 3
-        - 3
-    anumber: 8080
-    astring: hello world
-    definitionName: new
-    has_date: true
-    sitename: Test Site
-    targetName: testsite
-    templateName: website
+  aboolean: true
+  amap:
+    bar: 2
+    foo: 1
+    nested:
+      anotherarray:
+        - 4
+        - 5
+      "no": false
+      "yes": true
+  anarray:
+    - 1
+    - 3
+    - 3
+  anumber: 8080
+  astring: hello world
+  definitionname: new
+  has_date: true
+  sitename: Test Site
+  targetname: testsite
+  templatename: website
 scripts: {}
 definitions:
   js:
     requirements:
       local: true
       variables:
-        - name: alertMessage
+        - name: alertmessage
     files:
       - source: src/script-alert.js
-        target: src/js/{{.targetName}}.js
+        target: src/js/{{.targetname}}.js
         parse: true
   form:
     requirements:
       local: true
       variables:
-        - name: formTarget
+        - name: formtarget
     files:
       - source: src/form.html
-        target: src/{{.targetName}}-form.html
+        target: src/{{.targetname}}-form.html
         parse: true
   stylesheet:
     requirements:
       local: true
     files:
       - source: src/style.css
-        target: src/css/{{.targetName}}.css
+        target: src/css/{{.targetname}}.css
         parse: true
-
