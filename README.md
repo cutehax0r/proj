@@ -305,12 +305,6 @@ A number of functions are also provided to help make scripts easier to write.
 
 ## Short term goals
 
-* Fix linux bug:
-=== RUN   TestStaticCopy_CopiesAllFiles
-    static_copy_test.go:20: File src/example5.md mode mismatch: expected 0600, got 0644
---- FAIL: TestStaticCopy_CopiesAllFiles (0.01s)
-
-
 * Let's get automatic tests on merges to main with 'make test' and 'make acceptance'
 * Let's get building 'distributions':
   * Macos Arm - Binary, homebrew, dmg
@@ -324,6 +318,10 @@ A number of functions are also provided to help make scripts easier to write.
 
 ## Long term goals
 
+* **Fix design flaw:** File pulled from github aren't goign to have permissions copied. This is a
+problem for installing templates distributed as git repos. For example, If a template has a shell
+script it's execute bit won't be set. To fix this I think we need to modify the `files` declaration
+to allow you to declare target permissions and then not have them set on local files.
 * allow for `variables.template.definition` in global config so that (for example)
 `variables.python.version = 3` or `variables.ruby.typesystem = "sorbet"` can be set
 * allow variable declarations to include "persist: false" to avoid adding them to a .proj directory
