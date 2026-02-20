@@ -296,7 +296,6 @@ will not change the writing behavior
 
 A number of functions are also provided to help make scripts easier to write.
 
-  * `logDebug`. Log "debug" information. Only visible at log-level 3.
   * `logInfo`. log "optional" information. Visible at log level 2 or 3.
   * `logWarn`. log "warnings" information, errors that can be recovered or that will not hault
   processing. Visible at log level 1-3.
@@ -319,6 +318,10 @@ A number of functions are also provided to help make scripts easier to write.
 
 ## Long term goals
 
+* **Fix design flaw:** File pulled from github aren't goign to have permissions copied. This is a
+problem for installing templates distributed as git repos. For example, If a template has a shell
+script it's execute bit won't be set. To fix this I think we need to modify the `files` declaration
+to allow you to declare target permissions and then not have them set on local files.
 * allow for `variables.template.definition` in global config so that (for example)
 `variables.python.version = 3` or `variables.ruby.typesystem = "sorbet"` can be set
 * allow variable declarations to include "persist: false" to avoid adding them to a .proj directory
