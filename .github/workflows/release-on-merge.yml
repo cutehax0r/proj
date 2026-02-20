@@ -41,8 +41,10 @@ jobs:
       - name: Trigger Release workflow via repository dispatch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
+          PAYLOAD=$(jq -n --arg version "$VERSION" '{version: $version}')
           gh api repos/cutehax0r/proj/dispatches \
             -X POST \
             -f event_type="release-tag-created" \
-            -f client_payload='{"version":"${{ steps.version.outputs.version }}"}'
+            -f client_payload="$PAYLOAD"
