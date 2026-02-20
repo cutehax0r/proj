@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  create-release-tag:
+  release:
     if: github.event.pull_request.merged && contains(github.event.pull_request.title, 'RELEASE:')
     runs-on: ubuntu-latest
     steps:
@@ -38,8 +38,17 @@ jobs:
           git tag ${{ steps.version.outputs.version }}
           git push origin ${{ steps.version.outputs.version }}
 
-      - name: Trigger Release workflow
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: true
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --clean
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh workflow run release.yml --ref ${{ steps.version.outputs.version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
