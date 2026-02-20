@@ -302,12 +302,6 @@ A number of functions are also provided to help make scripts easier to write.
   processing. Visible at log level 1-3.
    * `logError`. log "errors" that should halt further processing. visible at all log levels
 
-# Test Plan (add)
-
-8. if you run with --target-path, it better exist or running should fail.
-9. if you run with --target-path, proj add foo should work as if you were inside of target-path even
-   if the command was run from outside of it.
-
 # Wishlist
 
 * allow for `variables.template.definition` in global config so that (for example)
