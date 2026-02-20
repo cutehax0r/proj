@@ -15,42 +15,20 @@ builds:
       - linux_arm64
 
 archives:
-  - id: macos
-    format: zip
-    goos:
-      - darwin
-    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
-
-  - id: linux
-    format: tar.gz
-    goos:
-      - linux
-    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+  - format: zip
+    format_overrides:
+      - goos: linux
+        format: tar.gz
 
 nfpms:
-  - id: deb
-    package_name: proj
+  - package_name: proj
     homepage: https://github.com/cutehax0r/proj
     maintainer: "cutehax0r <97819453+cutehax0r@users.noreply.github.com>"
     description: "A tool for setting up new projects or adding files to existing projects"
     license: MIT
     formats:
       - deb
-    contents:
-      - src: proj
-        dst: /usr/local/bin/proj
-
-  - id: rpm
-    package_name: proj
-    homepage: https://github.com/cutehax0r/proj
-    maintainer: "cutehax0r <97819453+cutehax0r@users.noreply.github.com>"
-    description: "A tool for setting up new projects or adding files to existing projects"
-    license: MIT
-    formats:
       - rpm
-    contents:
-      - src: proj
-        dst: /usr/local/bin/proj
 
 checksum:
   name_template: "checksums.txt"
