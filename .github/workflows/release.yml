@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -76,20 +79,20 @@ jobs:
           curl -L https://github.com/goreleaser/nfpm/releases/latest/download/nfpm_$(uname -s)_$(uname -m).tar.gz | tar xz
           sudo mv nfpm /usr/local/bin/
 
-      - name: Create Linux packages configuration for amd64
+      - name: Create nfpm config for amd64
         run: |
-          cat > nfpm.yaml << 'EOF'
-name: proj
-arch: amd64
-version: ${{ github.ref_name }}
-maintainer: "Your Name <your.email@example.com>"
-description: "Your project description"
-license: MIT
-section: utils
-contents:
-  - src: bin/proj-linux-amd64
-    dst: /usr/local/bin/proj
-EOF
+          cat > nfpm.yaml <<'EOF'
+          name: proj
+          arch: amd64
+          version: ${{ github.ref_name }}
+          maintainer: "Your Name <your.email@example.com>"
+          description: "Your project description"
+          license: MIT
+          section: utils
+          contents:
+            - src: bin/proj-linux-amd64
+              dst: /usr/local/bin/proj
+          EOF
 
       - name: Build Linux amd64 deb package
         run: |
@@ -109,20 +112,20 @@ EOF
           echo "sha256=$(shasum -a 256 bin/proj-${{ github.ref_name }}-linux-amd64.zst | cut -d' ' -f1)" >> $GITHUB_OUTPUT
         id: zst-amd64
 
-      - name: Create Linux packages configuration for arm64
+      - name: Create nfpm config for arm64
         run: |
-          cat > nfpm.yaml << 'EOF'
-name: proj
-arch: arm64
-version: ${{ github.ref_name }}
-maintainer: "Your Name <your.email@example.com>"
-description: "Your project description"
-license: MIT
-section: utils
-contents:
-  - src: bin/proj-linux-arm64
-    dst: /usr/local/bin/proj
-EOF
+          cat > nfpm.yaml <<'EOF'
+          name: proj
+          arch: arm64
+          version: ${{ github.ref_name }}
+          maintainer: "Your Name <your.email@example.com>"
+          description: "Your project description"
+          license: MIT
+          section: utils
+          contents:
+            - src: bin/proj-linux-arm64
+              dst: /usr/local/bin/proj
+          EOF
 
       - name: Build Linux arm64 deb package
         run: |
