@@ -88,7 +88,8 @@ jobs:
 
       - name: Install nFPM
         run: |
-          curl -L https://github.com/goreleaser/nfpm/releases/latest/download/nfpm_$(uname -s)_$(uname -m).tar.gz | tar xz
+          NFPM_VERSION=$(curl -s https://api.github.com/repos/goreleaser/nfpm/releases/latest | grep tag_name | cut -d '"' -f 4)
+          curl -L "https://github.com/goreleaser/nfpm/releases/download/${NFPM_VERSION}/nfpm_$(uname -s)_$(uname -m).tar.gz" | tar xz
           sudo mv nfpm /usr/local/bin/
 
       - name: Create nfpm config for amd64
