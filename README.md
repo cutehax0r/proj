@@ -296,7 +296,6 @@ will not change the writing behavior
 
 A number of functions are also provided to help make scripts easier to write.
 
-  * `logDebug`. Log "debug" information. Only visible at log-level 3.
   * `logInfo`. log "optional" information. Visible at log level 2 or 3.
   * `logWarn`. log "warnings" information, errors that can be recovered or that will not hault
   processing. Visible at log level 1-3.
@@ -305,6 +304,12 @@ A number of functions are also provided to help make scripts easier to write.
 # Wishlist
 
 ## Short term goals
+
+* Fix linux bug:
+=== RUN   TestStaticCopy_CopiesAllFiles
+    static_copy_test.go:20: File src/example5.md mode mismatch: expected 0600, got 0644
+--- FAIL: TestStaticCopy_CopiesAllFiles (0.01s)
+
 
 * Let's get automatic tests on merges to main with 'make test' and 'make acceptance'
 * Let's get building 'distributions':
