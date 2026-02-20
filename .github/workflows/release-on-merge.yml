@@ -127,7 +127,7 @@ jobs:
       - name: Install nFPM
         uses: secondlife/setup-nfpm@v1
         with:
-          version: 'v2.35.0'
+          version: 'latest'
 
       - name: Create nfpm config for amd64
         run: |
