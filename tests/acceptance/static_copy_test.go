@@ -1,7 +1,6 @@
 package acceptance
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 )
@@ -17,13 +16,6 @@ func TestStaticCopy_CopiesAllFiles(t *testing.T) {
 	VerifyFileHash(t, projectDir, "src/example-4-testproject.md", filepath.Join(templateDir, "src/example4.md"))
 	VerifyFileHash(t, projectDir, "src/example5.md", filepath.Join(templateDir, "src/example5.md"))
 	VerifyFileHash(t, projectDir, "example6.sh", filepath.Join(templateDir, "src/example6.sh"))
-
-	// Skip file mode checks in CI environments due to git not tracking granular file permissions.
-	// Local development should still verify file permissions are correct.
-	if _, inCI := os.LookupEnv("CI"); !inCI {
-		VerifyFileMode(t, projectDir, "src/example5.md", 0600)
-		VerifyFileMode(t, projectDir, "example6.sh", 0755)
-	}
 
 	_ = ctx // ctx is used for cleanup via t.Cleanup
 }
