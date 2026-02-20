@@ -1,0 +1,112 @@
+project_name: proj
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - id: macos-arm64
+    goos: darwin
+    goarch: arm64
+    binary: proj
+    ldflags:
+      - -s -w
+
+  - id: macos-amd64
+    goos: darwin
+    goarch: amd64
+    binary: proj
+    ldflags:
+      - -s -w
+
+  - id: linux-arm64
+    goos: linux
+    goarch: arm64
+    binary: proj
+    ldflags:
+      - -s -w
+
+  - id: linux-amd64
+    goos: linux
+    goarch: amd64
+    binary: proj
+    ldflags:
+      - -s -w
+
+archives:
+  - id: macos
+    builds:
+      - macos-arm64
+      - macos-amd64
+    format: zip
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+
+  - id: linux
+    builds:
+      - linux-arm64
+      - linux-amd64
+    format: tar.gz
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+
+nfpms:
+  - id: deb-amd64
+    package_name: proj
+    homepage: https://github.com/cutehax0r/proj
+    maintainer: "cutehax0r <cutehax0r@example.com>"
+    description: "A tool for setting up new projects or adding files to existing projects"
+    license: MIT
+    formats:
+      - deb
+    builds:
+      - linux-amd64
+    bindir: /usr/local/bin
+
+  - id: rpm-amd64
+    package_name: proj
+    homepage: https://github.com/cutehax0r/proj
+    maintainer: "cutehax0r <cutehax0r@example.com>"
+    description: "A tool for setting up new projects or adding files to existing projects"
+    license: MIT
+    formats:
+      - rpm
+    builds:
+      - linux-amd64
+    bindir: /usr/local/bin
+
+  - id: deb-arm64
+    package_name: proj
+    homepage: https://github.com/cutehax0r/proj
+    maintainer: "cutehax0r <cutehax0r@example.com>"
+    description: "A tool for setting up new projects or adding files to existing projects"
+    license: MIT
+    formats:
+      - deb
+    builds:
+      - linux-arm64
+    bindir: /usr/local/bin
+
+  - id: rpm-arm64
+    package_name: proj
+    homepage: https://github.com/cutehax0r/proj
+    maintainer: "cutehax0r <cutehax0r@example.com>"
+    description: "A tool for setting up new projects or adding files to existing projects"
+    license: MIT
+    formats:
+      - rpm
+    builds:
+      - linux-arm64
+    bindir: /usr/local/bin
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+release:
+  github:
+    owner: cutehax0r
+    repo: proj
+  draft: false
+  prerelease: false
+
+changelog:
+  sort: asc
+  use: github-native
