@@ -226,9 +226,18 @@ release:
 		echo "  Link: $$PR_URL"; \
 		echo ""; \
 		echo "Step 6/10: Waiting for CI checks (2 min timeout)..."; \
-		timeout 120 gh pr checks --watch "$$PR_NUMBER" >/dev/null 2>&1; \
-		if [ $$? -eq 124 ]; then echo "ERROR: Checks did not complete within 2 minutes"; echo "Check status: $$PR_URL"; exit 1; elif [ $$? -ne 0 ]; then echo "ERROR: CI checks failed"; echo "Check results: $$PR_URL"; exit 1; fi; \
-		echo "✓ All checks passed!"; \
+		CHECK_COUNT=0; \
+		while [ $$CHECK_COUNT -lt 120 ]; do \
+			CHECKS=$$(gh pr view "$$PR_NUMBER" --json statusCheckRollup -q ".statusCheckRollup | map(select(.status != \"COMPLETED\")) | length" 2>/dev/null); \
+			if [ "$$CHECKS" = "0" ]; then \
+				FAILED=$$(gh pr view "$$PR_NUMBER" --json statusCheckRollup -q ".statusCheckRollup | map(select(.conclusion == \"FAILURE\")) | length" 2>/dev/null); \
+				if [ "$$FAILED" -gt 0 ]; then echo "ERROR: CI checks failed"; echo "Check results: $$PR_URL"; exit 1; fi; \
+				echo "✓ All checks passed!"; \
+				break; \
+			fi; \
+			sleep 1; CHECK_COUNT=$$((CHECK_COUNT + 1)); \
+		done; \
+		if [ $$CHECK_COUNT -ge 120 ]; then echo "ERROR: Checks did not complete within 2 minutes"; echo "Check status: $$PR_URL"; exit 1; fi; \
 		echo ""; \
 		echo "Step 7/10: Merging pull request..."; \
 		gh pr merge --squash "$$PR_NUMBER" >/dev/null 2>&1 || { echo "ERROR: Failed to merge PR"; exit 1; }; \
