@@ -1,4 +1,4 @@
-name: CI Tests
+name: CI / macOS
 
 on:
   push:
@@ -22,11 +22,6 @@ jobs:
           # macOS Sonoma - x86-64
           - runner: macos-15
             os: macOS
-            arch: x86-64
-            go-arch: amd64
-          # Linux - x86-64
-          - runner: ubuntu-latest
-            os: Linux
             arch: x86-64
             go-arch: amd64
 

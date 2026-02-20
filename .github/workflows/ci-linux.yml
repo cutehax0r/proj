@@ -1,0 +1,39 @@
+name: CI / Linux
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    name: Test (Linux - x86-64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build and test
+        run: make build && make acceptance
+        timeout-minutes: 5
+
+      - name: Upload test results
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-linux-x86-64
+          path: |
+            bin/
+          retention-days: 0
