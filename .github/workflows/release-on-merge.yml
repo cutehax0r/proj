@@ -23,13 +23,13 @@ jobs:
         run: |
           TITLE="${{ github.event.pull_request.title }}"
           VERSION=$(echo "$TITLE" | grep -oP 'RELEASE:\s*\K(v[0-9]+\.[0-9]+\.[0-9]+)' || echo "")
-          
+
           if [ -z "$VERSION" ]; then
             echo "ERROR: Could not extract version from PR title: $TITLE"
             exit 1
           fi
-          
-           echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Create and push tag
         run: |
@@ -38,8 +38,11 @@ jobs:
           git tag ${{ steps.version.outputs.version }}
           git push origin ${{ steps.version.outputs.version }}
 
-      - name: Trigger Release workflow
+      - name: Trigger Release workflow via repository dispatch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run release.yml --ref ${{ steps.version.outputs.version }}
+          gh api repos/cutehax0r/proj/dispatches \
+            -X POST \
+            -F event_type="release-tag-created" \
+            -F client_payload="{\"version\":\"${{ steps.version.outputs.version }}\"}"

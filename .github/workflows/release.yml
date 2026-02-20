@@ -4,9 +4,14 @@ on:
   push:
     tags:
       - 'v*'
+  repository_dispatch:
+    types: [release-tag-created]
 
 permissions:
   contents: write
+
+env:
+  VERSION: ${{ github.event.client_payload.version || github.ref_name }}
 
 jobs:
   test:
@@ -14,6 +19,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.VERSION }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -34,6 +41,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.VERSION }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -49,14 +58,14 @@ jobs:
 
       - name: Create macOS arm64 zip
         run: |
-          zip -r bin/proj-${{ github.ref_name }}-darwin-arm64.zip bin/proj-darwin-arm64
-          echo "sha256=$(shasum -a 256 bin/proj-${{ github.ref_name }}-darwin-arm64.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          zip -r bin/proj-${{ env.VERSION }}-darwin-arm64.zip bin/proj-darwin-arm64
+          echo "sha256=$(shasum -a 256 bin/proj-${{ env.VERSION }}-darwin-arm64.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
         id: zip-arm64
 
       - name: Create macOS amd64 zip
         run: |
-          zip -r bin/proj-${{ github.ref_name }}-darwin-amd64.zip bin/proj-darwin-amd64
-          echo "sha256=$(shasum -a 256 bin/proj-${{ github.ref_name }}-darwin-amd64.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          zip -r bin/proj-${{ env.VERSION }}-darwin-amd64.zip bin/proj-darwin-amd64
+          echo "sha256=$(shasum -a 256 bin/proj-${{ env.VERSION }}-darwin-amd64.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
         id: zip-amd64
 
       - name: Upload macOS artifacts
@@ -64,8 +73,8 @@ jobs:
         with:
           name: macos-artifacts
           path: |
-            bin/proj-${{ github.ref_name }}-darwin-arm64.zip
-            bin/proj-${{ github.ref_name }}-darwin-amd64.zip
+            bin/proj-${{ env.VERSION }}-darwin-arm64.zip
+            bin/proj-${{ env.VERSION }}-darwin-amd64.zip
 
   build-linux:
     needs: test
@@ -73,6 +82,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.VERSION }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -97,7 +108,7 @@ jobs:
           cat > nfpm.yaml <<'EOF'
           name: proj
           arch: amd64
-          version: ${{ github.ref_name }}
+          version: ${{ env.VERSION }}
           maintainer: "Your Name <your.email@example.com>"
           description: "Your project description"
           license: MIT
@@ -109,20 +120,20 @@ jobs:
 
       - name: Build Linux amd64 deb package
         run: |
-          nfpm pkg --packager deb --target bin/proj-${{ github.ref_name }}-linux-amd64.deb
-          echo "sha256=$(shasum -a 256 bin/proj-${{ github.ref_name }}-linux-amd64.deb | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          nfpm pkg --packager deb --target bin/proj-${{ env.VERSION }}-linux-amd64.deb
+          echo "sha256=$(shasum -a 256 bin/proj-${{ env.VERSION }}-linux-amd64.deb | cut -d' ' -f1)" >> $GITHUB_OUTPUT
         id: deb-amd64
 
       - name: Build Linux amd64 rpm package
         run: |
-          nfpm pkg --packager rpm --target bin/proj-${{ github.ref_name }}-linux-amd64.rpm
-          echo "sha256=$(shasum -a 256 bin/proj-${{ github.ref_name }}-linux-amd64.rpm | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          nfpm pkg --packager rpm --target bin/proj-${{ env.VERSION }}-linux-amd64.rpm
+          echo "sha256=$(shasum -a 256 bin/proj-${{ env.VERSION }}-linux-amd64.rpm | cut -d' ' -f1)" >> $GITHUB_OUTPUT
         id: rpm-amd64
 
       - name: Create Linux amd64 zst archive
         run: |
-          zstd -c bin/proj-linux-amd64 > bin/proj-${{ github.ref_name }}-linux-amd64.zst
-          echo "sha256=$(shasum -a 256 bin/proj-${{ github.ref_name }}-linux-amd64.zst | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          zstd -c bin/proj-linux-amd64 > bin/proj-${{ env.VERSION }}-linux-amd64.zst
+          echo "sha256=$(shasum -a 256 bin/proj-${{ env.VERSION }}-linux-amd64.zst | cut -d' ' -f1)" >> $GITHUB_OUTPUT
         id: zst-amd64
 
       - name: Create nfpm config for arm64
@@ -130,7 +141,7 @@ jobs:
           cat > nfpm.yaml <<'EOF'
           name: proj
           arch: arm64
-          version: ${{ github.ref_name }}
+          version: ${{ env.VERSION }}
           maintainer: "Your Name <your.email@example.com>"
           description: "Your project description"
           license: MIT
@@ -142,20 +153,20 @@ jobs:
 
       - name: Build Linux arm64 deb package
         run: |
-          nfpm pkg --packager deb --target bin/proj-${{ github.ref_name }}-linux-arm64.deb
-          echo "sha256=$(shasum -a 256 bin/proj-${{ github.ref_name }}-linux-arm64.deb | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          nfpm pkg --packager deb --target bin/proj-${{ env.VERSION }}-linux-arm64.deb
+          echo "sha256=$(shasum -a 256 bin/proj-${{ env.VERSION }}-linux-arm64.deb | cut -d' ' -f1)" >> $GITHUB_OUTPUT
         id: deb-arm64
 
       - name: Build Linux arm64 rpm package
         run: |
-          nfpm pkg --packager rpm --target bin/proj-${{ github.ref_name }}-linux-arm64.rpm
-          echo "sha256=$(shasum -a 256 bin/proj-${{ github.ref_name }}-linux-arm64.rpm | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          nfpm pkg --packager rpm --target bin/proj-${{ env.VERSION }}-linux-arm64.rpm
+          echo "sha256=$(shasum -a 256 bin/proj-${{ env.VERSION }}-linux-arm64.rpm | cut -d' ' -f1)" >> $GITHUB_OUTPUT
         id: rpm-arm64
 
       - name: Create Linux arm64 zst archive
         run: |
-          zstd -c bin/proj-linux-arm64 > bin/proj-${{ github.ref_name }}-linux-arm64.zst
-          echo "sha256=$(shasum -a 256 bin/proj-${{ github.ref_name }}-linux-arm64.zst | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          zstd -c bin/proj-linux-arm64 > bin/proj-${{ env.VERSION }}-linux-arm64.zst
+          echo "sha256=$(shasum -a 256 bin/proj-${{ env.VERSION }}-linux-arm64.zst | cut -d' ' -f1)" >> $GITHUB_OUTPUT
         id: zst-arm64
 
       - name: Upload Linux artifacts
@@ -163,12 +174,12 @@ jobs:
         with:
           name: linux-artifacts
           path: |
-            bin/proj-${{ github.ref_name }}-linux-amd64.deb
-            bin/proj-${{ github.ref_name }}-linux-amd64.rpm
-            bin/proj-${{ github.ref_name }}-linux-amd64.zst
-            bin/proj-${{ github.ref_name }}-linux-arm64.deb
-            bin/proj-${{ github.ref_name }}-linux-arm64.rpm
-            bin/proj-${{ github.ref_name }}-linux-arm64.zst
+            bin/proj-${{ env.VERSION }}-linux-amd64.deb
+            bin/proj-${{ env.VERSION }}-linux-amd64.rpm
+            bin/proj-${{ env.VERSION }}-linux-amd64.zst
+            bin/proj-${{ env.VERSION }}-linux-arm64.deb
+            bin/proj-${{ env.VERSION }}-linux-arm64.rpm
+            bin/proj-${{ env.VERSION }}-linux-arm64.zst
 
   create-release:
     needs: [build-macos, build-linux]
@@ -176,6 +187,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.VERSION }}
 
       - name: Download macOS artifacts
         uses: actions/download-artifact@v4
@@ -201,14 +214,14 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            macos-artifacts/proj-${{ github.ref_name }}-darwin-arm64.zip
-            macos-artifacts/proj-${{ github.ref_name }}-darwin-amd64.zip
-            linux-artifacts/proj-${{ github.ref_name }}-linux-amd64.deb
-            linux-artifacts/proj-${{ github.ref_name }}-linux-amd64.rpm
-            linux-artifacts/proj-${{ github.ref_name }}-linux-amd64.zst
-            linux-artifacts/proj-${{ github.ref_name }}-linux-arm64.deb
-            linux-artifacts/proj-${{ github.ref_name }}-linux-arm64.rpm
-            linux-artifacts/proj-${{ github.ref_name }}-linux-arm64.zst
+            macos-artifacts/proj-${{ env.VERSION }}-darwin-arm64.zip
+            macos-artifacts/proj-${{ env.VERSION }}-darwin-amd64.zip
+            linux-artifacts/proj-${{ env.VERSION }}-linux-amd64.deb
+            linux-artifacts/proj-${{ env.VERSION }}-linux-amd64.rpm
+            linux-artifacts/proj-${{ env.VERSION }}-linux-amd64.zst
+            linux-artifacts/proj-${{ env.VERSION }}-linux-arm64.deb
+            linux-artifacts/proj-${{ env.VERSION }}-linux-arm64.rpm
+            linux-artifacts/proj-${{ env.VERSION }}-linux-arm64.zst
             macos-artifacts/checksums.txt
           draft: false
           prerelease: false
