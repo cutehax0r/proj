@@ -290,8 +290,6 @@ A number of functions are also provided to help make scripts easier to write.
 
 # Test Plan (add)
 
-4. variable declaration flows from: global, to template, to .proj.yml to -v command line arg (later
-   = higher priority)
 8. if you run with --target-path, it better exist or running should fail.
 9. if you run with --target-path, proj add foo should work as if you were inside of target-path even
    if the command was run from outside of it.
