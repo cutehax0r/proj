@@ -125,15 +125,9 @@ jobs:
         run: make build-linux-amd64
 
       - name: Install nFPM
-        run: |
-          NFPM_VERSION=$(curl -s https://api.github.com/repos/goreleaser/nfpm/releases/latest | jq -r '.tag_name')
-          if [ -z "$NFPM_VERSION" ] || [ "$NFPM_VERSION" = "null" ]; then
-            echo "Failed to get nFPM version"
-            exit 1
-          fi
-          echo "Installing nFPM version: $NFPM_VERSION"
-          curl -L "https://github.com/goreleaser/nfpm/releases/download/${NFPM_VERSION}/nfpm_$(uname -s)_$(uname -m).tar.gz" | tar xz
-          sudo mv nfpm /usr/local/bin/
+        uses: secondlife/setup-nfpm@v1
+        with:
+          version: 'v2.35.0'
 
       - name: Create nfpm config for amd64
         run: |
