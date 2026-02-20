@@ -1,4 +1,4 @@
-.PHONY: help build build-macos-arm64 build-macos-amd64 build-windows-arm64 build-windows-amd64 build-linux-arm64 build-linux-amd64 build-all clean test acceptance release release-gh
+.PHONY: help build build-macos-arm64 build-macos-amd64 build-windows-arm64 build-windows-amd64 build-linux-arm64 build-linux-amd64 build-all clean test acceptance release release-gh unrelease
 
 # Default target
 .DEFAULT_GOAL := build
@@ -49,6 +49,7 @@ help:
 	@echo "  make release TAG [COMMIT]           Create local release tag"
 	@echo "  make release TAG [COMMIT] DRY       Dry-run of local release"
 	@echo "  make release-gh TAG [COMMIT] [DRY]  Create release via GitHub PR (fully automated)"
+	@echo "  make unrelease TAG [DRY]            Delete a release (tag, artifacts, revert merge)"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make build-windows-amd64            Build Windows 64-bit"
@@ -58,6 +59,8 @@ help:
 	@echo "  make release-gh v1.1.1 abc123de     GitHub release from specific commit"
 	@echo "  make release-gh v1.1.1 DRY          Preview what would happen"
 	@echo "  make release-gh v1.1.1 abc123de DRY Preview from specific commit"
+	@echo "  make unrelease v1.0.0               Delete a bad release completely"
+	@echo "  make unrelease v1.0.0 DRY           Preview what would be deleted"
 	@echo "  GOOS=linux GOARCH=arm64 make        Custom build"
 
 # Main build target (builds for local platform + creates copy as 'proj')
@@ -343,6 +346,76 @@ release-gh:
 		echo ""; \
 		echo "GitHub Actions will now build and create artifacts."; \
 		echo "Monitor at: https://github.com/cutehax0r/proj/actions/workflows/Release"; \
+	fi'
+	@true
+
+# Delete a release (tag, GitHub Release, and revert merge commit)
+unrelease:
+	@bash -c 'VERSION="$(word 2,$(MAKECMDGOALS))"; \
+	DRY_RUN="$(word 3,$(MAKECMDGOALS))"; \
+	if [ -z "$$VERSION" ] || [ "$$VERSION" = "unrelease" ]; then \
+		echo "ERROR: No version provided"; \
+		echo "Usage: make unrelease VERSION [DRY]"; \
+		echo "Examples:"; \
+		echo "  make unrelease v1.0.0"; \
+		echo "  make unrelease v1.0.0 DRY"; \
+		exit 1; \
+	fi; \
+	if ! echo "$$VERSION" | grep -qE "^v[0-9]+\.[0-9]+\.[0-9]+$$"; then \
+		echo "ERROR: Invalid version format: $$VERSION"; \
+		echo "Must be semantic versioning format: vX.Y.Z (e.g., v1.0.0)"; \
+		exit 1; \
+	fi; \
+	if ! git rev-parse -q --verify "refs/tags/$$VERSION" >/dev/null 2>&1; then \
+		echo "ERROR: Tag $$VERSION does not exist"; \
+		echo "To see existing tags, run: git tag -l"; \
+		exit 1; \
+	fi; \
+	if ! command -v gh &> /dev/null; then \
+		echo "ERROR: GitHub CLI not found"; \
+		echo "Install from: https://cli.github.com"; \
+		exit 1; \
+	fi; \
+	if [ "$$DRY_RUN" = "DRY" ]; then \
+		echo "DRY-RUN MODE (no changes will be made)"; \
+		echo ""; \
+		echo "Would delete:"; \
+		echo "  1. Local tag: $$VERSION"; \
+		echo "  2. Remote tag: $$VERSION"; \
+		echo "  3. GitHub Release artifact for $$VERSION"; \
+		echo "  4. Revert merge commit on main"; \
+		echo ""; \
+		echo "To execute, run: make unrelease $$VERSION"; \
+	else \
+		echo "Deleting release $$VERSION..."; \
+		echo ""; \
+		echo "Step 1/4: Deleting local tag..."; \
+		git tag -d "$$VERSION" >/dev/null 2>&1 || { echo "ERROR: Failed to delete local tag"; exit 1; }; \
+		echo "✓ Deleted local tag $$VERSION"; \
+		echo ""; \
+		echo "Step 2/4: Deleting remote tag..."; \
+		git push origin --delete "$$VERSION" >/dev/null 2>&1 || { echo "ERROR: Failed to delete remote tag"; exit 1; }; \
+		echo "✓ Deleted remote tag $$VERSION"; \
+		echo ""; \
+		echo "Step 3/4: Deleting GitHub Release artifact..."; \
+		gh release delete "$$VERSION" --cleanup-tag --yes >/dev/null 2>&1 || { echo "⚠ Warning: Could not delete GitHub Release (may not exist)"; }; \
+		echo "✓ GitHub Release artifact deleted (if it existed)"; \
+		echo ""; \
+		echo "Step 4/4: Finding and reverting merge commit..."; \
+		MERGE_COMMIT=$$(git log --oneline --grep="RELEASE: $$VERSION" --all 2>/dev/null | head -1 | awk "{print \$$1}"); \
+		if [ -n "$$MERGE_COMMIT" ]; then \
+			git revert -m 1 "$$MERGE_COMMIT" --no-edit >/dev/null 2>&1 || { echo "ERROR: Failed to revert merge commit"; exit 1; }; \
+			echo "✓ Reverted merge commit $$MERGE_COMMIT"; \
+			echo ""; \
+			echo "Step 5/4: Pushing revert to main..."; \
+			git push origin main >/dev/null 2>&1 || { echo "ERROR: Failed to push revert"; exit 1; }; \
+			echo "✓ Pushed revert commit to main"; \
+		else \
+			echo "⚠ Warning: Could not find merge commit for $$VERSION"; \
+			echo "  (This is OK if the release was never actually merged)"; \
+		fi; \
+		echo ""; \
+		echo "✓ Release $$VERSION deleted successfully!"; \
 	fi'
 	@true
 
