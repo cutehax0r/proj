@@ -206,7 +206,7 @@ release:
 		echo ""; \
 		echo "Step 2/10: Updating README.md..."; \
 		if [ ! -f "README.md" ]; then echo "ERROR: README.md not found"; exit 1; fi; \
-		sed -i.bak "1s/^#.*[Pp]roj.*$$/# proj $$VERSION/" README.md || { echo "ERROR: Failed to update README.md"; exit 1; }; \
+		sed -i.bak "1s/^#.*[Pp]roj.*$$/# Proj $$VERSION/" README.md || { echo "ERROR: Failed to update README.md"; exit 1; }; \
 		rm -f README.md.bak; \
 		echo "✓ Updated README.md first line"; \
 		echo ""; \
