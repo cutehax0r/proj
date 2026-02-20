@@ -44,5 +44,5 @@ jobs:
         run: |
           gh api repos/cutehax0r/proj/dispatches \
             -X POST \
-            -F event_type="release-tag-created" \
-            -F client_payload="{\"version\":\"${{ steps.version.outputs.version }}\"}"
+            -f event_type="release-tag-created" \
+            -f client_payload='{"version":"${{ steps.version.outputs.version }}"}'
