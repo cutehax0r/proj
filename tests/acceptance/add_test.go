@@ -189,3 +189,66 @@ func TestAddCommand_WorksFromNestedDirectory(t *testing.T) {
 		t.Errorf("Expected about.html to contain h1 'About Us', got:\n%s", content)
 	}
 }
+
+func TestAddCommand_FailsWhenTargetPathDoesNotExist(t *testing.T) {
+	ctx := Setup(t)
+
+	nonexistentPath := filepath.Join(ctx.TempDir, "nonexistent", "path")
+	ctx.Run("add", "html", "page", "--target-path", nonexistentPath).
+		ExpectError("not in a proj directory").
+		ExpectExitCode(1)
+}
+
+func TestAddCommand_WorksWithTargetPath(t *testing.T) {
+	ctx, projectDir := SetupProjectFromTemplate(t, "testsite")
+
+	// Create a different directory to run the command from
+	otherDir := filepath.Join(ctx.TempDir, "other")
+	err := os.MkdirAll(otherDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create other directory: %v", err)
+	}
+
+	// Change to the other directory and run add with --target-path pointing to the project
+	originalTempDir := ctx.TempDir
+	ctx.TempDir = otherDir
+
+	ctx.Run("add", "html", "about", "--target-path", projectDir, "-v", "title=About Us").
+		ExpectExitCode(0)
+
+	ctx.TempDir = originalTempDir
+
+	// Verify the file was created
+	htmlPath := filepath.Join(projectDir, "src", "about.html")
+	VerifyFileExists(t, htmlPath)
+
+	content := ReadFileString(t, htmlPath)
+	if !strings.Contains(content, "<title>About Us</title>") {
+		t.Errorf("Expected about.html to contain title 'About Us', got:\n%s", content)
+	}
+}
+
+func TestAddCommand_FindsProjectRootByWalkingUp(t *testing.T) {
+	ctx, projectDir := SetupProjectFromTemplate(t, "testsite")
+
+	// Create a nested directory structure
+	nestedDir := filepath.Join(projectDir, "src", "deep", "nested", "path")
+	err := os.MkdirAll(nestedDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create nested directory: %v", err)
+	}
+
+	// Run add with --target-path pointing to the nested dir
+	// It should walk up and find the .proj/proj.yml in projectDir
+	ctx.Run("add", "html", "contact", "--target-path", nestedDir, "-v", "title=Contact Us").
+		ExpectExitCode(0)
+
+	// Verify the file was created in the project root, not the nested directory
+	htmlPath := filepath.Join(projectDir, "src", "contact.html")
+	VerifyFileExists(t, htmlPath)
+
+	content := ReadFileString(t, htmlPath)
+	if !strings.Contains(content, "<title>Contact Us</title>") {
+		t.Errorf("Expected contact.html to contain title 'Contact Us', got:\n%s", content)
+	}
+}
