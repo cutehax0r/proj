@@ -304,6 +304,21 @@ A number of functions are also provided to help make scripts easier to write.
 
 # Wishlist
 
+## Short term goals
+
+* Let's get automatic tests on merges to main with 'make test' and 'make acceptance'
+* Let's get building 'distributions':
+  * Macos Arm - Binary, homebrew, dmg
+  * Macos x86 - binary, homebrew, dmg
+  * Linux arm - deb, rpm, tgz
+  * Linux x86 - deb, rpm, tgz
+  * Windows arm - zip
+  * Windows x86 - zip
+  * docker(?)
+* Documentation in the man pages
+
+## Long term goals
+
 * allow for `variables.template.definition` in global config so that (for example)
 `variables.python.version = 3` or `variables.ruby.typesystem = "sorbet"` can be set
 * allow variable declarations to include "persist: false" to avoid adding them to a .proj directory
