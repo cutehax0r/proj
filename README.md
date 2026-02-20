@@ -1,4 +1,4 @@
-# Proj v0.0.20
+# Proj v0.0.21
 A tool for setting up new projects or adding files to existing projects
 
 ## Usage
