@@ -125,9 +125,7 @@ jobs:
         run: make build-linux-amd64
 
       - name: Install nFPM
-        uses: secondlife/setup-nfpm@v1
-        with:
-          version: 'latest'
+        run: sudo apt-get update && sudo apt-get install -y nfpm
 
       - name: Create nfpm config for amd64
         run: |
