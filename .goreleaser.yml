@@ -35,9 +35,8 @@ checksum:
   algorithm: sha256
 
 release:
-  github:
-    owner: cutehax0r
-    repo: proj
+  draft: false
+  prerelease: false
 
 changelog:
   sort: asc
