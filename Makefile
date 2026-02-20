@@ -46,18 +46,19 @@ help:
 	@echo "  GOARCH=<arch>                 Target architecture (arm64, amd64)"
 	@echo ""
 	@echo "Release targets:"
-	@echo "  make release TAG [COMMIT]     Create local release tag"
-	@echo "  make release TAG [COMMIT] DRY Dry-run of local release"
-	@echo "  make release-gh TAG           Create release via GitHub PR (fully automated)"
-	@echo "  make release-gh TAG DRY       Preview GitHub PR release"
+	@echo "  make release TAG [COMMIT]           Create local release tag"
+	@echo "  make release TAG [COMMIT] DRY       Dry-run of local release"
+	@echo "  make release-gh TAG [COMMIT] [DRY]  Create release via GitHub PR (fully automated)"
 	@echo ""
 	@echo "Examples:"
-	@echo "  make build-windows-amd64      Build Windows 64-bit"
-	@echo "  make build-all                Build all platform variants"
-	@echo "  make release v1.0.0           Create tag locally, push manually"
-	@echo "  make release-gh v1.1.1        Full automated GitHub-based release"
-	@echo "  make release-gh v1.1.1 DRY    Preview what would happen"
-	@echo "  GOOS=linux GOARCH=arm64 make  Custom build"
+	@echo "  make build-windows-amd64            Build Windows 64-bit"
+	@echo "  make build-all                      Build all platform variants"
+	@echo "  make release v1.0.0                 Create tag locally, push manually"
+	@echo "  make release-gh v1.1.1              Full automated GitHub-based release from main"
+	@echo "  make release-gh v1.1.1 abc123de     GitHub release from specific commit"
+	@echo "  make release-gh v1.1.1 DRY          Preview what would happen"
+	@echo "  make release-gh v1.1.1 abc123de DRY Preview from specific commit"
+	@echo "  GOOS=linux GOARCH=arm64 make        Custom build"
 
 # Main build target (builds for local platform + creates copy as 'proj')
 build:
@@ -235,13 +236,27 @@ release:
 # GitHub-based release target
 release-gh:
 	@bash -c 'VERSION="$(word 2,$(MAKECMDGOALS))"; \
-	DRY_RUN="$(word 3,$(MAKECMDGOALS))"; \
+	COMMIT="$(word 3,$(MAKECMDGOALS))"; \
+	DRY_RUN="$(word 4,$(MAKECMDGOALS))"; \
 	if [ -z "$$VERSION" ] || [ "$$VERSION" = "release-gh" ]; then \
 		echo "ERROR: No version provided"; \
-		echo "Usage: make release-gh VERSION [DRY]"; \
+		echo "Usage: make release-gh VERSION [COMMIT] [DRY]"; \
 		echo "Examples:"; \
 		echo "  make release-gh v1.0.0"; \
+		echo "  make release-gh v1.0.0 abc123de"; \
+		echo "  make release-gh v1.0.0 abc123de DRY"; \
 		echo "  make release-gh v1.0.0 DRY"; \
+		exit 1; \
+	fi; \
+	if [ -n "$$COMMIT" ] && [ "$$COMMIT" = "DRY" ]; then \
+		DRY_RUN="$$COMMIT"; \
+		COMMIT=""; \
+	fi; \
+	if [ -z "$$COMMIT" ]; then \
+		COMMIT="main"; \
+	fi; \
+	if ! git rev-parse -q --verify "$$COMMIT" >/dev/null 2>&1; then \
+		echo "ERROR: Invalid commit: $$COMMIT"; \
 		exit 1; \
 	fi; \
 	if ! echo "$$VERSION" | grep -qE "^v[0-9]+\.[0-9]+\.[0-9]+$$"; then \
@@ -262,8 +277,11 @@ release-gh:
 	if [ "$$DRY_RUN" = "DRY" ]; then \
 		echo "DRY-RUN MODE (no changes will be made)"; \
 		echo ""; \
+		echo "Release: $$VERSION"; \
+		echo "From commit: $$COMMIT"; \
+		echo ""; \
 		echo "Would perform:"; \
-		echo "  1. Create branch release/$$VERSION"; \
+		echo "  1. Create branch release/$$VERSION (on $$COMMIT)"; \
 		echo "  2. Push branch to GitHub"; \
 		echo "  3. Create PR with title: RELEASE: $$VERSION"; \
 		echo "  4. Enable auto-merge (squash)"; \
@@ -272,14 +290,15 @@ release-gh:
 		echo "  7. Confirm tag $$VERSION created"; \
 		echo "  8. Delete local branch release/$$VERSION"; \
 		echo ""; \
-		echo "To execute, run: make release-gh $$VERSION"; \
+		echo "To execute, run: make release-gh $$VERSION $$COMMIT"; \
 	else \
 		echo "Creating release $$VERSION via GitHub PR..."; \
+		echo "From commit: $$COMMIT"; \
 		echo ""; \
 		echo "Step 1/8: Creating branch..."; \
 		BRANCH="release/$$VERSION"; \
-		git checkout -b "$$BRANCH" >/dev/null 2>&1 || { echo "ERROR: Failed to create branch"; exit 1; }; \
-		echo "✓ Created branch $$BRANCH"; \
+		git checkout -b "$$BRANCH" "$$COMMIT" >/dev/null 2>&1 || { echo "ERROR: Failed to create branch on $$COMMIT"; exit 1; }; \
+		echo "✓ Created branch $$BRANCH from $$COMMIT"; \
 		echo ""; \
 		echo "Step 2/8: Pushing to GitHub..."; \
 		git push -u origin "$$BRANCH" >/dev/null 2>&1 || { echo "ERROR: Failed to push branch"; exit 1; }; \
@@ -328,8 +347,5 @@ release-gh:
 	@true
 
 # Catch-all for release targets to suppress "No rule to make target" errors
-v%:
-	@true
-
-main HEAD DRY:
+%:
 	@true
