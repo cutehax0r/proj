@@ -8,58 +8,35 @@ before:
 
 builds:
   - binary: proj
-    goos:
-      - darwin
-      - linux
-    goarch:
-      - amd64
-      - arm64
-    ldflags:
-      - -s -w
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+      - linux_amd64
+      - linux_arm64
 
 archives:
   - format: zip
-    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
-    files:
-      - src: "*"
-        dst: "."
     only:
       - darwin
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
 
   - format: tar.gz
-    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
-    files:
-      - src: "*"
-        dst: "."
     only:
       - linux
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
 
 nfpms:
-  - id: deb
-    package_name: proj
+  - package_name: proj
     homepage: https://github.com/cutehax0r/proj
-    maintainer: "cutehax0r <cutehax0r@example.com>"
+    maintainer: "cutehax0r <97819453+cutehax0r@users.noreply.github.com>"
     description: "A tool for setting up new projects or adding files to existing projects"
     license: MIT
     formats:
       - deb
-    architectures:
-      - amd64
-      - arm64
-    bindir: /usr/local/bin
-
-  - id: rpm
-    package_name: proj
-    homepage: https://github.com/cutehax0r/proj
-    maintainer: "cutehax0r <cutehax0r@example.com>"
-    description: "A tool for setting up new projects or adding files to existing projects"
-    license: MIT
-    formats:
       - rpm
     architectures:
       - amd64
       - arm64
-    bindir: /usr/local/bin
 
 checksum:
   name_template: "checksums.txt"
@@ -69,8 +46,6 @@ release:
   github:
     owner: cutehax0r
     repo: proj
-  draft: false
-  prerelease: false
 
 changelog:
   sort: asc
