@@ -1,4 +1,4 @@
-.PHONY: help build build-macos-arm64 build-macos-amd64 build-windows-arm64 build-windows-amd64 build-linux-arm64 build-linux-amd64 build-all clean test acceptance
+.PHONY: help build build-macos-arm64 build-macos-amd64 build-windows-arm64 build-windows-amd64 build-linux-arm64 build-linux-amd64 build-all clean test acceptance release
 
 # Default target
 .DEFAULT_GOAL := build
@@ -45,9 +45,16 @@ help:
 	@echo "  GOOS=<os>                     Target OS (darwin, windows, linux)"
 	@echo "  GOARCH=<arch>                 Target architecture (arm64, amd64)"
 	@echo ""
+	@echo "Release targets:"
+	@echo "  make release TAG [COMMIT]     Create and push a release tag"
+	@echo "  make release TAG [COMMIT] DRY Create release tag (dry-run, no push)"
+	@echo ""
 	@echo "Examples:"
 	@echo "  make build-windows-amd64      Build Windows 64-bit"
 	@echo "  make build-all                Build all platform variants"
+	@echo "  make release v1.0.0           Release from latest main commit"
+	@echo "  make release v1.0.0 abc123de  Release from specific commit"
+	@echo "  make release v1.0.0 abc123de DRY  Dry-run (preview only)"
 	@echo "  GOOS=linux GOARCH=arm64 make  Custom build"
 
 # Main build target (builds for local platform + creates copy as 'proj')
@@ -127,3 +134,105 @@ clean:
 	@find /var/folders -name "proj-acceptance-*" -type d -exec rm -rf {} + 2>/dev/null || true
 	@$(GO) clean
 	@echo "✓ Clean complete"
+
+# Release target
+release:
+	@bash -c '\
+		TAG="$(word 2,$(MAKECMDGOALS))"; \
+		ARG3="$(word 3,$(MAKECMDGOALS))"; \
+		ARG4="$(word 4,$(MAKECMDGOALS))"; \
+		\
+		if [ -z "$$TAG" ] || [ "$$TAG" = "release" ]; then \
+			echo "ERROR: No tag provided"; \
+			echo "Usage: make release TAG [COMMIT] [DRY]"; \
+			echo "Examples:"; \
+			echo "  make release v1.0.0"; \
+			echo "  make release v1.0.0 abc123de"; \
+			echo "  make release v1.0.0 DRY"; \
+			echo "  make release v1.0.0 abc123de DRY"; \
+			exit 1; \
+		fi; \
+		\
+		if ! echo "$$TAG" | grep -qE "^v[0-9]+\.[0-9]+\.[0-9]+$$"; then \
+			echo "ERROR: Invalid tag format: $$TAG"; \
+			echo "Must be semantic versioning format: vX.Y.Z (e.g., v1.0.0)"; \
+			exit 1; \
+		fi; \
+		\
+		if git rev-parse -q --verify "refs/tags/$$TAG" >/dev/null 2>&1; then \
+			echo "ERROR: Tag $$TAG already exists"; \
+			echo "To see existing tags, run: git tag -l"; \
+			exit 1; \
+		fi; \
+		\
+		DRY_RUN=""; \
+		COMMIT="main"; \
+		\
+		if [ "$$ARG3" = "DRY" ]; then \
+			DRY_RUN="DRY"; \
+		elif [ -n "$$ARG3" ]; then \
+			COMMIT="$$ARG3"; \
+			if [ "$$ARG4" = "DRY" ]; then \
+				DRY_RUN="DRY"; \
+			fi; \
+		fi; \
+		\
+		if ! git rev-parse -q --verify "$$COMMIT" >/dev/null 2>&1; then \
+			echo "ERROR: Invalid commit: $$COMMIT"; \
+			exit 1; \
+		fi; \
+		\
+		COMMIT_HASH=$$(git rev-parse "$$COMMIT"); \
+		CURRENT_BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
+		\
+		if [ "$$DRY_RUN" = "DRY" ]; then \
+			echo "DRY-RUN MODE (no changes will be made)"; \
+			echo ""; \
+			echo "Will create tag: $$TAG"; \
+			echo "From commit:   $$COMMIT_HASH"; \
+			echo "Current branch: $$CURRENT_BRANCH"; \
+			echo ""; \
+			echo "Steps that would be executed:"; \
+			echo "  1. git checkout $$COMMIT"; \
+			echo "  2. git tag $$TAG"; \
+			echo "  3. git push origin $$TAG"; \
+			echo "  4. git checkout $$CURRENT_BRANCH"; \
+			echo ""; \
+			echo "To execute, run: make release $$TAG $$(echo $$COMMIT | cut -c1-8)"; \
+		else \
+			echo "Creating release $$TAG from commit $$COMMIT_HASH..."; \
+			echo ""; \
+			echo "Step 1/4: Checking out commit $$COMMIT_HASH..."; \
+			git checkout "$$COMMIT" >/dev/null 2>&1 || { echo "ERROR: Failed to checkout $$COMMIT"; exit 1; }; \
+			echo "✓ Checked out $$COMMIT_HASH"; \
+			\
+			echo ""; \
+			echo "Step 2/4: Creating tag $$TAG..."; \
+			git tag "$$TAG" || { echo "ERROR: Failed to create tag"; exit 1; }; \
+			echo "✓ Tag created"; \
+			\
+			echo ""; \
+			echo "Step 3/4: Pushing tag to remote..."; \
+			git push origin "$$TAG" || { echo "ERROR: Failed to push tag"; git tag -d "$$TAG"; exit 1; }; \
+			echo "✓ Tag pushed to origin"; \
+			\
+			echo ""; \
+			echo "Step 4/4: Returning to $$CURRENT_BRANCH..."; \
+			git checkout "$$CURRENT_BRANCH" >/dev/null 2>&1 || { echo "WARNING: Could not return to $$CURRENT_BRANCH"; exit 1; }; \
+			echo "✓ Returned to $$CURRENT_BRANCH"; \
+			\
+			echo ""; \
+			echo "✓ Release $$TAG created successfully!"; \
+			echo ""; \
+			echo "GitHub Actions will now build and create artifacts."; \
+			echo "Monitor progress at: https://github.com/$$(git config --get remote.origin.url | grep -o 'github.com.*' | sed 's/.git$$//')/actions"; \
+		fi \
+	'
+	@true
+
+# Catch-all for release targets to suppress "No rule to make target" errors
+v%:
+	@true
+
+main HEAD DRY:
+	@true
