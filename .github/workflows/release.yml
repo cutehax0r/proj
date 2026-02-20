@@ -98,7 +98,17 @@ jobs:
         run: make build-linux-amd64
 
       - name: Install nFPM
-        run: sudo apt-get update && sudo apt-get install -y nfpm
+        run: |
+          TMPDIR=$(mktemp -d)
+          cd "$TMPDIR"
+          RELEASE_JSON=$(curl -s https://api.github.com/repos/goreleaser/nfpm/releases | jq ".[0]")
+          VERSION=$(echo "$RELEASE_JSON" | jq -r ".tag_name")
+          ASSET=$(echo "$RELEASE_JSON" | jq -r ".assets[] | select(.name | contains("Linux") and contains("x86_64")) | .browser_download_url")
+          curl -L "$ASSET" | tar xz
+          sudo mv nfpm /usr/local/bin/
+          cd -
+          rm -rf "$TMPDIR"
+          nfpm --version
 
       - name: Create nfpm config for amd64
         run: |
