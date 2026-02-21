@@ -252,11 +252,13 @@ Once variables are declared they may be modified by any of the defined 'before s
 ### Variable Naming Conventions
 
 All variable names are automatically normalized to lowercase. This means:
-  * `UserName`, `userName`, and `username` all refer to the same variable
+* `UserName`, `userName`, and `username` all refer to the same variable
   * In templates and Lua scripts, use lowercase names: `{{.username}}` instead of `{{.UserName}}`
-  * When defining variables in configuration files or via CLI, you can use any casing, but it will be converted to lowercase
+  * When defining variables in configuration files or via CLI, you can use any casing, but it will
+  be converted to lowercase
 
-**Note:** A warning will be logged if a variable name contains mixed case (e.g., `UserName`) to help identify potential issues.
+**Note:** A warning will be logged if a variable name contains mixed case (e.g., `UserName`) to help
+identify potential issues.
 
 The system automatically provides the following lowercase variables in all definitions:
   * `targetname` - The name of the project/file being created
@@ -305,7 +307,13 @@ A number of functions are also provided to help make scripts easier to write.
 
 ## Short term goals
 
-* Documentation in the man pages
+* Create man pages from content of /docs
+* See if we can get 'make release' pushing
+  * to a homebrew cask
+  * whatever linux needs for deb, rpm, tgz (for arch)
+* Docs pushing to github wiki on release
+* Windows build support
+* Much improved installation instructions
 
 ## Long term goals
 
@@ -313,6 +321,8 @@ A number of functions are also provided to help make scripts easier to write.
 problem for installing templates distributed as git repos. For example, If a template has a shell
 script it's execute bit won't be set. To fix this I think we need to modify the `files` declaration
 to allow you to declare target permissions and then not have them set on local files.
+* improve readme, focus on 'what it does' and how to install. Everything else to docs
+* github pages with a nice video intro, prettified documentation, etc. Get it syncing with releases.
 * allow for `variables.template.definition` in global config so that (for example)
 `variables.python.version = 3` or `variables.ruby.typesystem = "sorbet"` can be set
 * allow variable declarations to include "persist: false" to avoid adding them to a .proj directory
