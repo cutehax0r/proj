@@ -5,6 +5,8 @@ project_name: proj
 before:
   hooks:
     - go mod download
+    - go install github.com/cpuguy83/go-md2man/v2@latest
+    - make man
 
 builds:
   - binary: proj
@@ -15,10 +17,13 @@ builds:
       - linux_arm64
 
 archives:
-  - format: zip
+  - formats: [zip]
     format_overrides:
       - goos: linux
-        format: tar.gz
+        formats: [tar.gz]
+    files:
+      - src: bin/man/*
+        dst: man
 
 nfpms:
   - package_name: proj
@@ -29,6 +34,27 @@ nfpms:
     formats:
       - deb
       - rpm
+    contents:
+      - src: bin/man/proj.1
+        dst: /usr/share/man/man1/proj.1
+      - src: bin/man/proj-new.1
+        dst: /usr/share/man/man1/proj-new.1
+      - src: bin/man/proj-add.1
+        dst: /usr/share/man/man1/proj-add.1
+      - src: bin/man/proj-help.1
+        dst: /usr/share/man/man1/proj-help.1
+      - src: bin/man/proj.yml.5
+        dst: /usr/share/man/man5/proj.yml.5
+      - src: bin/man/proj.7
+        dst: /usr/share/man/man7/proj.7
+      - src: bin/man/proj-scripts.7
+        dst: /usr/share/man/man7/proj-scripts.7
+      - src: bin/man/proj-lua.7
+        dst: /usr/share/man/man7/proj-lua.7
+      - src: bin/man/proj-variables.7
+        dst: /usr/share/man/man7/proj-variables.7
+      - src: bin/man/proj-template.7
+        dst: /usr/share/man/man7/proj-template.7
 
 checksum:
   name_template: "checksums.txt"
