@@ -312,7 +312,6 @@ I'm going to use `go-md2man`.
 
 ## Short term goals
 
-* Create man pages from content of /docs
 * See if we can get 'make release' pushing
   * to a homebrew cask
   * whatever linux needs for deb, rpm, tgz (for arch)
