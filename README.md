@@ -303,6 +303,11 @@ A number of functions are also provided to help make scripts easier to write.
   processing. Visible at log level 1-3.
    * `logError`. log "errors" that should halt further processing. visible at all log levels
 
+# Development
+
+Use `make` to execute commands. There isn't a convenient way to compile manuals from typst pages so
+I'm going to use `go-md2man`.
+
 # Wishlist
 
 ## Short term goals
