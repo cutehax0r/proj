@@ -314,6 +314,7 @@ A number of functions are also provided to help make scripts easier to write.
 * Docs pushing to github wiki on release
 * Windows build support
 * Much improved installation instructions
+* downloading binaries requires 'sudo xattr -d com.apple.quarantine ./path/to/app'
 
 ## Long term goals
 
@@ -328,7 +329,7 @@ to allow you to declare target permissions and then not have them set on local f
 * allow variable declarations to include "persist: false" to avoid adding them to a .proj directory
 * allow a 'not required' variable declaration format. for documentation of what's allowed
 * allow required variables to declare kind: (string, number, boolean) as type
-* allow required variables to declare "options"
+* allow required variables to declare "options" (must be 1,2, "alpha" or "bravo", true/false, etc)
 * write a `prompt` functions that can be called from lua
 * add "descriptions" to most things
 * allow requirements to define mandatory software, checked with `which foo`
@@ -340,19 +341,15 @@ to allow you to declare target permissions and then not have them set on local f
 * make `new` list all available templates if run with no arguments
 * make `add` list all available definitions if run with no arguments
 * add --version that dumps a version
-* makefile that does go build for arm/x86/apple.
-* makefile that can build bundles (brew, arch, deb, rpm, nix)
-* tests
 * shell completion should be better. use ValidArgsFunc() on cobra.Command to read template root. 
 * add support for --input or something that reads in data from a file (or maybe STDin and exposes it
   to lua-land and perhaps as a variable. That would allow you to automate filling content of certain
   files.
 * add string helper functions `camelcase`, `classify`, etc. like [active
 support](https://apidock.com/rails/ActiveSupport/Inflector/camelize)
-* maybe --set-variables FOO=BAR should try to be case-insentive when matching variables?
-* maybe we should have a --force-set that forces variables to a value (so it gets applied after all the
+* a --force-set that forces variables to a value (so it gets applied after all the
 scripts run)
-* maybe we should have a --force-write that ignores the normal 'file already exists' checks
+* a --force-write that ignores the normal 'file already exists' checks
 * allow file definitions to specify destination permissions
 * All this fussing with variables.  It might make more sense to route everything to JSON and pass
 that to the toluavalue function.  Tag your structs with `json:"foo"` pass an instance of the struct
