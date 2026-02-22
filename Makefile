@@ -1,4 +1,4 @@
-.PHONY: help build build-macos-arm64 build-macos-amd64 build-windows-arm64 build-windows-amd64 build-linux-arm64 build-linux-amd64 build-all clean test acceptance release
+.PHONY: help build build-macos-arm64 build-macos-amd64 build-windows-arm64 build-windows-amd64 build-linux-arm64 build-linux-amd64 build-all clean test acceptance release man man-install install uninstall
 
 # Default target
 .DEFAULT_GOAL := build
@@ -39,6 +39,9 @@ help:
 	@echo "  make acceptance               Run acceptance tests (builds + tests)"
 	@echo "  make acceptance-no-cleanup    Run acceptance tests and preserve temp directories"
 	@echo "  make clean                    Remove build artifacts and acceptance temp directories"
+	@echo "  make man                      Generate man pages from markdown sources"
+	@echo "  make install                  Install binary and man pages to ~/.local"
+	@echo "  make uninstall                Remove binary and man pages from ~/.local"
 	@echo "  make help                     Display this help message"
 	@echo ""
 	@echo "Environment variables:"
@@ -134,6 +137,79 @@ clean:
 	@find /var/folders -name "proj-acceptance-*" -type d -exec rm -rf {} + 2>/dev/null || true
 	@$(GO) clean
 	@echo "✓ Clean complete"
+
+# Man page generation
+MAN_SRC_DIR := ./doc
+MAN_OUT_DIR := ./bin/man
+
+man:
+	@echo "Generating man pages..."
+	@mkdir -p $(MAN_OUT_DIR)
+	@command -v go-md2man >/dev/null 2>&1 || go install github.com/cpuguy83/go-md2man/v2@latest
+	@for src in $(MAN_SRC_DIR)/*.md; do \
+		out=$$(basename "$$src" .md); \
+		go-md2man -in "$$src" -out "$(MAN_OUT_DIR)/$$out"; \
+		echo "✓ Generated: $(MAN_OUT_DIR)/$$out"; \
+	done
+	@echo "✓ Man pages generated in $(MAN_OUT_DIR)/"
+
+man-install: man
+	@echo "Installing man pages..."
+	@mkdir -p ~/.local/share/man/man1 ~/.local/share/man/man5 ~/.local/share/man/man7
+	@if [ -f $(MAN_OUT_DIR)/proj.1 ]; then \
+		cp $(MAN_OUT_DIR)/proj.1 ~/.local/share/man/man1/; \
+		echo "✓ Installed: proj.1"; \
+	fi
+	@if [ -f $(MAN_OUT_DIR)/proj.yml.5 ]; then \
+		cp $(MAN_OUT_DIR)/proj.yml.5 ~/.local/share/man/man5/; \
+		echo "✓ Installed: proj.yml.5"; \
+	fi
+	@if [ -f $(MAN_OUT_DIR)/proj.7 ]; then \
+		cp $(MAN_OUT_DIR)/proj.7 ~/.local/share/man/man7/; \
+		echo "✓ Installed: proj.7"; \
+	fi
+	@echo "Updating man database..."
+	@mandb ~/.local/share/man 2>/dev/null || true
+	@echo "✓ Man pages installed. Try: man proj"
+
+# Install binary and man pages (XDG-compliant, user-level)
+install: build man
+	@echo "Installing proj..."
+	@mkdir -p ~/.local/bin
+	@cp $(OUTPUT_DIR)/$(BINARY_NAME) ~/.local/bin/
+	@chmod +x ~/.local/bin/$(BINARY_NAME)
+	@echo "✓ Installed binary to ~/.local/bin/$(BINARY_NAME)"
+	@mkdir -p ~/.local/share/man/man1 ~/.local/share/man/man5 ~/.local/share/man/man7
+	@cp $(MAN_OUT_DIR)/*.1 ~/.local/share/man/man1/
+	@cp $(MAN_OUT_DIR)/*.5 ~/.local/share/man/man5/
+	@cp $(MAN_OUT_DIR)/*.7 ~/.local/share/man/man7/
+	@echo "✓ Installed man pages"
+	@mandb ~/.local/share/man 2>/dev/null || true
+	@echo ""
+	@echo "Make sure ~/.local/bin is in your PATH."
+	@echo "Add to your shell config (e.g., ~/.zshrc or ~/.bashrc):"
+	@echo '  export PATH="$$HOME/.local/bin:$$PATH"'
+	@echo ""
+	@echo "Try: proj --version"
+
+# Uninstall binary and man pages
+uninstall:
+	@echo "Uninstalling proj..."
+	@rm -f ~/.local/bin/$(BINARY_NAME)
+	@echo "✓ Removed binary from ~/.local/bin/"
+	@rm -f ~/.local/share/man/man1/proj.1
+	@rm -f ~/.local/share/man/man1/proj-new.1
+	@rm -f ~/.local/share/man/man1/proj-add.1
+	@rm -f ~/.local/share/man/man1/proj-help.1
+	@rm -f ~/.local/share/man/man5/proj.yml.5
+	@rm -f ~/.local/share/man/man7/proj.7
+	@rm -f ~/.local/share/man/man7/proj-scripts.7
+	@rm -f ~/.local/share/man/man7/proj-lua.7
+	@rm -f ~/.local/share/man/man7/proj-variables.7
+	@rm -f ~/.local/share/man/man7/proj-template.7
+	@echo "✓ Removed man pages"
+	@mandb ~/.local/share/man 2>/dev/null || true
+	@echo "✓ Uninstall complete"
 
 # Unified GitHub PR-based release target
 release:
