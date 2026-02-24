@@ -89,8 +89,8 @@ jobs:
           # Get the line number of conflicts_with
           CONFLICTS_LINE=$(grep -n 'conflicts_with' "$FORMULA_FILE" | head -1 | cut -d: -f1)
           
-          # Add all depends_on lines
-          sed -n "${FIRST_DEPENDS_LINE},$((CONFLICTS_LINE-1))p" "$FORMULA_FILE" >> "${FORMULA_FILE}.tmp"
+          # Add all depends_on lines (up to but not including the blank line before conflicts_with)
+          sed -n "${FIRST_DEPENDS_LINE},$((CONFLICTS_LINE-2))p" "$FORMULA_FILE" >> "${FORMULA_FILE}.tmp"
           
           # Add everything after conflicts_with (excluding the conflicts_with line itself)
           tail -n +$((CONFLICTS_LINE+1)) "$FORMULA_FILE" >> "${FORMULA_FILE}.tmp"
