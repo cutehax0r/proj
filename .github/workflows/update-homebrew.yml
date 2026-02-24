@@ -28,7 +28,7 @@ jobs:
         with:
           repository: cutehax0r/homebrew-tap
           path: homebrew-tap
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.AUTOMATED_PUBLISHING_TOKEN }}
 
       - name: Get latest release info
         id: release-info
