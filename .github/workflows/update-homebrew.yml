@@ -53,7 +53,8 @@ jobs:
       - name: Create version-specific formula
         run: |
           # Extract version components
-          VERSION_ARRAY=(${{ steps.release-info.outputs.version }//./ })
+          VERSION="${{ steps.release-info.outputs.version }}"
+          VERSION_ARRAY=(${VERSION//./ })
           MAJOR=${VERSION_ARRAY[0]}
           MINOR=${VERSION_ARRAY[1]}
           PATCH=${VERSION_ARRAY[2]}
@@ -63,10 +64,10 @@ jobs:
           PREV_VERSION="${MAJOR}.${MINOR}.${PREV_PATCH}"
           
           # Create new version-specific formula
-          cp homebrew-tap/Formula/proj@${PREV_VERSION}.rb homebrew-tap/Formula/proj@${{ steps.release-info.outputs.version }}.rb
-          sed -i '' "s/ProjAT${PREV_PATCH}/ProjAT${PATCH}/" homebrew-tap/Formula/proj@${{ steps.release-info.outputs.version }}.rb
-          sed -i '' "s|url ".*"|url "https://github.com/cutehax0r/proj/archive/refs/tags/v${PREV_VERSION}.tar.gz"|" homebrew-tap/Formula/proj@${{ steps.release-info.outputs.version }}.rb
-          sed -i '' "s|sha256 ".*"|sha256 "${{ steps.sha256.outputs.sha256 }}"|" homebrew-tap/Formula/proj@${{ steps.release-info.outputs.version }}.rb
+          cp homebrew-tap/Formula/proj@${PREV_VERSION}.rb homebrew-tap/Formula/proj@${VERSION}.rb
+          sed -i '' "s/ProjAT${PREV_PATCH}/ProjAT${PATCH}/" homebrew-tap/Formula/proj@${VERSION}.rb
+          sed -i '' "s|url ".*"|url "https://github.com/cutehax0r/proj/archive/refs/tags/v${PREV_VERSION}.tar.gz"|" homebrew-tap/Formula/proj@${VERSION}.rb
+          sed -i '' "s|sha256 ".*"|sha256 "${{ steps.sha256.outputs.sha256 }}"|" homebrew-tap/Formula/proj@${VERSION}.rb
 
       - name: Run brew audit
         run: |
