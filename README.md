@@ -252,8 +252,11 @@ Once variables are declared they may be modified by any of the defined 'before s
 ### Variable Naming Conventions
 
 All variable names are automatically normalized to lowercase. This means:
-* `UserName`, `userName`, and `username` all refer to the same variable
+
+  * `UserName`, `userName`, and `username` all refer to the same variable
+
   * In templates and Lua scripts, use lowercase names: `{{.username}}` instead of `{{.UserName}}`
+
   * When defining variables in configuration files or via CLI, you can use any casing, but it will
   be converted to lowercase
 
@@ -261,8 +264,11 @@ All variable names are automatically normalized to lowercase. This means:
 identify potential issues.
 
 The system automatically provides the following lowercase variables in all definitions:
+
   * `targetname` - The name of the project/file being created
+
   * `templatename` - The name of the template being used
+
   * `definitionname` - The name of the definition being executed
 
 ## Templates
@@ -299,9 +305,11 @@ will not change the writing behavior
 A number of functions are also provided to help make scripts easier to write.
 
   * `logInfo`. log "optional" information. Visible at log level 2 or 3.
+
   * `logWarn`. log "warnings" information, errors that can be recovered or that will not hault
   processing. Visible at log level 1-3.
-   * `logError`. log "errors" that should halt further processing. visible at all log levels
+
+  * `logError`. log "errors" that should halt further processing. visible at all log levels
 
 # Development
 
@@ -312,53 +320,87 @@ I'm going to use `go-md2man`.
 
 ## Short term goals
 
-* See if we can get 'make release' pushing
-  * to a homebrew cask
-  * whatever linux needs for deb, rpm, tgz (for arch)
-* Docs pushing to github wiki on release
-* Windows build support
-* Much improved installation instructions
-* downloading binaries requires 'sudo xattr -d com.apple.quarantine ./path/to/app'
+  * can get 'make release' pushing:
+
+      * cutehax0r/homebrew-tap
+
+      * cutehaxor/rpm-repo
+
+      * cutehaxor/deb-repo
+
+      * cutehaxor/zst-repo
+
+  * Docs pushing to github wiki on release
 
 ## Long term goals
 
-* **Fix design flaw:** File pulled from github aren't goign to have permissions copied. This is a
-problem for installing templates distributed as git repos. For example, If a template has a shell
-script it's execute bit won't be set. To fix this I think we need to modify the `files` declaration
-to allow you to declare target permissions and then not have them set on local files.
-* improve readme, focus on 'what it does' and how to install. Everything else to docs
-* github pages with a nice video intro, prettified documentation, etc. Get it syncing with releases.
-* allow for `variables.template.definition` in global config so that (for example)
-`variables.python.version = 3` or `variables.ruby.typesystem = "sorbet"` can be set
-* allow variable declarations to include "persist: false" to avoid adding them to a .proj directory
-* allow a 'not required' variable declaration format. for documentation of what's allowed
-* allow required variables to declare kind: (string, number, boolean) as type
-* allow required variables to declare "options" (must be 1,2, "alpha" or "bravo", true/false, etc)
-* write a `prompt` functions that can be called from lua
-* add "descriptions" to most things
-* allow requirements to define mandatory software, checked with `which foo`
-* add `setup` command that writes a default config to and an example template
-* add `create` that builds a new template in ~/.local/share/proj
-* add `info` command that shows details about what's allowed/required for templates/definitions
-* add `install` command that does a `git clone ...` to template_root
-* add `remove` command that does an `rm -rf ` in template root
-* make `new` list all available templates if run with no arguments
-* make `add` list all available definitions if run with no arguments
-* add --version that dumps a version
-* shell completion should be better. use ValidArgsFunc() on cobra.Command to read template root. 
-* add support for --input or something that reads in data from a file (or maybe STDin and exposes it
-  to lua-land and perhaps as a variable. That would allow you to automate filling content of certain
-  files.
-* add string helper functions `camelcase`, `classify`, etc. like [active
-support](https://apidock.com/rails/ActiveSupport/Inflector/camelize)
-* a --force-set that forces variables to a value (so it gets applied after all the
-scripts run)
-* a --force-write that ignores the normal 'file already exists' checks
-* allow file definitions to specify destination permissions
-* All this fussing with variables.  It might make more sense to route everything to JSON and pass
-that to the toluavalue function.  Tag your structs with `json:"foo"` pass an instance of the struct
-to json.Marshal(somestruct) to get a map[string]any. then pass that over to .toluavalue Investigate
-later. For now it works and that's good enough.  Just write some more ToMap() functions
-* when copying files with parent directories, we should have a way to specify permissions. For now
-those will have to be done with shell scripts.
-* github windows builds working
+  * **Fix design flaw:** File pulled from github aren't goign to have permissions copied. This is a
+    problem for installing templates distributed as git repos. For example, If a template has a shell
+    script it's execute bit won't be set. To fix this I think we need to modify the `files` declaration
+    to allow you to declare target permissions and then not have them set on local files.
+
+  * improve readme, focus on 'what it does' and how to install. Everything else to docs
+
+  * Much improved installation instructions (binaries 'sudo xattr -d com.apple.quarantine ./path/to/app')
+    or brew install --no-quarantine. linux repos need some kind of code signing too but it's gpg
+
+  * github pages with a nice video intro, prettified documentation, etc. Get it syncing with releases.
+
+  * allow for `variables.template.definition` in global config so that (for example)
+  `variables.python.version = 3` or `variables.ruby.typesystem = "sorbet"` can be set
+
+  * allow variable declarations to include "persist: false" to avoid adding them to a .proj directory
+
+  * allow a 'not required' variable declaration format. for documentation of what's allowed
+
+  * allow required variables to declare kind: (string, number, boolean) as type
+
+  * allow required variables to declare "options" (must be 1,2, "alpha" or "bravo", true/false, etc)
+
+  * write a `prompt` functions that can be called from lua
+
+  * add "descriptions" to most things
+
+  * allow requirements to define mandatory software, checked with `which foo`
+
+  * add `setup` command that writes a default config to and an example template
+
+  * add `create` that builds a new template in ~/.local/share/proj
+
+  * add `info` command that shows details about what's allowed/required for templates/definitions
+
+  * add `install` command that does a `git clone ...` to template_root
+
+  * add `remove` command that does an `rm -rf ` in template root
+
+  * make `new` list all available templates if run with no arguments
+
+  * make `add` list all available definitions if run with no arguments
+
+  * add --version that dumps a version
+
+  * shell completion should be better. use ValidArgsFunc() on cobra.Command to read template root. 
+
+  * add support for --input or something that reads in data from a file (or maybe STDin and exposes it
+    to lua-land and perhaps as a variable. That would allow you to automate filling content of certain
+    files.
+
+  * add string helper functions `camelcase`, `classify`, etc. like [active
+  support](https://apidock.com/rails/ActiveSupport/Inflector/camelize)
+
+  * a --force-set that forces variables to a value (so it gets applied after all the
+  scripts run)
+
+  * a --force-write that ignores the normal 'file already exists' checks
+
+  * allow file definitions to specify destination permissions
+
+  * All this fussing with variables.  It might make more sense to route everything to JSON and pass
+  that to the toluavalue function.  Tag your structs with `json:"foo"` pass an instance of the struct
+  to json.Marshal(somestruct) to get a map[string]any. then pass that over to .toluavalue Investigate
+  later. For now it works and that's good enough.  Just write some more ToMap() functions
+
+  * when copying files with parent directories, we should have a way to specify permissions. For now
+  those will have to be done with shell scripts.
+
+  * github windows builds working, add a winget repository
