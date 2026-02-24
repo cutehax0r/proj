@@ -72,10 +72,34 @@ jobs:
           # Update class name (Proj -> ProjAT${CLASS_VERSION})
           sed -i "s/class Proj </class ProjAT${CLASS_VERSION} </" homebrew-tap/Formula/proj@${VERSION}.rb
           
-          # Replace conflicts_with with keg_only for versioned formula
-          sed -i 's/conflicts_with "proj", because: "this formula provides a different proj executable"/keg_only :versioned_formula/' homebrew-tap/Formula/proj@${VERSION}.rb
+          # For versioned formulas: reorder lines so keg_only comes before depends_on
+          # Step 1: Create a temp file with the correct structure
+          FORMULA_FILE="homebrew-tap/Formula/proj@${VERSION}.rb"
           
-          echo "Created proj@${VERSION}.rb with proper structure"
+          # Extract license line number
+          LICENSE_LINE=$(grep -n 'license "MIT"' "$FORMULA_FILE" | head -1 | cut -d: -f1)
+          
+          # Create new content: everything up to and including license, then keg_only, then depends_on, then rest
+          head -n "$LICENSE_LINE" "$FORMULA_FILE" > "${FORMULA_FILE}.tmp"
+          echo "" >> "${FORMULA_FILE}.tmp"
+          echo "  keg_only :versioned_formula" >> "${FORMULA_FILE}.tmp"
+          
+          # Get the line number of first depends_on
+          FIRST_DEPENDS_LINE=$(grep -n 'depends_on' "$FORMULA_FILE" | head -1 | cut -d: -f1)
+          
+          # Get the line number of conflicts_with
+          CONFLICTS_LINE=$(grep -n 'conflicts_with' "$FORMULA_FILE" | head -1 | cut -d: -f1)
+          
+          # Add all depends_on lines
+          sed -n "${FIRST_DEPENDS_LINE},$((CONFLICTS_LINE-1))p" "$FORMULA_FILE" >> "${FORMULA_FILE}.tmp"
+          
+          # Add everything after conflicts_with (excluding the conflicts_with line itself)
+          tail -n +$((CONFLICTS_LINE+1)) "$FORMULA_FILE" >> "${FORMULA_FILE}.tmp"
+          
+          # Replace original with temp
+          mv "${FORMULA_FILE}.tmp" "$FORMULA_FILE"
+          
+          echo "Created proj@${VERSION}.rb with proper structure (keg_only before depends_on)"
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v4
