@@ -6,7 +6,6 @@ on:
     workflows: ["Release on Merge"]
     types: 
       - completed
-    branches: [main]
 
 jobs:
   update-homebrew:
