@@ -54,26 +54,32 @@ jobs:
         run: |
           # Extract version components
           VERSION="${{ steps.release-info.outputs.version }}"
-          VERSION_ARRAY=(${VERSION//./ })
+          VERSION_NO_V=$(echo "$VERSION" | sed 's/^v//')
+          VERSION_ARRAY=(${VERSION_NO_V//./ })
           MAJOR=${VERSION_ARRAY[0]}
           MINOR=${VERSION_ARRAY[1]}
           PATCH=${VERSION_ARRAY[2]}
           
+          # Create class name (e.g., 0.0.4 -> ProjAT004)
+          CLASS_VERSION="${MAJOR}${MINOR}${PATCH}"
+          
           # Get previous version number
           PREV_PATCH=$((PATCH - 1))
           PREV_VERSION="${MAJOR}.${MINOR}.${PREV_PATCH}"
+          PREV_CLASS_VERSION="${MAJOR}${MINOR}${PREV_PATCH}"
           
           # Create new version-specific formula
-          cp homebrew-tap/Formula/proj@${PREV_VERSION}.rb homebrew-tap/Formula/proj@${VERSION}.rb
-          sed -i '' "s/ProjAT${PREV_PATCH}/ProjAT${PATCH}/" homebrew-tap/Formula/proj@${VERSION}.rb
-          sed -i '' "s|url ".*"|url "https://github.com/cutehax0r/proj/archive/refs/tags/v${PREV_VERSION}.tar.gz"|" homebrew-tap/Formula/proj@${VERSION}.rb
-          sed -i '' "s|sha256 ".*"|sha256 "${{ steps.sha256.outputs.sha256 }}"|" homebrew-tap/Formula/proj@${VERSION}.rb
+          cp homebrew-tap/Formula/proj@${PREV_VERSION}.rb homebrew-tap/Formula/proj@${VERSION_NO_V}.rb
+          sed -i '' "s/ProjAT${PREV_CLASS_VERSION}/ProjAT${CLASS_VERSION}/" homebrew-tap/Formula/proj@${VERSION_NO_V}.rb
+          sed -i '' "s|url ".*"|url "https://github.com/cutehax0r/proj/archive/refs/tags/v${PREV_VERSION}.tar.gz"|" homebrew-tap/Formula/proj@${VERSION_NO_V}.rb
+          sed -i '' "s|sha256 ".*"|sha256 "${{ steps.sha256.outputs.sha256 }}"|" homebrew-tap/Formula/proj@${VERSION_NO_V}.rb
 
       - name: Run brew audit
         run: |
           cd homebrew-tap
+          VERSION_NO_V=$(echo "${{ steps.release-info.outputs.version }}" | sed 's/^v//')
           brew audit Formula/proj.rb
-          brew audit Formula/proj@${{ steps.release-info.outputs.version }}.rb
+          brew audit Formula/proj@${VERSION_NO_V}.rb
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v4
