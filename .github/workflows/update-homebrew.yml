@@ -81,7 +81,6 @@ jobs:
           
           # Create new content: everything up to and including license, then keg_only, then depends_on, then rest
           head -n "$LICENSE_LINE" "$FORMULA_FILE" > "${FORMULA_FILE}.tmp"
-          echo "" >> "${FORMULA_FILE}.tmp"
           echo "  keg_only :versioned_formula" >> "${FORMULA_FILE}.tmp"
           
           # Get the line number of first depends_on
