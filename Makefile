@@ -1,4 +1,4 @@
-.PHONY: help build build-macos-arm64 build-macos-amd64 build-windows-arm64 build-windows-amd64 build-linux-arm64 build-linux-amd64 build-all clean test acceptance release man man-install install uninstall
+.PHONY: help build build-macos-arm64 build-macos-amd64 build-windows-arm64 build-windows-amd64 build-linux-arm64 build-linux-amd64 build-all clean test acceptance release man man-install install uninstall wiki
 
 # Default target
 .DEFAULT_GOAL := build
@@ -40,6 +40,7 @@ help:
 	@echo "  make acceptance-no-cleanup    Run acceptance tests and preserve temp directories"
 	@echo "  make clean                    Remove build artifacts and acceptance temp directories"
 	@echo "  make man                      Generate man pages from markdown sources"
+	@echo "  make wiki                     Generate wiki markdown files from doc sources"
 	@echo "  make install                  Install binary and man pages to ~/.local"
 	@echo "  make uninstall                Remove binary and man pages from ~/.local"
 	@echo "  make help                     Display this help message"
@@ -142,6 +143,10 @@ clean:
 MAN_SRC_DIR := ./doc
 MAN_OUT_DIR := ./bin/man
 
+# Wiki generation
+WIKI_SRC_DIR := ./doc
+WIKI_OUT_DIR := ./bin/wiki
+
 man:
 	@echo "Generating man pages..."
 	@mkdir -p $(MAN_OUT_DIR)
@@ -171,6 +176,23 @@ man-install: man
 	@echo "Updating man database..."
 	@mandb ~/.local/share/man 2>/dev/null || true
 	@echo "✓ Man pages installed. Try: man proj"
+
+wiki:
+	@echo "Generating wiki files..."
+	@mkdir -p $(WIKI_OUT_DIR)
+	@for src in $(WIKI_SRC_DIR)/*.md; do \
+		base=$$(basename "$$src"); \
+		if [ "$$base" = "proj.1.md" ]; then \
+			dest="proj-command.md"; \
+		elif [ "$$base" = "proj.7.md" ]; then \
+			dest="proj-file-format.md"; \
+		else \
+			dest=$$(echo "$$base" | sed -E 's/\.[157]\.md$$/.md/'); \
+		fi; \
+		cp "$$src" "$(WIKI_OUT_DIR)/$$dest"; \
+		echo "✓ Copied $$base to $(WIKI_OUT_DIR)/$$dest"; \
+	done
+	@echo "✓ Wiki documentation generated in $(WIKI_OUT_DIR)/"
 
 # Install binary and man pages (XDG-compliant, user-level)
 install: build man
