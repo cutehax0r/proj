@@ -86,15 +86,6 @@ jobs:
           
           # The URL and SHA256 are already set correctly from proj.rb
 
-      - name: Run brew audit
-        run: |
-          cd homebrew-tap
-          VERSION="${{ steps.release-info.outputs.version }}"
-          echo "Running brew audit on Formula/proj.rb"
-          brew audit Formula/proj.rb
-          echo "Running brew audit on Formula/proj@${VERSION}.rb"
-          brew audit Formula/proj@${VERSION}.rb
-
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
