@@ -1,0 +1,83 @@
+name: Update Homebrew Tap
+
+on:
+  workflow_run:
+    workflows: ["Release on Merge"]
+    types: 
+      - completed
+    branches: [main]
+
+jobs:
+  update-homebrew:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main project
+        uses: actions/checkout@v4
+        with:
+          repository: cutehax0r/proj
+          path: proj
+
+      - name: Checkout homebrew-tap
+        uses: actions/checkout@v4
+        with:
+          repository: cutehax0r/homebrew-tap
+          path: homebrew-tap
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get latest release info
+        id: release-info
+        run: |
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/cutehax0r/proj/releases/latest)
+          VERSION=$(echo "$LATEST_RELEASE" | jq -r '.tag_name' | sed 's/^v//')
+          ASSET_URL=$(echo "$LATEST_RELEASE" | jq -r '.assets[] | select(.name | test("\\.tar\\.gz$")) | .browser_download_url' | head -1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "asset_url=$ASSET_URL" >> $GITHUB_OUTPUT
+
+      - name: Calculate SHA256 and validate
+        id: sha256
+        run: |
+          curl -L -o release.tar.gz "${{ steps.release-info.outputs.asset_url }}"
+          SHA256=$(shasum -a 256 release.tar.gz | awk '{print $1}')
+          echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+          # Validate SHA256 calculation
+          if [ -z "$SHA256" ] || [ ${#SHA256} -ne 64 ]; then
+            echo "ERROR: Invalid SHA256 calculation"
+            exit 1
+          fi
+
+      - name: Update main formula
+        run: |
+          sed -i '' "s|url ".*"|url "https://github.com/cutehax0r/proj/archive/refs/tags/v${{ steps.release-info.outputs.version }}.tar.gz"|" homebrew-tap/Formula/proj.rb
+          sed -i '' "s|sha256 ".*"|sha256 "${{ steps.sha256.outputs.sha256 }}"|" homebrew-tap/Formula/proj.rb
+
+      - name: Create version-specific formula
+        run: |
+          # Extract version components
+          VERSION_ARRAY=(${{ steps.release-info.outputs.version }//./ })
+          MAJOR=${VERSION_ARRAY[0]}
+          MINOR=${VERSION_ARRAY[1]}
+          PATCH=${VERSION_ARRAY[2]}
+          
+          # Get previous version number
+          PREV_PATCH=$((PATCH - 1))
+          PREV_VERSION="${MAJOR}.${MINOR}.${PREV_PATCH}"
+          
+          # Create new version-specific formula
+          cp homebrew-tap/Formula/proj@${PREV_VERSION}.rb homebrew-tap/Formula/proj@${{ steps.release-info.outputs.version }}.rb
+          sed -i '' "s/ProjAT${PREV_PATCH}/ProjAT${PATCH}/" homebrew-tap/Formula/proj@${{ steps.release-info.outputs.version }}.rb
+          sed -i '' "s|url ".*"|url "https://github.com/cutehax0r/proj/archive/refs/tags/v${PREV_VERSION}.tar.gz"|" homebrew-tap/Formula/proj@${{ steps.release-info.outputs.version }}.rb
+          sed -i '' "s|sha256 ".*"|sha256 "${{ steps.sha256.outputs.sha256 }}"|" homebrew-tap/Formula/proj@${{ steps.release-info.outputs.version }}.rb
+
+      - name: Run brew audit
+        run: |
+          cd homebrew-tap
+          brew audit Formula/proj.rb
+          brew audit Formula/proj@${{ steps.release-info.outputs.version }}.rb
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          repository: homebrew-tap
+          commit_author: github-actions[bot] <actions@github.com>
+          commit_message: "Update proj formula to v${{ steps.release-info.outputs.version }}"
+          branch: main
