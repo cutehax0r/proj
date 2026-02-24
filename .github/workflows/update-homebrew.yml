@@ -52,6 +52,7 @@ jobs:
           curl -L -o release.tar.gz "${{ steps.release-info.outputs.asset_url }}"
           SHA256=$(shasum -a 256 release.tar.gz | awk '{print $1}')
           echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+          echo "asset_sha256=$SHA256"
           # Validate SHA256 calculation
           if [ -z "$SHA256" ] || [ ${#SHA256} -ne 64 ]; then
             echo "ERROR: Invalid SHA256 calculation"
@@ -60,39 +61,39 @@ jobs:
 
       - name: Update main formula
         run: |
-          sed -i "s|url \".*\"|url \"https://github.com/cutehax0r/proj/archive/refs/tags/v${{ steps.release-info.outputs.version }}.tar.gz\"|" homebrew-tap/Formula/proj.rb
-          sed -i "s|sha256 \".*\"|sha256 \"${{ steps.sha256.outputs.sha256 }}\"|" homebrew-tap/Formula/proj.rb
+          VERSION="${{ steps.release-info.outputs.version }}"
+          SHA256="${{ steps.sha256.outputs.sha256 }}"
+          echo "Updating proj.rb to version $VERSION with SHA256 $SHA256"
+          sed -i "s|url \".*\"|url \"https://github.com/cutehax0r/proj/archive/refs/tags/v${VERSION}.tar.gz\"|" homebrew-tap/Formula/proj.rb
+          sed -i "s|sha256 \".*\"|sha256 \"${SHA256}\"|" homebrew-tap/Formula/proj.rb
 
       - name: Create version-specific formula
         run: |
-          # Extract version components
           VERSION="${{ steps.release-info.outputs.version }}"
-          VERSION_NO_V=$(echo "$VERSION" | sed 's/^v//')
-          VERSION_ARRAY=(${VERSION_NO_V//./ })
-          MAJOR=${VERSION_ARRAY[0]}
-          MINOR=${VERSION_ARRAY[1]}
-          PATCH=${VERSION_ARRAY[2]}
+          SHA256="${{ steps.sha256.outputs.sha256 }}"
           
-          # Create class name (e.g., 0.0.4 -> ProjAT004)
-          CLASS_VERSION="${MAJOR}${MINOR}${PATCH}"
+          # Create class name (e.g., 0.0.6 -> ProjAT006)
+          # Remove dots from version for class name: 0.0.6 -> 006
+          CLASS_VERSION=$(echo "$VERSION" | tr -d '.')
           
-          # Get previous version number
-          PREV_PATCH=$((PATCH - 1))
-          PREV_VERSION="${MAJOR}.${MINOR}.${PREV_PATCH}"
-          PREV_CLASS_VERSION="${MAJOR}${MINOR}${PREV_PATCH}"
+          echo "Creating proj@${VERSION}.rb with class ProjAT${CLASS_VERSION}"
           
-          # Create new version-specific formula
-          cp homebrew-tap/Formula/proj@${PREV_VERSION}.rb homebrew-tap/Formula/proj@${VERSION_NO_V}.rb
-          sed -i "s/ProjAT${PREV_CLASS_VERSION}/ProjAT${CLASS_VERSION}/" homebrew-tap/Formula/proj@${VERSION_NO_V}.rb
-          sed -i "s|url \".*\"|url \"https://github.com/cutehax0r/proj/archive/refs/tags/v${PREV_VERSION}.tar.gz\"|" homebrew-tap/Formula/proj@${VERSION_NO_V}.rb
-          sed -i "s|sha256 \".*\"|sha256 \"${{ steps.sha256.outputs.sha256 }}\"|" homebrew-tap/Formula/proj@${VERSION_NO_V}.rb
+          # Copy main formula to version-specific formula
+          cp homebrew-tap/Formula/proj.rb homebrew-tap/Formula/proj@${VERSION}.rb
+          
+          # Update class name (Proj -> ProjAT${CLASS_VERSION})
+          sed -i "s/class Proj </class ProjAT${CLASS_VERSION} </" homebrew-tap/Formula/proj@${VERSION}.rb
+          
+          # The URL and SHA256 are already set correctly from proj.rb
 
       - name: Run brew audit
         run: |
           cd homebrew-tap
-          VERSION_NO_V=$(echo "${{ steps.release-info.outputs.version }}" | sed 's/^v//')
+          VERSION="${{ steps.release-info.outputs.version }}"
+          echo "Running brew audit on Formula/proj.rb"
           brew audit Formula/proj.rb
-          brew audit Formula/proj@${VERSION_NO_V}.rb
+          echo "Running brew audit on Formula/proj@${VERSION}.rb"
+          brew audit Formula/proj@${VERSION}.rb
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v4
