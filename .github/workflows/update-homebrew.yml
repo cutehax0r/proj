@@ -72,7 +72,10 @@ jobs:
           # Update class name (Proj -> ProjAT${CLASS_VERSION})
           sed -i "s/class Proj </class ProjAT${CLASS_VERSION} </" homebrew-tap/Formula/proj@${VERSION}.rb
           
-          # The URL and SHA256 are already set correctly from proj.rb
+          # Replace conflicts_with with keg_only for versioned formula
+          sed -i 's/conflicts_with "proj", because: "this formula provides a different proj executable"/keg_only :versioned_formula/' homebrew-tap/Formula/proj@${VERSION}.rb
+          
+          echo "Created proj@${VERSION}.rb with proper structure"
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v4
