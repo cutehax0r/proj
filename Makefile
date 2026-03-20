@@ -222,6 +222,7 @@ uninstall:
 	@rm -f ~/.local/share/man/man1/proj.1
 	@rm -f ~/.local/share/man/man1/proj-new.1
 	@rm -f ~/.local/share/man/man1/proj-add.1
+	@rm -f ~/.local/share/man/man1/proj-info.1
 	@rm -f ~/.local/share/man/man1/proj-help.1
 	@rm -f ~/.local/share/man/man5/proj.yml.5
 	@rm -f ~/.local/share/man/man7/proj.7

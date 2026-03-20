@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/afero"
 )
 
+var ErrNotInProjDirectory = errors.New("not in a proj directory")
+
 type Paths struct {
 	TargetRoot         string
 	TargetPath         string
@@ -114,6 +116,10 @@ func (p *Paths) ResolveFrom(baseDir, path string) (string, error) {
 	return resolve(baseDir, path)
 }
 
+func Resolve(components ...string) (string, error) {
+	return resolve(components...)
+}
+
 func FindProjectRoot(startPath ...string) (string, error) {
 	return FindProjectRootWithFS(afero.NewOsFs(), startPath...)
 }
@@ -190,7 +196,7 @@ func findProjectRootFrom(fs afero.Fs, startPath string) (string, error) {
 		// made it to / without a proj file so give up.
 		if current == root {
 			slog.Debug("No proj config found in directory tree", slog.String("root", root))
-			return "", errors.New("not in a proj directory")
+			return "", ErrNotInProjDirectory
 		}
 
 		// those weird windows paths might mean root is \foo\bar but current is \foo
@@ -198,7 +204,7 @@ func findProjectRootFrom(fs afero.Fs, startPath string) (string, error) {
 		parent := filepath.Dir(current)
 		if parent == current {
 			slog.Debug("No proj config found in directory tree", slog.String("root", root))
-			return "", errors.New("not in a proj directory")
+			return "", ErrNotInProjDirectory
 		}
 		current = parent
 	}

@@ -21,6 +21,9 @@ contained within.
 * `add` <path>
   Add a file or directory to the current project template.
 
+* `info` [template] [definition]
+  Inspect templates and definitions.
+
 * `completion` [command]
   Generate autocompletion scripts for shell
 
@@ -48,4 +51,4 @@ Create a new project from a template:
 
 ## SEE ALSO
 
-proj-new(1), proj-add(1), proj-help(1), proj.yml(5), proj(7)
+proj-new(1), proj-add(1), proj-info(1), proj-help(1), proj.yml(5), proj(7)

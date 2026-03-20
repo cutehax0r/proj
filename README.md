@@ -4,7 +4,9 @@ A tool for setting up new projects or adding files to existing projects
 ## Usage
 
 Commands:
-  * proj <command> <template> <name> [OPTIONS]
+  * `proj new <template> <name> [OPTIONS]`
+  * `proj add <definition> <name> [OPTIONS]`
+  * `proj info [template] [definition] [OPTIONS]`
 
 Running `new` implies the definition `new`
 
@@ -85,6 +87,44 @@ proj add stylesheet print
     project. Setting `--template-path` will cause `--template-root` to have no effect.
 
   * `-v STRING`, `--set-varaible STRING`: define a variable `-v FOO=bar`.
+
+#### Info
+
+Inspect available templates and definitions.
+
+##### Usage
+
+General formats:
+
+* `proj info`
+
+* `proj info <template>`
+
+* `proj info <template> <definition>`
+
+##### Examples
+
+**Example:** List available templates.
+
+```sh
+proj info
+```
+
+**Example:** Show definitions in the `static` template grouped by `new` and `add`.
+
+```sh
+proj info static
+```
+
+**Example:** Show details for the `new` definition in `static`.
+
+```sh
+proj info static new
+```
+
+##### Arguments
+
+  * `-s STRING`, `--template-root STRING`: directory to search for project templates
 
 ## Configuration
 
@@ -367,8 +407,6 @@ I'm going to use `go-md2man`.
 
   * add `create` that builds a new template in ~/.local/share/proj
 
-  * add `info` command that shows details about what's allowed/required for templates/definitions
-
   * add `install` command that does a `git clone ...` to template_root
 
   * add `remove` command that does an `rm -rf ` in template root
@@ -388,7 +426,7 @@ I'm going to use `go-md2man`.
   * add string helper functions `camelcase`, `classify`, etc. like [active
   support](https://apidock.com/rails/ActiveSupport/Inflector/camelize)
 
-  * a --force-set that forces variables to a value (so it gets applied after all the
+  * a --force-set / -V(?) that forces variables to a value (so it gets applied after all the
   scripts run)
 
   * a --force-write that ignores the normal 'file already exists' checks

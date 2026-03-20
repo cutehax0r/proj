@@ -14,7 +14,8 @@ func TestRootCommand_ShowsHelp(t *testing.T) {
 		ExpectOutput("Flags:").
 		ExpectOutput("Available Commands:").
 		ExpectOutput("new").
-		ExpectOutput("add")
+		ExpectOutput("add").
+		ExpectOutput("info")
 }
 
 func TestRootCommand_HelpFlag(t *testing.T) {
