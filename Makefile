@@ -115,7 +115,7 @@ build-all: build-macos-arm64 build-macos-amd64 build-windows-arm64 build-windows
 	@ls -lh $(OUTPUT_DIR)/
 
 # Test target
-test:
+test: build
 	@echo "Running tests..."
 	$(GO) test -v ./...
 

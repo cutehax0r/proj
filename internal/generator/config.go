@@ -98,8 +98,7 @@ func InfoConfig(templateName, definitionName string) (*Config, error) {
 	}
 
 	// If template name not provided, try to find it from project context
-	// (unless --all flag is set, which forces global view)
-	if cfg.TemplateName == "" && !viper.GetBool("all") {
+	if cfg.TemplateName == "" {
 		targetPath := viper.GetString("target-path")
 		projectRoot, err := paths.FindProjectRootWithFS(fs, targetPath)
 		if err == nil {

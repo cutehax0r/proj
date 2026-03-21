@@ -124,6 +124,7 @@ proj info static new
 
 ##### Arguments
 
+  * `-a`, `--all`: force global view and list all templates (ignores project context)
   * `-s STRING`, `--template-root STRING`: directory to search for project templates
 
 ## Configuration

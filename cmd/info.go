@@ -51,6 +51,15 @@ func runInfo(cmd *cobra.Command, args []string) {
 	}
 
 	explainer := info.NewExplainer(cfg)
+
+	if viper.GetBool("all") {
+		if err := explainer.ExplainGlobal(); err != nil {
+			slog.Error("Failed to explain", slog.Any("error", err))
+			os.Exit(1)
+		}
+		return
+	}
+
 	if err := explainer.Explain(); err != nil {
 		slog.Error("Failed to explain", slog.Any("error", err))
 		os.Exit(1)

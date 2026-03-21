@@ -84,20 +84,27 @@ func (e *Explainer) Explain() error {
 	switch {
 	case e.cfg.DefinitionName != "":
 		return e.explainDefinition()
-	case e.cfg.TemplateName != "":
+	case e.cfg.TemplateName != "" && !e.inProject():
 		return e.explainTemplate()
 	case e.inProject():
 		return e.explainProject()
+	case e.cfg.TemplateName != "":
+		return e.explainTemplate()
 	default:
-		return e.explainGlobal()
+		return e.ExplainGlobal()
 	}
 }
 
 func (e *Explainer) inProject() bool {
-	return e.cfg.Paths.TargetConfigPath != ""
+	if e.cfg.Paths == nil || e.cfg.Paths.TargetConfigPath == "" {
+		return false
+	}
+	// Also verify the file actually exists
+	_, err := os.Stat(e.cfg.Paths.TargetConfigPath)
+	return err == nil
 }
 
-func (e *Explainer) explainGlobal() error {
+func (e *Explainer) ExplainGlobal() error {
 	templates, err := e.listTemplates(e.cfg.Paths.TemplateRoot)
 	if err != nil {
 		return fmt.Errorf("failed to list templates: %w", err)
@@ -116,6 +123,11 @@ func (e *Explainer) explainProject() error {
 	projectCtx, err := e.findProjectContext(e.cfg.Paths.TargetRoot)
 	if err != nil {
 		return fmt.Errorf("failed to inspect project context: %w", err)
+	}
+
+	// If we're not actually in a project (findProjectContext returns nil), fall back to global
+	if projectCtx == nil {
+		return e.ExplainGlobal()
 	}
 
 	defNames := make([]string, 0, len(projectCtx.Definitions))
