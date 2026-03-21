@@ -105,3 +105,44 @@ func AddConfig(kind, name string) (*Config, error) {
 
 	return cfg, nil
 }
+
+func InfoConfig(templateName, definitionName string) (*Config, error) {
+	fs := afero.NewOsFs()
+	cfg := &Config{
+		TemplateName:     templateName,
+		DefinitionName:   definitionName,
+		GlobalConfigFile: viper.GetString("global-config-file"),
+		Fs:               fs,
+	}
+
+	// If template name not provided, try to find it from project context
+	if cfg.TemplateName == "" {
+		targetPath := viper.GetString("target-path")
+		projectRoot, err := paths.FindProjectRootWithFS(fs, targetPath)
+		if err == nil {
+			projYmlPath := filepath.Join(projectRoot, paths.TargetConfigFileDir, paths.TargetConfigFile)
+			projData, err := afero.ReadFile(fs, projYmlPath)
+			if err == nil {
+				targetCfg := &config.TargetConfig{}
+				if err := yaml.Unmarshal(projData, targetCfg); err == nil {
+					cfg.TemplateName = targetCfg.TemplateName
+					viper.Set("target-root", projectRoot)
+					viper.Set("target-path", projectRoot)
+					viper.Set("target-config-file", projYmlPath)
+				}
+			}
+		}
+	}
+
+	slog.Debug("Info configuration loaded", slog.String("template", cfg.TemplateName), slog.String("definition", cfg.DefinitionName))
+
+	// Set template name in viper so setupPaths can use it
+	viper.Set("template-name", cfg.TemplateName)
+	viper.Set("target-name", "") // Info doesn't need a target name
+
+	if err := cfg.setupPaths(); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
