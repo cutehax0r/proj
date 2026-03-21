@@ -43,24 +43,6 @@ func NewConfig(templateName, targetName string) (*Config, error) {
 	return cfg, nil
 }
 
-func (cfg *Config) setupPaths() error {
-	viper.Set("template-name", cfg.TemplateName)
-	viper.Set("target-name", cfg.TargetName)
-	viper.Set("target-config-file", "") // this should not exist yet if we're running new
-
-	p, err := paths.NewPathsFromConfig(viper.AllSettings())
-	if err != nil {
-		slog.Error("Failed to setup paths", slog.Any("error", err))
-		return err
-	}
-	cfg.Paths = p
-
-	// Set the template path in viper so it can be used during file spec resolution
-	viper.Set("template-path", p.TemplatePath)
-
-	return nil
-}
-
 func AddConfig(kind, name string) (*Config, error) {
 	// Find project root from current directory
 	targetPath := viper.GetString("target-path")
@@ -116,7 +98,8 @@ func InfoConfig(templateName, definitionName string) (*Config, error) {
 	}
 
 	// If template name not provided, try to find it from project context
-	if cfg.TemplateName == "" {
+	// (unless --all flag is set, which forces global view)
+	if cfg.TemplateName == "" && !viper.GetBool("all") {
 		targetPath := viper.GetString("target-path")
 		projectRoot, err := paths.FindProjectRootWithFS(fs, targetPath)
 		if err == nil {
@@ -145,4 +128,22 @@ func InfoConfig(templateName, definitionName string) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func (cfg *Config) setupPaths() error {
+	viper.Set("template-name", cfg.TemplateName)
+	viper.Set("target-name", cfg.TargetName)
+	viper.Set("target-config-file", "") // this should not exist yet if we're running new
+
+	p, err := paths.NewPathsFromConfig(viper.AllSettings())
+	if err != nil {
+		slog.Error("Failed to setup paths", slog.Any("error", err))
+		return err
+	}
+	cfg.Paths = p
+
+	// Set the template path in viper so it can be used during file spec resolution
+	viper.Set("template-path", p.TemplatePath)
+
+	return nil
 }

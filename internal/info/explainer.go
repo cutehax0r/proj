@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"proj/internal/config"
+	"proj/internal/generator"
 	"proj/internal/paths"
 	"sort"
 	"strings"
@@ -13,7 +14,9 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-type Catalog struct{}
+type Explainer struct {
+	cfg *generator.Config
+}
 
 type ProjectContext struct {
 	Root         string
@@ -63,11 +66,114 @@ type templateFile struct {
 	Target string `yaml:"target"`
 }
 
-func NewCatalog() *Catalog {
-	return &Catalog{}
+type localDefinition struct {
+	Requirements localRequirements
+	Files        []string
 }
 
-func (c *Catalog) FindProjectContext(startPath string) (*ProjectContext, error) {
+type localRequirements struct {
+	Local     bool
+	Variables []VariableDetail
+}
+
+func NewExplainer(cfg *generator.Config) *Explainer {
+	return &Explainer{cfg: cfg}
+}
+
+func (e *Explainer) Explain() error {
+	switch {
+	case e.cfg.DefinitionName != "":
+		return e.explainDefinition()
+	case e.cfg.TemplateName != "":
+		return e.explainTemplate()
+	case e.inProject():
+		return e.explainProject()
+	default:
+		return e.explainGlobal()
+	}
+}
+
+func (e *Explainer) inProject() bool {
+	return e.cfg.Paths.TargetConfigPath != ""
+}
+
+func (e *Explainer) explainGlobal() error {
+	templates, err := e.listTemplates(e.cfg.Paths.TemplateRoot)
+	if err != nil {
+		return fmt.Errorf("failed to list templates: %w", err)
+	}
+
+	page, err := RenderTemplatesPage(TemplatesPageData{TemplateNames: templates})
+	if err != nil {
+		return fmt.Errorf("failed to render templates page: %w", err)
+	}
+
+	fmt.Print(page)
+	return nil
+}
+
+func (e *Explainer) explainProject() error {
+	projectCtx, err := e.findProjectContext(e.cfg.Paths.TargetRoot)
+	if err != nil {
+		return fmt.Errorf("failed to inspect project context: %w", err)
+	}
+
+	defNames := make([]string, 0, len(projectCtx.Definitions))
+	for name := range projectCtx.Definitions {
+		defNames = append(defNames, name)
+	}
+	sort.Strings(defNames)
+
+	page, err := RenderTemplatesPage(TemplatesPageData{
+		InProject:        true,
+		CurrentTemplate:  projectCtx.TemplateName,
+		LocalDefinitions: defNames,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to render project templates page: %w", err)
+	}
+
+	fmt.Print(page)
+	return nil
+}
+
+func (e *Explainer) explainTemplate() error {
+	projectCtx, _ := e.findProjectContext(e.cfg.Paths.TargetRoot)
+
+	summaries, err := e.templateSummaries(e.cfg.Paths.TemplateRoot, e.cfg.TemplateName, projectCtx)
+	if err != nil {
+		return fmt.Errorf("failed to read template details: %w", err)
+	}
+
+	pageData := BuildTemplatePageData(e.cfg.TemplateName, summaries)
+	page, err := RenderTemplatePage(pageData)
+	if err != nil {
+		return fmt.Errorf("failed to render template page: %w", err)
+	}
+
+	fmt.Print(page)
+	return nil
+}
+
+func (e *Explainer) explainDefinition() error {
+	projectCtx, _ := e.findProjectContext(e.cfg.Paths.TargetRoot)
+
+	detail, err := e.definitionDetails(e.cfg.Paths.TemplateRoot, e.cfg.TemplateName, e.cfg.DefinitionName, projectCtx)
+	if err != nil {
+		return fmt.Errorf("failed to inspect definition: %w", err)
+	}
+
+	pageData := BuildDefinitionPageData(e.cfg.TemplateName, detail)
+	page, err := RenderDefinitionPage(pageData)
+	if err != nil {
+		return fmt.Errorf("failed to render definition page: %w", err)
+	}
+
+	fmt.Print(page)
+	return nil
+}
+
+func (e *Explainer) findProjectContext(startPath string) (*ProjectContext, error) {
 	startAbs, err := paths.Resolve(startPath)
 	if err != nil {
 		return nil, err
@@ -99,7 +205,7 @@ func (c *Catalog) FindProjectContext(startPath string) (*ProjectContext, error) 
 	}, nil
 }
 
-func (c *Catalog) ListTemplates(templateRoot string) ([]string, error) {
+func (e *Explainer) listTemplates(templateRoot string) ([]string, error) {
 	entries, err := os.ReadDir(templateRoot)
 	if err != nil {
 		return nil, err
@@ -121,8 +227,8 @@ func (c *Catalog) ListTemplates(templateRoot string) ([]string, error) {
 	return result, nil
 }
 
-func (c *Catalog) TemplateSummaries(templateRoot, templateName string, projectCtx *ProjectContext) ([]DefinitionSummary, error) {
-	defs, err := c.loadTemplateDefinitions(templateRoot, templateName)
+func (e *Explainer) templateSummaries(templateRoot, templateName string, projectCtx *ProjectContext) ([]DefinitionSummary, error) {
+	defs, err := e.loadTemplateDefinitions(templateRoot, templateName)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +244,7 @@ func (c *Catalog) TemplateSummaries(templateRoot, templateName string, projectCt
 
 	if projectCtx != nil && projectCtx.TemplateName == templateName {
 		for name, rawDef := range projectCtx.Definitions {
-			localDef := parseLocalDefinition(rawDef)
+			localDef := e.parseLocalDefinition(rawDef)
 			result = append(result, DefinitionSummary{
 				Name:   name,
 				Local:  localDef.Requirements.Local,
@@ -160,15 +266,15 @@ func (c *Catalog) TemplateSummaries(templateRoot, templateName string, projectCt
 	return result, nil
 }
 
-func (c *Catalog) DefinitionDetails(templateRoot, templateName, definitionName string, projectCtx *ProjectContext) (*DefinitionDetail, error) {
+func (e *Explainer) definitionDetails(templateRoot, templateName, definitionName string, projectCtx *ProjectContext) (*DefinitionDetail, error) {
 	if projectCtx != nil && projectCtx.TemplateName == templateName {
 		if rawDef, ok := projectCtx.Definitions[definitionName]; ok {
-			localDef := parseLocalDefinition(rawDef)
-			return buildDefinitionDetail(definitionName, localDef.Requirements.Local, "local", localDef.Files, localDef.Requirements.Variables), nil
+			localDef := e.parseLocalDefinition(rawDef)
+			return e.buildDefinitionDetail(definitionName, localDef.Requirements.Local, "local", localDef.Files, localDef.Requirements.Variables), nil
 		}
 	}
 
-	defs, err := c.loadTemplateDefinitions(templateRoot, templateName)
+	defs, err := e.loadTemplateDefinitions(templateRoot, templateName)
 	if err != nil {
 		return nil, err
 	}
@@ -187,10 +293,10 @@ func (c *Catalog) DefinitionDetails(templateRoot, templateName, definitionName s
 		variables = append(variables, VariableDetail{Name: v.Name, Default: v.Default})
 	}
 
-	return buildDefinitionDetail(definitionName, def.Requirements.Local, "template", targets, variables), nil
+	return e.buildDefinitionDetail(definitionName, def.Requirements.Local, "template", targets, variables), nil
 }
 
-func buildDefinitionDetail(name string, local bool, source string, targets []string, variables []VariableDetail) *DefinitionDetail {
+func (e *Explainer) buildDefinitionDetail(name string, local bool, source string, targets []string, variables []VariableDetail) *DefinitionDetail {
 	sort.Strings(targets)
 	sort.Slice(variables, func(i, j int) bool { return variables[i].Name < variables[j].Name })
 
@@ -203,7 +309,7 @@ func buildDefinitionDetail(name string, local bool, source string, targets []str
 	}
 }
 
-func (c *Catalog) loadTemplateDefinitions(templateRoot, templateName string) (map[string]templateDefinition, error) {
+func (e *Explainer) loadTemplateDefinitions(templateRoot, templateName string) (map[string]templateDefinition, error) {
 	templateConfigPath, err := paths.Resolve(templateRoot, templateName, paths.TemplateConfigFile)
 	if err != nil {
 		return nil, err
@@ -225,17 +331,7 @@ func (c *Catalog) loadTemplateDefinitions(templateRoot, templateName string) (ma
 	return tpl.Definitions, nil
 }
 
-type localDefinition struct {
-	Requirements localRequirements
-	Files        []string
-}
-
-type localRequirements struct {
-	Local     bool
-	Variables []VariableDetail
-}
-
-func parseLocalDefinition(raw any) localDefinition {
+func (e *Explainer) parseLocalDefinition(raw any) localDefinition {
 	result := localDefinition{
 		Requirements: localRequirements{Local: true},
 	}
