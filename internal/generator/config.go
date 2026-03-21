@@ -2,11 +2,11 @@ package generator
 
 import (
 	"log/slog"
+	"os"
 	"path/filepath"
 	"proj/internal/config"
 	"proj/internal/paths"
 
-	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 	"go.yaml.in/yaml/v3"
 )
@@ -20,7 +20,6 @@ type Config struct {
 	GlobalConfigFile string
 
 	Paths *paths.Paths
-	Fs    afero.Fs
 }
 
 func NewConfig(templateName, targetName string) (*Config, error) {
@@ -31,7 +30,6 @@ func NewConfig(templateName, targetName string) (*Config, error) {
 		SetVariables:     viper.GetStringSlice("set-variable"),
 		NoWrite:          viper.GetBool("no-write"),
 		GlobalConfigFile: viper.GetString("global-config-file"),
-		Fs:               afero.NewOsFs(),
 	}
 
 	slog.Debug("Configuration loaded", slog.Bool("no-write", cfg.NoWrite))
@@ -46,14 +44,13 @@ func NewConfig(templateName, targetName string) (*Config, error) {
 func AddConfig(kind, name string) (*Config, error) {
 	// Find project root from current directory
 	targetPath := viper.GetString("target-path")
-	fs := afero.NewOsFs()
-	projectRoot, err := paths.FindProjectRootWithFS(fs, targetPath)
+	projectRoot, err := paths.FindProjectRoot(targetPath)
 	if err != nil {
 		return nil, err
 	}
 
 	projYmlPath := filepath.Join(projectRoot, paths.TargetConfigFileDir, paths.TargetConfigFile)
-	projData, err := afero.ReadFile(fs, projYmlPath)
+	projData, err := os.ReadFile(projYmlPath)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +67,6 @@ func AddConfig(kind, name string) (*Config, error) {
 		SetVariables:     viper.GetStringSlice("set-variable"),
 		NoWrite:          viper.GetBool("no-write"),
 		GlobalConfigFile: viper.GetString("global-config-file"),
-		Fs:               afero.NewOsFs(),
 	}
 
 	slog.Debug("Configuration loaded", slog.Bool("no-write", cfg.NoWrite))
@@ -89,21 +85,19 @@ func AddConfig(kind, name string) (*Config, error) {
 }
 
 func InfoConfig(templateName, definitionName string) (*Config, error) {
-	fs := afero.NewOsFs()
 	cfg := &Config{
 		TemplateName:     templateName,
 		DefinitionName:   definitionName,
 		GlobalConfigFile: viper.GetString("global-config-file"),
-		Fs:               fs,
 	}
 
 	// If template name not provided, try to find it from project context
 	if cfg.TemplateName == "" {
 		targetPath := viper.GetString("target-path")
-		projectRoot, err := paths.FindProjectRootWithFS(fs, targetPath)
+		projectRoot, err := paths.FindProjectRoot(targetPath)
 		if err == nil {
 			projYmlPath := filepath.Join(projectRoot, paths.TargetConfigFileDir, paths.TargetConfigFile)
-			projData, err := afero.ReadFile(fs, projYmlPath)
+			projData, err := os.ReadFile(projYmlPath)
 			if err == nil {
 				targetCfg := &config.TargetConfig{}
 				if err := yaml.Unmarshal(projData, targetCfg); err == nil {

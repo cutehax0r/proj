@@ -3,13 +3,13 @@ package generator
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"proj/internal/config"
 	"proj/internal/luabridge"
 	"proj/internal/paths"
 	"strings"
 
-	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 	"go.yaml.in/yaml/v3"
 )
@@ -69,8 +69,7 @@ func (a *Adder) setupConfig() error {
 
 	projectRoot := viper.GetString("target-root")
 	projYmlPath := filepath.Join(projectRoot, paths.TargetConfigFileDir, paths.TargetConfigFile)
-	fs := afero.NewOsFs()
-	projData, err := afero.ReadFile(fs, projYmlPath)
+	projData, err := os.ReadFile(projYmlPath)
 	if err != nil {
 		slog.Error("Failed to read project config", slog.String("path", projYmlPath), slog.Any("error", err))
 		return err
@@ -103,7 +102,7 @@ func (a *Adder) setupConfig() error {
 
 	slog.Debug("Project config merged", slog.Any("variables", projectCfg.Variables), slog.Any("definitions", projectCfg.Definitions))
 
-	if _, err := fs.Stat(a.paths.TargetPath); err != nil {
+	if _, err := os.Stat(a.paths.TargetPath); err != nil {
 		slog.Error("Target path does not exist", slog.String("path", a.paths.TargetPath))
 		return err
 	}
@@ -112,7 +111,7 @@ func (a *Adder) setupConfig() error {
 	defPath := strings.Join([]string{"definitions", a.cfg.DefinitionName}, ".")
 	if !viper.IsSet(defPath) {
 		slog.Error("Definition does not exist", slog.String("path", defPath), slog.String("definition-name", a.cfg.DefinitionName), slog.String("template name", a.cfg.TemplateName))
-		return afero.ErrFileNotFound
+		return fmt.Errorf("definition '%s' does not exist in template '%s'", a.cfg.DefinitionName, a.cfg.TemplateName)
 	}
 
 	reqs, err := loadRequirements()
@@ -134,7 +133,7 @@ func (a *Adder) setupConfig() error {
 }
 
 func (a *Adder) runBeforeScripts() error {
-	vars, err := runBeforeScriptsAndValidateVars(a.luaenv, a.scripts.BeforeScriptsWithFS(a.cfg.Fs), a.reqs)
+	vars, err := runBeforeScriptsAndValidateVars(a.luaenv, a.scripts.BeforeScripts(), a.reqs)
 	if err != nil {
 		return err
 	}
@@ -155,7 +154,7 @@ func (a *Adder) validateFiles() error {
 		}
 
 		// Check if file already exists
-		if _, err := a.cfg.Fs.Stat(destPath); err == nil {
+		if _, err := os.Stat(destPath); err == nil {
 			conflicts = append(conflicts, destPath)
 			slog.Debug("Target file already exists", slog.String("target", destPath))
 		}
@@ -176,5 +175,5 @@ func (a *Adder) processFiles() error {
 }
 
 func (a *Adder) runAfterScripts() error {
-	return runAfterScripts(a.luaenv, a.scripts.AfterScriptsWithFS(a.cfg.Fs))
+	return runAfterScripts(a.luaenv, a.scripts.AfterScripts())
 }

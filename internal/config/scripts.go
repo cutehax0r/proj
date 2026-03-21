@@ -3,10 +3,10 @@ package config
 import (
 	"errors"
 	"log/slog"
+	"os"
 	"proj/internal/paths"
 	"strings"
 
-	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 )
 
@@ -20,10 +20,6 @@ type ScriptSpec struct {
 }
 
 func NewScriptSpec(paths *paths.Paths) (ScriptSpec, error) {
-	return NewScriptSpecWithFS(afero.NewOsFs(), paths)
-}
-
-func NewScriptSpecWithFS(fs afero.Fs, paths *paths.Paths) (ScriptSpec, error) {
 	var result ScriptSpec
 	var ok bool
 
@@ -95,38 +91,26 @@ func NewScriptSpecWithFS(fs afero.Fs, paths *paths.Paths) (ScriptSpec, error) {
 }
 
 func (s *ScriptSpec) BeforeScripts() []string {
-	return s.BeforeScriptsWithFS(afero.NewOsFs())
-}
-
-func (s *ScriptSpec) BeforeScriptsWithFS(fs afero.Fs) []string {
 	var result []string
-	result = appendIfExistsWithFS(fs, result, s.GlobalBefore)
-	result = appendIfExistsWithFS(fs, result, s.TemplateBefore)
-	result = appendIfExistsWithFS(fs, result, s.DefinitionBefore)
+	result = appendIfExists(result, s.GlobalBefore)
+	result = appendIfExists(result, s.TemplateBefore)
+	result = appendIfExists(result, s.DefinitionBefore)
 	return result
 }
 
 func (s *ScriptSpec) AfterScripts() []string {
-	return s.AfterScriptsWithFS(afero.NewOsFs())
-}
-
-func (s *ScriptSpec) AfterScriptsWithFS(fs afero.Fs) []string {
 	var result []string
-	result = appendIfExistsWithFS(fs, result, s.DefinitionAfter)
-	result = appendIfExistsWithFS(fs, result, s.TemplateAfter)
-	result = appendIfExistsWithFS(fs, result, s.GlobalAfter)
+	result = appendIfExists(result, s.DefinitionAfter)
+	result = appendIfExists(result, s.TemplateAfter)
+	result = appendIfExists(result, s.GlobalAfter)
 	return result
 }
 
 func appendIfExists(scripts []string, script string) []string {
-	return appendIfExistsWithFS(afero.NewOsFs(), scripts, script)
-}
-
-func appendIfExistsWithFS(fs afero.Fs, scripts []string, script string) []string {
 	if script == "" {
 		return scripts
 	}
-	_, err := fs.Stat(script)
+	_, err := os.Stat(script)
 	if err != nil {
 		slog.Debug("Script doesn't exist", slog.Any("error", err), slog.String("script", script))
 		return scripts

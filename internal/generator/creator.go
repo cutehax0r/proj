@@ -1,14 +1,15 @@
 package generator
 
 import (
+	"fmt"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"proj/internal/config"
 	"proj/internal/luabridge"
 	"proj/internal/paths"
 	"strings"
 
-	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 	"go.yaml.in/yaml/v3"
 )
@@ -60,7 +61,7 @@ func (c *Creator) Create() error {
 
 func (c *Creator) writeConfig() error {
 	projDir := filepath.Join(c.paths.TargetPath, ".proj")
-	if err := c.cfg.Fs.MkdirAll(projDir, 0755); err != nil {
+	if err := os.MkdirAll(projDir, 0755); err != nil {
 		slog.Error("Failed to create .proj directory", slog.String("directory", projDir), slog.Any("error", err))
 		return err
 	}
@@ -80,7 +81,7 @@ func (c *Creator) writeConfig() error {
 	}
 
 	configPath := filepath.Join(projDir, "proj.yml")
-	if err := afero.WriteFile(c.cfg.Fs, configPath, yamlData, 0644); err != nil {
+	if err := os.WriteFile(configPath, yamlData, 0644); err != nil {
 		slog.Error("Failed to write target config file", slog.String("path", configPath), slog.Any("error", err))
 		return err
 	}
@@ -96,15 +97,15 @@ func (c *Creator) setupConfig() error {
 	}
 	slog.Debug("template config loaded", "file", viper.ConfigFileUsed())
 
-	if _, err := c.cfg.Fs.Stat(c.paths.TargetPath); err == nil {
+	if _, err := os.Stat(c.paths.TargetPath); err == nil {
 		slog.Error("Target path exists", slog.String("path", c.paths.TargetPath))
-		return afero.ErrFileExists
+		return fmt.Errorf("target path already exists: %s", c.paths.TargetPath)
 	}
 
 	defPath := strings.Join([]string{"definitions", c.cfg.DefinitionName}, ".")
 	if !viper.IsSet(defPath) {
 		slog.Error("Definition does not exist in template", slog.String("path", defPath), slog.String("definition-name", c.cfg.DefinitionName), slog.String("template name", c.cfg.TemplateName), slog.String("template config file", viper.GetString("template-config-file")))
-		return afero.ErrFileNotFound
+		return fmt.Errorf("definition '%s' does not exist in template '%s'", c.cfg.DefinitionName, c.cfg.TemplateName)
 	}
 
 	reqs, err := loadRequirements()
@@ -126,7 +127,7 @@ func (c *Creator) setupConfig() error {
 }
 
 func (c *Creator) runBeforeScripts() error {
-	vars, err := runBeforeScriptsAndValidateVars(c.luaenv, c.scripts.BeforeScriptsWithFS(c.cfg.Fs), c.reqs)
+	vars, err := runBeforeScriptsAndValidateVars(c.luaenv, c.scripts.BeforeScripts(), c.reqs)
 	if err != nil {
 		return err
 	}
@@ -136,7 +137,7 @@ func (c *Creator) runBeforeScripts() error {
 }
 
 func (c *Creator) runAfterScripts() error {
-	return runAfterScripts(c.luaenv, c.scripts.AfterScriptsWithFS(c.cfg.Fs))
+	return runAfterScripts(c.luaenv, c.scripts.AfterScripts())
 }
 
 func (c *Creator) processFiles() error {

@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"io"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"proj/internal/config"
 	"proj/internal/paths"
 	"text/template"
-
-	"github.com/spf13/afero"
 )
 
 func processFiles(cfg *Config, p *paths.Paths, files []config.FileSpec, vars map[string]any) error {
@@ -56,7 +55,7 @@ func renderAndWriteFile(cfg *Config, p *paths.Paths, files []config.FileSpec, fi
 
 	slog.Info("parsing content of file", slog.String("source", file.Source), slog.String("target", destPath))
 
-	rawtemp, err := afero.ReadFile(cfg.Fs, file.Source)
+	rawtemp, err := os.ReadFile(file.Source)
 	if err != nil {
 		slog.Error("Couldn't read the raw template data", slog.String("Source", file.Source), slog.Any("err", err))
 		return err
@@ -84,13 +83,13 @@ func renderAndWriteFile(cfg *Config, p *paths.Paths, files []config.FileSpec, fi
 	}
 
 	targetDir := filepath.Dir(destPath)
-	if err := cfg.Fs.MkdirAll(targetDir, 0o755); err != nil {
+	if err := os.MkdirAll(targetDir, 0o755); err != nil {
 		slog.Error("Failed to create target directory", slog.String("directory", targetDir), slog.Any("error", err))
 		return err
 	}
 	slog.Debug("Created target directory", slog.String("directory", targetDir))
 
-	if err := afero.WriteFile(cfg.Fs, destPath, []byte(file.Rendered), file.SourceMode); err != nil {
+	if err := os.WriteFile(destPath, []byte(file.Rendered), file.SourceMode); err != nil {
 		slog.Error("Failed to write rendered file", slog.String("target", destPath), slog.Any("error", err))
 		return err
 	}
@@ -110,20 +109,20 @@ func copyFile(cfg *Config, files []config.FileSpec, fileIdx int, destPath string
 	}
 
 	targetDir := filepath.Dir(destPath)
-	if err := cfg.Fs.MkdirAll(targetDir, 0o755); err != nil {
+	if err := os.MkdirAll(targetDir, 0o755); err != nil {
 		slog.Error("Failed to create target directory", slog.String("directory", targetDir), slog.Any("error", err))
 		return err
 	}
 	slog.Debug("Created target directory", slog.String("directory", targetDir))
 
-	sourceFile, err := cfg.Fs.Open(file.Source)
+	sourceFile, err := os.Open(file.Source)
 	if err != nil {
 		slog.Error("Failed to open source file", slog.String("source", file.Source), slog.Any("error", err))
 		return err
 	}
 	defer sourceFile.Close()
 
-	targetFile, err := cfg.Fs.Create(destPath)
+	targetFile, err := os.Create(destPath)
 	if err != nil {
 		slog.Error("Failed to create target file", slog.String("target", destPath), slog.Any("error", err))
 		return err
@@ -136,7 +135,7 @@ func copyFile(cfg *Config, files []config.FileSpec, fileIdx int, destPath string
 	}
 	slog.Debug("Copied file", slog.String("source", file.Source), slog.String("target", destPath))
 
-	if err := cfg.Fs.Chmod(destPath, file.SourceMode); err != nil {
+	if err := os.Chmod(destPath, file.SourceMode); err != nil {
 		slog.Warn("Failed to set permissions on copied file", slog.String("target", destPath), slog.Any("error", err))
 	}
 	slog.Debug("Set permissions on copied file", slog.String("target", destPath), slog.Any("mode", file.SourceMode))

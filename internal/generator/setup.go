@@ -57,14 +57,14 @@ func loadGeneratorArtifacts(cfg *Config, p *paths.Paths, reqs *config.Requiremen
 	}
 	slog.Debug("Final Variables", slog.Any("vars", vars))
 
-	scripts, err := config.NewScriptSpecWithFS(cfg.Fs, p)
+	scripts, err := config.NewScriptSpec(p)
 	if err != nil {
 		slog.Error("Couldn't build scripts", slog.Any("error", err))
 		return nil, config.ScriptSpec{}, nil, nil, err
 	}
 	slog.Debug("Final scripts", slog.Any("scripts", scripts))
 
-	files, err := config.NewFileSpecsWithFS(cfg.Fs, p)
+	files, err := config.NewFileSpecs(p)
 	if err != nil {
 		slog.Error("Failed to load files from template definition", slog.Any("error", err))
 		return nil, config.ScriptSpec{}, nil, nil, err

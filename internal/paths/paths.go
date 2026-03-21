@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/spf13/afero"
 )
 
 var ErrNotInProjDirectory = errors.New("not in a proj directory")
@@ -121,10 +119,6 @@ func Resolve(components ...string) (string, error) {
 }
 
 func FindProjectRoot(startPath ...string) (string, error) {
-	return FindProjectRootWithFS(afero.NewOsFs(), startPath...)
-}
-
-func FindProjectRootWithFS(fs afero.Fs, startPath ...string) (string, error) {
 	var searchPath string
 	var err error
 
@@ -142,7 +136,46 @@ func FindProjectRootWithFS(fs afero.Fs, startPath ...string) (string, error) {
 		}
 	}
 
-	return findProjectRootFrom(fs, searchPath)
+	return findProjectRootFrom(searchPath)
+}
+
+func findProjectRootFrom(startPath string) (string, error) {
+	current := startPath
+
+	// I think we need this for windows support with weird \foo\bar\baz paths that can be root
+	root := filepath.VolumeName(current) + string(filepath.Separator)
+	if root == string(filepath.Separator) {
+		root = "/"
+	}
+
+	for {
+		// we're inside a .proj directory
+		if filepath.Base(current) == TargetConfigFileDir {
+			slog.Error("Cannot run proj command inside .proj directory", slog.String("path", current))
+			return "", errors.New("proj can't modify itself")
+		}
+
+		// fond project root because .proj/proj.yml exists in current directory tree
+		projPath := filepath.Join(current, TargetConfigFileDir, TargetConfigFile)
+		if _, err := os.Stat(projPath); err == nil {
+			return current, nil
+		}
+
+		// made it to / without a proj file so give up.
+		if current == root {
+			slog.Debug("No proj config found in directory tree", slog.String("root", root))
+			return "", ErrNotInProjDirectory
+		}
+
+		// those weird windows paths might mean root is \foo\bar but current is \foo
+		// maybe it's defensive?
+		parent := filepath.Dir(current)
+		if parent == current {
+			slog.Debug("No proj config found in directory tree", slog.String("root", root))
+			return "", ErrNotInProjDirectory
+		}
+		current = parent
+	}
 }
 
 func (p *Paths) LogValue() slog.Value {
@@ -168,45 +201,6 @@ func (p *Paths) ToMap() map[string]string {
 		"templateConfigPath": p.TemplateConfigPath,
 		"globalConfigRoot":   p.GlobalConfigRoot,
 		"globalConfigPath":   p.GlobalConfigPath,
-	}
-}
-
-func findProjectRootFrom(fs afero.Fs, startPath string) (string, error) {
-	current := startPath
-
-	// I think we need this for windows support with weird \foo\bar\baz paths that can be root
-	root := filepath.VolumeName(current) + string(filepath.Separator)
-	if root == string(filepath.Separator) {
-		root = "/"
-	}
-
-	for {
-		// we're inside a .proj directory
-		if filepath.Base(current) == TargetConfigFileDir {
-			slog.Error("Cannot run proj command inside .proj directory", slog.String("path", current))
-			return "", errors.New("proj can't modify itself")
-		}
-
-		// fond project root because .proj/proj.yml exists in current directory tree
-		projPath := filepath.Join(current, TargetConfigFileDir, TargetConfigFile)
-		if _, err := fs.Stat(projPath); err == nil {
-			return current, nil
-		}
-
-		// made it to / without a proj file so give up.
-		if current == root {
-			slog.Debug("No proj config found in directory tree", slog.String("root", root))
-			return "", ErrNotInProjDirectory
-		}
-
-		// those weird windows paths might mean root is \foo\bar but current is \foo
-		// maybe it's defensive?
-		parent := filepath.Dir(current)
-		if parent == current {
-			slog.Debug("No proj config found in directory tree", slog.String("root", root))
-			return "", ErrNotInProjDirectory
-		}
-		current = parent
 	}
 }
 

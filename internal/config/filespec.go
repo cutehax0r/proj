@@ -4,10 +4,10 @@ import (
 	"errors"
 	"io/fs"
 	"log/slog"
+	"os"
 	"proj/internal/paths"
 	"strings"
 
-	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 )
 
@@ -30,10 +30,6 @@ func (f *FileSpec) ToMap() map[string]any {
 }
 
 func NewFileSpecs(p *paths.Paths) ([]FileSpec, error) {
-	return NewFileSpecsWithFS(afero.NewOsFs(), p)
-}
-
-func NewFileSpecsWithFS(fs afero.Fs, paths *paths.Paths) ([]FileSpec, error) {
 	result := make([]FileSpec, 0)
 
 	datapath := strings.Join([]string{"definitions", viper.GetString("definition-name"), "files"}, ".")
@@ -59,19 +55,19 @@ func NewFileSpecsWithFS(fs afero.Fs, paths *paths.Paths) ([]FileSpec, error) {
 		}
 
 		// Resolve source relative to the definition's source directory
-		source, err := paths.ResolveFrom(sourceDir, spec["source"].(string))
+		source, err := p.ResolveFrom(sourceDir, spec["source"].(string))
 		if err != nil {
 			slog.Error("Failed to resolve source path", slog.String("source", spec["source"].(string)), slog.String("sourceDir", sourceDir), slog.Any("error", err))
 			return nil, err
 		}
 
 		// If source file doesn't exist and we have a different template source dir, try fallback
-		info, err := fs.Stat(source)
+		info, err := os.Stat(source)
 		if err != nil && sourceDir != templateSourceDir {
 			slog.Debug("Source file not found in primary location, checking fallback", slog.String("source", source), slog.String("fallback-dir", templateSourceDir))
-			fallbackSource, fallbackErr := paths.ResolveFrom(templateSourceDir, spec["source"].(string))
+			fallbackSource, fallbackErr := p.ResolveFrom(templateSourceDir, spec["source"].(string))
 			if fallbackErr == nil {
-				if fallbackInfo, fallbackStatErr := fs.Stat(fallbackSource); fallbackStatErr == nil {
+				if fallbackInfo, fallbackStatErr := os.Stat(fallbackSource); fallbackStatErr == nil {
 					slog.Debug("Found source file in fallback location", slog.String("fallback-source", fallbackSource))
 					source = fallbackSource
 					info = fallbackInfo
@@ -86,7 +82,7 @@ func NewFileSpecsWithFS(fs afero.Fs, paths *paths.Paths) ([]FileSpec, error) {
 		}
 		sourceMode := info.Mode()
 
-		target, _ := paths.ResolveTarget(spec["target"].(string))
+		target, _ := p.ResolveTarget(spec["target"].(string))
 
 		parse, ok := spec["parse"].(bool)
 		if !ok {
