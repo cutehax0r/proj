@@ -379,6 +379,9 @@ I'm going to use `go-md2man`.
     script it's execute bit won't be set. To fix this I think we need to modify the `files` declaration
     to allow you to declare target permissions and then not have them set on local files.
 
+  * **Fix man files:** The man page renderer has issues with `<foo>` format. They don't get
+    displayed. Go read the md2man go lib docs and figure out what's wrong and how to do this right.
+
   * improve readme, focus on 'what it does' and how to install. Everything else to docs
 
   * Much improved installation instructions (binaries 'sudo xattr -d com.apple.quarantine ./path/to/app')
