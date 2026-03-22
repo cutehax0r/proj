@@ -409,8 +409,6 @@ I'm going to use `go-md2man`.
 
   * add `setup` command that writes a default config to and an example template
 
-  * add `create` that builds a new template in ~/.local/share/proj
-
   * add `install` command that does a `git clone ...` to template_root
 
   * add `remove` command that does an `rm -rf ` in template root
