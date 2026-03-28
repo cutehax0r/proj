@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"fmt"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/AaronO/go-git-http"
 )
 
 type TestContext struct {
@@ -290,4 +293,42 @@ func copyDir(t *testing.T, src, dst string) {
 			}
 		}
 	}
+}
+
+type GitServer struct {
+	Server *httptest.Server
+	URL    string
+}
+
+func StartGitServer(t *testing.T, repoDir string) *GitServer {
+	t.Helper()
+
+	gitHandler := githttp.New(filepath.Dir(repoDir))
+	server := httptest.NewServer(gitHandler)
+	t.Cleanup(server.Close)
+
+	return &GitServer{
+		Server: server,
+		URL:    server.URL + "/" + filepath.Base(repoDir),
+	}
+}
+
+func (ctx *TestContext) SetupWithGitServer(t *testing.T) (*TestContext, *GitServer) {
+	t.Helper()
+
+	ctx = Setup(t)
+	repoPath := filepath.Join(ProjRoot(), "testdata", "git-server", "repos", "test-template")
+	gitServer := StartGitServer(t, repoPath)
+
+	return ctx, gitServer
+}
+
+func SetupWithGitServer(t *testing.T) (*TestContext, *GitServer) {
+	t.Helper()
+
+	ctx := Setup(t)
+	repoPath := filepath.Join(ProjRoot(), "testdata", "git-server", "repos", "test-template")
+	gitServer := StartGitServer(t, repoPath)
+
+	return ctx, gitServer
 }
