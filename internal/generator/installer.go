@@ -1,7 +1,7 @@
 package generator
 
 import (
-	"fmt"
+	"errors"
 	"log/slog"
 	"net/url"
 	"os"
@@ -37,31 +37,34 @@ func (i *Installer) Install() error {
 	templateGit := viper.GetString("template-git")
 	cloneURL, err := i.buildCloneURL(i.cfg.TemplateName, templateGit)
 	if err != nil {
+		slog.Error("Failed to build clone URL", slog.Any("error", err))
 		return err
 	}
 
 	i.cfg.DefinitionName = cloneURL
 
-	targetPath := i.paths.TemplateRoot
+	targetPath := filepath.Join(i.paths.TemplateRoot, i.cfg.TargetName)
 
 	if _, err := os.Stat(targetPath); err == nil {
-		return fmt.Errorf("template %q already exists at %s", i.cfg.TargetName, targetPath)
+		slog.Error("Template already exists", slog.String("target", i.cfg.TargetName), slog.String("path", targetPath))
+		return errors.New("template already exists")
 	}
 
 	slog.Debug("Cloning template", slog.String("url", cloneURL), slog.String("to", targetPath))
 
 	_, err = git.PlainClone(targetPath, false, &git.CloneOptions{
-		URL:      cloneURL,
-		Depth:    1,
-		Progress: os.Stderr,
+		URL:   cloneURL,
+		Depth: 1,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to clone: %w", err)
+		slog.Error("Failed to clone", slog.Any("error", err))
+		return err
 	}
 
 	projYmlPath := filepath.Join(targetPath, paths.TemplateConfigFile)
 	if _, err := os.Stat(projYmlPath); err != nil {
-		return fmt.Errorf("template missing %s at %s", paths.TemplateConfigFile, projYmlPath)
+		slog.Error("Template missing proj.yml", slog.String("path", projYmlPath))
+		return err
 	}
 
 	slog.Debug("Template installed successfully", slog.String("path", targetPath))
@@ -75,10 +78,11 @@ func (i *Installer) buildCloneURL(source, templateGit string) (string, error) {
 
 	parsed, err := url.Parse(templateGit)
 	if err != nil {
-		return "", fmt.Errorf("invalid template-git URL: %w", err)
+		slog.Error("Invalid template-git URL", slog.Any("error", err))
+		return "", err
 	}
 
 	owner := strings.Trim(parsed.Path, "/")
 
-	return fmt.Sprintf("%s://%s/%s", parsed.Scheme, parsed.Host, filepath.Join(owner, source)), nil
+	return strings.TrimRight(parsed.Scheme+"://"+parsed.Host+"/"+filepath.Join(owner, source), "/"), nil
 }
