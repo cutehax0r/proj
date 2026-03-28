@@ -136,6 +136,8 @@ clean:
 	@echo "Cleaning acceptance test temp directories..."
 	@find /tmp -name "proj-acceptance-*" -type d -exec rm -rf {} + 2>/dev/null || true
 	@find /var/folders -name "proj-acceptance-*" -type d -exec rm -rf {} + 2>/dev/null || true
+	@echo "Cleaning test install directories..."
+	@rm -rf /tmp/proj-test-install /tmp/test-templates 2>/dev/null || true
 	@$(GO) clean
 	@echo "✓ Clean complete"
 

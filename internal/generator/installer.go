@@ -50,6 +50,11 @@ func (i *Installer) Install() error {
 		return errors.New("template already exists")
 	}
 
+	if i.cfg.NoWrite {
+		slog.Info("Dry run - would clone template", slog.String("url", cloneURL), slog.String("to", targetPath))
+		return nil
+	}
+
 	slog.Debug("Cloning template", slog.String("url", cloneURL), slog.String("to", targetPath))
 
 	_, err = git.PlainClone(targetPath, false, &git.CloneOptions{
