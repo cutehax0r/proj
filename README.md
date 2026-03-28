@@ -7,6 +7,7 @@ Commands:
   * `proj new <template> <name> [OPTIONS]`
   * `proj add <definition> <name> [OPTIONS]`
   * `proj info [template] [definition] [OPTIONS]`
+  * `proj install <source> [target] [OPTIONS]`
 
 Running `new` implies the definition `new`
 
@@ -127,6 +128,50 @@ proj info static new
   * `-a`, `--all`: force global view and list all templates (ignores project context)
   * `-s STRING`, `--template-root STRING`: directory to search for project templates
 
+#### Install
+
+Install a template from a git repository to the local template root.
+
+##### Usage
+
+General format: `proj install <source> [target] [OPTIONS]`
+
+The source can be:
+* A short name (e.g., `user/repo`) which will be prefixed with the default git source (https://github.com/)
+* A full URL (e.g., `https://gitlab.com/user/repo`) which will be used as-is
+
+If target is not specified, it defaults to the last component of the source.
+
+**Example:** Install a template from GitHub.
+
+```sh
+proj install cutehax0r/my-template
+```
+
+**Example:** Install with a custom name.
+
+```sh
+proj install cutehax0r/my-template my-cool-template
+```
+
+**Example:** Install from GitLab.
+
+```sh
+proj install cutehax0r/my-template --template-git https://gitlab.com/
+```
+
+**Example:** Install from a specific URL.
+
+```sh
+proj install https://gitlab.com/me/my-template my-template
+```
+
+##### Arguments
+
+  * `-s STRING`, `--template-root STRING`: directory containing project templates (default: ~/.local/share/proj)
+
+  * `--template-git STRING`: default git source for short template names (default: https://github.com/)
+
 ## Configuration
 
 ### Global configuration
@@ -149,12 +194,16 @@ Global configuration options are set in the `XDG_CONFIG_DIR` or `~/.config/proj/
   * Target root sets the location in which new files are created. By default the current directory
     is used but you might want to set a `src` directory if you alawys want your projects to be
     started in a location (e.g., for a mono repo).
+
+  * Template git source sets the default git source for the `install` command when using short names
+    (e.g., `user/repo`). Defaults to `https://github.com/`.
    
 Here is an example configuration file:
 ```yaml
 ---
 # ~/.config/proj/proj.yml
 template-root: ~/src/github.com/cutehax0r/customtemplates
+template-git: https://github.com/
 target-root: ~/src/github.com/cutehax0r/
 log-level: 3
 scripts:
@@ -408,8 +457,6 @@ I'm going to use `go-md2man`.
   * allow requirements to define mandatory software, checked with `which foo`
 
   * add `setup` command that writes a default config to and an example template
-
-  * add `install` command that does a `git clone ...` to template_root
 
   * add `remove` command that does an `rm -rf ` in template root
 
