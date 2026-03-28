@@ -123,6 +123,17 @@ func InfoConfig(templateName, definitionName string) (*Config, error) {
 	return cfg, nil
 }
 
+func InstallerConfig(templateName, targetName string) (*Config, error) {
+	cfg := &Config {
+		TemplateName: templateName,
+		TargetName: targetName,
+		NoWrite: viper.GetViper().GetBool("no-write"),
+		GlobalConfigFile: viper.GetString("global-config-file"),
+	}
+
+	return cfg, nil
+}
+
 func (cfg *Config) setupPaths() error {
 	viper.Set("template-name", cfg.TemplateName)
 	viper.Set("target-name", cfg.TargetName)
