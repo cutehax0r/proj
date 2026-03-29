@@ -428,6 +428,8 @@ I'm going to use `go-md2man`.
     problem for installing templates distributed as git repos. For example, If a template has a shell
     script it's execute bit won't be set. To fix this I think we need to modify the `files` declaration
     to allow you to declare target permissions and then not have them set on local files.
+    when copying files with parent directories, we should have a way to specify permissions. For now
+    those will have to be done with shell scripts.
 
   * **Fix man files:** The man page renderer has issues with `<foo>` format. They don't get
     displayed. Go read the md2man go lib docs and figure out what's wrong and how to do this right.
@@ -458,10 +460,6 @@ I'm going to use `go-md2man`.
 
   * add `setup` command that writes a default config to and an example template
 
-  * add `remove` command that does an `rm -rf ` in template root
-
-  * make `new` list all available templates if run with no arguments
-
   * make `add` list all available definitions if run with no arguments
 
   * add --version that dumps a version
@@ -480,14 +478,9 @@ I'm going to use `go-md2man`.
 
   * a --force-write that ignores the normal 'file already exists' checks
 
-  * allow file definitions to specify destination permissions
-
   * All this fussing with variables.  It might make more sense to route everything to JSON and pass
   that to the toluavalue function.  Tag your structs with `json:"foo"` pass an instance of the struct
   to json.Marshal(somestruct) to get a map[string]any. then pass that over to .toluavalue Investigate
   later. For now it works and that's good enough.  Just write some more ToMap() functions
-
-  * when copying files with parent directories, we should have a way to specify permissions. For now
-  those will have to be done with shell scripts.
 
   * github windows builds working, add a winget repository
