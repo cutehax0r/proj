@@ -167,6 +167,30 @@ man-install: man
 		cp $(MAN_OUT_DIR)/proj.1 ~/.local/share/man/man1/; \
 		echo "✓ Installed: proj.1"; \
 	fi
+	@if [ -f $(MAN_OUT_DIR)/proj-install.1 ]; then \
+		cp $(MAN_OUT_DIR)/proj-install.1 ~/.local/share/man/man1/; \
+		echo "✓ Installed: proj-install.1"; \
+	fi
+	@if [ -f $(MAN_OUT_DIR)/proj-uninstall.1 ]; then \
+		cp $(MAN_OUT_DIR)/proj-uninstall.1 ~/.local/share/man/man1/; \
+		echo "✓ Installed: proj-uninstall.1"; \
+	fi
+	@if [ -f $(MAN_OUT_DIR)/proj-new.1 ]; then \
+		cp $(MAN_OUT_DIR)/proj-new.1 ~/.local/share/man/man1/; \
+		echo "✓ Installed: proj-new.1"; \
+	fi
+	@if [ -f $(MAN_OUT_DIR)/proj-add.1 ]; then \
+		cp $(MAN_OUT_DIR)/proj-add.1 ~/.local/share/man/man1/; \
+		echo "✓ Installed: proj-add.1"; \
+	fi
+	@if [ -f $(MAN_OUT_DIR)/proj-info.1 ]; then \
+		cp $(MAN_OUT_DIR)/proj-info.1 ~/.local/share/man/man1/; \
+		echo "✓ Installed: proj-info.1"; \
+	fi
+	@if [ -f $(MAN_OUT_DIR)/proj-help.1 ]; then \
+		cp $(MAN_OUT_DIR)/proj-help.1 ~/.local/share/man/man1/; \
+		echo "✓ Installed: proj-help.1"; \
+	fi
 	@if [ -f $(MAN_OUT_DIR)/proj.yml.5 ]; then \
 		cp $(MAN_OUT_DIR)/proj.yml.5 ~/.local/share/man/man5/; \
 		echo "✓ Installed: proj.yml.5"; \
@@ -174,6 +198,22 @@ man-install: man
 	@if [ -f $(MAN_OUT_DIR)/proj.7 ]; then \
 		cp $(MAN_OUT_DIR)/proj.7 ~/.local/share/man/man7/; \
 		echo "✓ Installed: proj.7"; \
+	fi
+	@if [ -f $(MAN_OUT_DIR)/proj-scripts.7 ]; then \
+		cp $(MAN_OUT_DIR)/proj-scripts.7 ~/.local/share/man/man7/; \
+		echo "✓ Installed: proj-scripts.7"; \
+	fi
+	@if [ -f $(MAN_OUT_DIR)/proj-lua.7 ]; then \
+		cp $(MAN_OUT_DIR)/proj-lua.7 ~/.local/share/man/man7/; \
+		echo "✓ Installed: proj-lua.7"; \
+	fi
+	@if [ -f $(MAN_OUT_DIR)/proj-variables.7 ]; then \
+		cp $(MAN_OUT_DIR)/proj-variables.7 ~/.local/share/man/man7/; \
+		echo "✓ Installed: proj-variables.7"; \
+	fi
+	@if [ -f $(MAN_OUT_DIR)/proj-template.7 ]; then \
+		cp $(MAN_OUT_DIR)/proj-template.7 ~/.local/share/man/man7/; \
+		echo "✓ Installed: proj-template.7"; \
 	fi
 	@echo "Updating man database..."
 	@mandb ~/.local/share/man 2>/dev/null || true
@@ -225,6 +265,7 @@ uninstall:
 	@rm -f ~/.local/share/man/man1/proj-new.1
 	@rm -f ~/.local/share/man/man1/proj-add.1
 	@rm -f ~/.local/share/man/man1/proj-install.1
+	@rm -f ~/.local/share/man/man1/proj-uninstall.1
 	@rm -f ~/.local/share/man/man1/proj-info.1
 	@rm -f ~/.local/share/man/man1/proj-help.1
 	@rm -f ~/.local/share/man/man5/proj.yml.5
