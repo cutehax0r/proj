@@ -28,6 +28,7 @@ func init() {
 	rootCmd.AddCommand(uninstallCmd)
 	uninstallCmd.Flags().StringP("template-root", "s", paths.TemplateRootDir(), "Path containing project templates")
 	uninstallCmd.Flags().Bool("force", false, "Force removal even if not from git or has local changes")
+	uninstallCmd.Flags().Bool("no-write", false, "Dry run - don't actually uninstall")
 
 	viper.BindPFlags(uninstallCmd.Flags())
 }

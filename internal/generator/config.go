@@ -145,6 +145,7 @@ func UninstallerConfig(targetName, templateRoot string) (*Config, error) {
 
 	cfg := &Config{
 		TargetName:       targetName,
+		TemplateName:     targetName,
 		NoWrite:          viper.GetBool("no-write"),
 		Force:            viper.GetBool("force"),
 		GlobalConfigFile: viper.GetString("global-config-file"),
