@@ -17,6 +17,7 @@ type Config struct {
 	DefinitionName   string
 	SetVariables     []string
 	NoWrite          bool
+	Force            bool
 	GlobalConfigFile string
 
 	Paths *paths.Paths
@@ -129,7 +130,28 @@ func InstallerConfig(templateName, targetName, templateRoot, templateGit string)
 		TargetName:       targetName,
 		DefinitionName:   templateGit,
 		NoWrite:          viper.GetBool("no-write"),
+		Force:            viper.GetBool("force"),
 		GlobalConfigFile: viper.GetString("global-config-file"),
+	}
+
+	return cfg, nil
+}
+
+func UninstallerConfig(targetName, templateRoot string) (*Config, error) {
+	viper.Set("template-root", templateRoot)
+	viper.Set("template-name", targetName)
+	viper.Set("target-name", targetName)
+	viper.Set("target-config-file", "")
+
+	cfg := &Config{
+		TargetName:       targetName,
+		NoWrite:          viper.GetBool("no-write"),
+		Force:            viper.GetBool("force"),
+		GlobalConfigFile: viper.GetString("global-config-file"),
+	}
+
+	if err := cfg.setupPaths(); err != nil {
+		return nil, err
 	}
 
 	return cfg, nil

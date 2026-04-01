@@ -20,7 +20,6 @@ var installCmd = &cobra.Command{
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return err
 		}
-		viper.SetDefault("template-git", "https://github.com/")
 		return nil
 	},
 	Run: runInstaller,
@@ -30,7 +29,6 @@ func init() {
 	rootCmd.AddCommand(installCmd)
 
 	installCmd.Flags().StringP("template-root", "s", paths.TemplateRootDir(), "Path containing project templates")
-	installCmd.Flags().String("template-git", "https://github.com/", "Default git source for short template names")
 
 	viper.BindPFlags(installCmd.Flags())
 }

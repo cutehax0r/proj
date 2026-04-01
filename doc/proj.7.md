@@ -1,5 +1,5 @@
 proj(7) -- Project template system overview
-===========================================
+==========================================
 
 ## NAME
 
@@ -10,6 +10,11 @@ proj - Overview of the proj template system
 **proj** is a project template system that allows you to define reusable
 templates for programming projects. This manual provides an overview of the
 template system, variable resolution, and script execution.
+
+## GLOBAL CONFIGURATION
+
+The global configuration file (`~/.config/proj/proj.yml` or `$XDG_CONFIG_HOME/proj/proj.yml`)
+controls proj's global behavior. See **proj.yml(5)** for details.
 
 ## TEMPLATE SYSTEM
 

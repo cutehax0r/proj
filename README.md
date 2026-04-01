@@ -8,6 +8,7 @@ Commands:
   * `proj add <definition> <name> [OPTIONS]`
   * `proj info [template] [definition] [OPTIONS]`
   * `proj install <source> [target] [OPTIONS]`
+  * `proj uninstall <target> [OPTIONS]`
 
 Running `new` implies the definition `new`
 
@@ -171,6 +172,40 @@ proj install https://gitlab.com/me/my-template my-template
   * `-s STRING`, `--template-root STRING`: directory containing project templates (default: ~/.local/share/proj)
 
   * `--template-git STRING`: default git source for short template names (default: https://github.com/)
+
+#### Uninstall
+
+Remove a template that was installed from a git repository.
+
+##### Usage
+
+General format: `proj uninstall <target> [OPTIONS]`
+
+**Example:** Uninstall a template.
+
+```sh
+proj uninstall my-template
+```
+
+**Example:** Dry run to see what would be removed.
+
+```sh
+proj uninstall my-template --no-write
+```
+
+**Example:** Force removal without checking git status.
+
+```sh
+proj uninstall my-template --force
+```
+
+##### Arguments
+
+  * `-s STRING`, `--template-root STRING`: directory containing project templates (default: ~/.local/share/proj)
+
+  * `--force`: force removal even if not from git or has local changes
+
+  * `-w`, `--no-write`: dry run - show what would be removed without deleting
 
 ## Configuration
 

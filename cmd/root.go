@@ -33,6 +33,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("no-write", "w", false, "Print the plan and don't write anything")
 	rootCmd.PersistentFlags().IntP("log-level", "l", 0, "How much to log [0-3], bigger = more")
 	rootCmd.PersistentFlags().StringVarP(&globalConfigFile, "global-config-file", "g", "", "Use specific global configuration file")
+	rootCmd.PersistentFlags().String("template-git", "https://github.com/", "Default git source for templates")
 	viper.BindPFlags(rootCmd.PersistentFlags())
 }
 

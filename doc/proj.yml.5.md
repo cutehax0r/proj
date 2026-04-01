@@ -20,6 +20,29 @@ proj project. It contains:
 * Script hooks for pre/post processing
 * Template configuration
 
+## GLOBAL CONFIGURATION
+
+The global configuration file (`~/.config/proj/proj.yml` or `$XDG_CONFIG_HOME/proj/proj.yml`)
+controls proj's global behavior. The following options are available:
+
+* `template-root` (string): Directory containing project templates (default: ~/.local/share/proj)
+
+* `template-git` (string): Default git source for the `install` command when using short names
+  (e.g., `user/repo`). Defaults to `https://github.com/`
+
+* `target-root` (string): Default directory for new projects
+
+* `log-level` (int): Logging level from 0 (errors only) to 3 (debug)
+
+Example global configuration:
+
+```yaml
+template-root: ~/src/templates
+template-git: https://gitlab.com/
+target-root: ~/projects
+log-level: 2
+```
+
 ## FILE FORMAT
 
 The file is formatted in YAML. A minimal example:
