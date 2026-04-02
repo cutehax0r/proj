@@ -158,6 +158,26 @@ func UninstallerConfig(targetName, templateRoot string) (*Config, error) {
 	return cfg, nil
 }
 
+func UpdaterConfig(templateName, templateRoot string) (*Config, error) {
+	viper.Set("template-root", templateRoot)
+	viper.Set("template-name", templateName)
+	viper.Set("target-name", templateName)
+
+	cfg := &Config{
+		TemplateName:     templateName,
+		TargetName:       templateName,
+		NoWrite:          viper.GetBool("no-write"),
+		Force:            viper.GetBool("force"),
+		GlobalConfigFile: viper.GetString("global-config-file"),
+	}
+
+	if err := cfg.setupPaths(); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
 func (cfg *Config) setupPaths() error {
 	viper.Set("template-name", cfg.TemplateName)
 	viper.Set("target-name", cfg.TargetName)

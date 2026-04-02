@@ -15,6 +15,10 @@ var (
 	ErrHasLocalChanges = errors.New("template has uncommitted local changes")
 )
 
+func init() {
+	_ = ErrNotInstalled
+}
+
 type Uninstaller struct {
 	cfg   *Config
 	paths *paths.Paths
