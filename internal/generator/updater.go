@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-git/go-git/v5"
 	"proj/internal/paths"
@@ -99,16 +100,28 @@ func (u *Updater) getRemoteOrigin(repo *git.Repository) (string, error) {
 }
 
 func (u *Updater) updateOrReinstall(repo *git.Repository, targetPath, remoteURL string) error {
-	worktree, err := repo.Worktree()
-	if err != nil {
-		return err
+	forceReinstall := u.cfg.Force
+
+	if !forceReinstall {
+		worktree, err := repo.Worktree()
+		if err != nil {
+			return err
+		}
+
+		err = worktree.Pull(&git.PullOptions{
+			RemoteName: "origin",
+		})
+		if err != nil {
+			if strings.Contains(err.Error(), "already up-to-date") || strings.Contains(err.Error(), "Already up to date") {
+				return nil
+			}
+			slog.Warn("Pull failed, reinstalling", slog.String("path", targetPath), slog.Any("error", err))
+			forceReinstall = true
+		}
 	}
 
-	err = worktree.Pull(&git.PullOptions{
-		RemoteName: "origin",
-	})
-	if err != nil {
-		slog.Warn("Shallow clone or pull failed, reinstalling", slog.String("path", targetPath), slog.Any("error", err))
+	if forceReinstall {
+		slog.Warn("Reinstalling template", slog.String("path", targetPath))
 		return u.reinstall(targetPath, remoteURL)
 	}
 

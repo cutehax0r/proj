@@ -6,3 +6,6 @@
 	precomposeunicode = true
 [remote "origin"]
 	url = /tmp/test-template-src
+[user]
+	email = test@test.com
+	name = Test

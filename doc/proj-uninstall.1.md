@@ -23,7 +23,7 @@ Use `--force` to bypass the git and local changes checks.
 * `-s, --template-root <path>`:
   Path containing project templates (default: ~/.local/share/proj)
 
-* `--force`:
+* `-f, --force`:
   Force removal even if the template is not from git or has local changes.
   This will also override the `--no-write` flag if both are specified.
 

@@ -31,11 +31,11 @@ even when inside a project directory.
 
 ## OPTIONS
 
-* `-a`, `--all`:
+* `-a, --all`:
   Force global view. List all available templates regardless of
   whether currently inside a project directory.
 
-* `-s`, `--template-root` <path>:
+* `-s, --template-root <path>`:
   Path containing project templates.
 
 ## EXAMPLES

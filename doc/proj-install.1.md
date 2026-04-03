@@ -21,7 +21,7 @@ If target is not specified, it defaults to the last component of the source.
 * `-s, --template-root <path>`:
   Path containing project templates (default: ~/.local/share/proj)
 
-* `--template-git <url>`:
+* `-g, --template-git <url>`:
   Default git source for short template names (default: https://github.com/)
 
 ## EXAMPLES

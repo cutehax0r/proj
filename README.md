@@ -9,6 +9,7 @@ Commands:
   * `proj info [template] [definition] [OPTIONS]`
   * `proj install <source> [target] [OPTIONS]`
   * `proj uninstall <target> [OPTIONS]`
+  * `proj update [target] [OPTIONS]`
 
 Running `new` implies the definition `new`
 
@@ -203,9 +204,44 @@ proj uninstall my-template --force
 
   * `-s STRING`, `--template-root STRING`: directory containing project templates (default: ~/.local/share/proj)
 
-  * `--force`: force removal even if not from git or has local changes
+  * `-f`, `--force`: force removal even if not from git or has local changes
 
   * `-w`, `--no-write`: dry run - show what would be removed without deleting
+
+#### Update
+
+Update installed templates from their git sources.
+
+##### Usage
+
+General format: `proj update` [target] [OPTIONS]
+
+If target is not specified, all installed templates will be checked for updates.
+Only templates installed from git sources can be updated.
+
+**Example:** Update all templates.
+
+```sh
+proj update
+```
+
+**Example:** Update a specific template.
+
+```sh
+proj update my-template
+```
+
+**Example:** Force update even if the repository has uncommitted local changes.
+
+```sh
+proj update my-template --force
+```
+
+##### Arguments
+
+  * `-s STRING`, `--template-root STRING`: directory containing project templates (default: ~/.local/share/proj)
+
+  * `-f`, `--force`: delete and reinstall even if the repository has uncommitted changes
 
 ## Configuration
 

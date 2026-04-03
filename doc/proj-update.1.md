@@ -4,7 +4,7 @@ proj-update(1) -- Update installed templates
 
 ## SYNOPSIS
 
-`proj update` <target> [options]
+`proj update` [target] [options]
 
 ## DESCRIPTION
 
